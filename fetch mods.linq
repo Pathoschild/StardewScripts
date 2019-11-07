@@ -571,7 +571,10 @@ IEnumerable<int> GetModIdsWithFilesNotUnpacked(string rootPath)
 /// <param name="filter">A filter which indicates whether a mod ID should be unpacked.</param>
 void UnpackMods(string rootPath, Func<int, bool> filter)
 {
-	SevenZipBase.SetLibraryPath(@"C:\Program Files (x86)\7-Zip\7z.dll");
+		SevenZipBase.SetLibraryPath(Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess
+			? @"C:\Program Files (x86)\7-Zip\7z.dll"
+			: @"C:\Program Files\7-Zip\7z.dll"
+		);
 
 	// get folders to unpack
 	DirectoryInfo[] modDirs = this
@@ -622,6 +625,8 @@ void UnpackMods(string rootPath, Func<int, bool> filter)
 				if (tempDir.Exists)
 					FileHelper.ForceDelete(tempDir);
 				tempDir.Create();
+				tempDir.Refresh();
+
 				try
 				{
 					this.ExtractFile(archiveFile, tempDir);
@@ -719,13 +724,14 @@ void ExtractFile(FileInfo file, DirectoryInfo extractTo)
 {
 	try
 	{
+		CancellationTokenSource cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 		Task
 			.Run(() =>
 			{
 				using (SevenZipExtractor unpacker = new SevenZipExtractor(file.FullName))
 					unpacker.ExtractArchive(extractTo.FullName);
-			})
-			.Wait(TimeSpan.FromSeconds(60));
+			}, cancellation.Token)
+			.Wait();
 	}
 	catch (AggregateException outerEx)
 	{
