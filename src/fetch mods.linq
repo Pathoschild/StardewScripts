@@ -80,7 +80,7 @@ readonly HashSet<int> IgnoreNexusIDsForValidation = new HashSet<int>
 	1770, // Twelfth Night - Depixelate - ReShade
 	1798, // Twelfth Night - Gameboy Pocket - ReShade
 	2152, // Updated XACT file for audio modding [.xap file],
-	
+
 	// mod translations
 	2825, // Auto-Grabber Mod (zh)
 	4305, // Climates of Ferngill (pt)
@@ -89,20 +89,20 @@ readonly HashSet<int> IgnoreNexusIDsForValidation = new HashSet<int>
 	4339, // Lunar Disturbances (pt)
 	4265, // Magic (pt)
 	4370, // Trent's New Animals (pt)
-	
+
 	// mods which include a copy of another mod for some reason
 	3496, // Farm Extended (content pack with a copy of Farm Type Manager)
 	1692, // New NPC Alec (content pack with a copy of Custom Element Handler, Custom Farming, Custom Furniture, and Custom NPC)
 	1128, // New Shirts and 2 new Skirts (includes Get Dressed)
 	2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
-	
+
 	// reposts
 	1765, // Console Commands
 	1427, // Prairie King Made Easy
 	887,  // Reseed
 	1363, // Save Anywhere
 	1077, // UI Mod Suite
-	
+
 	// special cases
 	4109, // PPJA Home of Abandoned Mods - CFR Conversions
 	4181  // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
@@ -193,7 +193,7 @@ readonly HashSet<int> IgnoreFileIDsForValidation = new HashSet<int>
 	9477,  // Even More Secret Woods (#2364) > Bush Reset
 	3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
 	14167, // Village Map Mod (#3355) > Village Console Commands
-	
+
 	// legacy/broken content packs
 	7425,  // Earth and Water Obelisks (#1980) > Fahnestock - Seasonal Immersion
 	7426,  // Earth and Water Obelisks (#1980) > Garrison - Seasonal Immersion
@@ -228,6 +228,16 @@ readonly HashSet<int> IgnoreFileIDsForValidation = new HashSet<int>
 	9495,  // Quieter Cat Dog and Keg (#2371), .wav files
 };
 
+/// <summary>The settings to use when writing JSON files.</summary>
+readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
+{
+	Formatting = Newtonsoft.Json.Formatting.Indented,
+	Converters = new List<JsonConverter>
+	{
+		new StringEnumConverter() // save enums as their string names
+	}
+};
+
 
 /*********
 ** Script
@@ -247,7 +257,7 @@ async Task Main()
 	this.UnpackMods(rootPath: this.RootPath, filter: id => this.ResetUnpacked || unpackMods.Contains(id) || modIdsToUnpack.Contains(id));
 
 	// run analysis
-	ParsedModData[] mods = this.ReadMods(this.RootPath).ToArray();
+	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
 	await this.GetModsNotOnWikiAsync(mods).Dump("SMAPI mods not on the wiki");
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreEntries(mods).Dump($"{nameof(IgnoreNexusIDsForValidation)}/{nameof(IgnoreFileIDsForValidation)} values which don't match any downloaded mod/file");
@@ -259,7 +269,7 @@ async Task Main()
 *********/
 /// <summary>Get SMAPI mods which aren't listed on the wiki compatibility list.</summary>
 /// <param name="mods">The mods to check.</param>
-async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedModData> mods)
+async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 {
 	// fetch mods on the wiki
 	ModToolkit toolkit = new ModToolkit();
@@ -275,10 +285,10 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedModData> mods)
 			folder.ModType == ModType.Smapi
 			&& !string.IsNullOrWhiteSpace(folder.ModID)
 			&& (!knownModIDs.Contains(folder.ModID) || !knownNexusIDs.Contains(mod.ID))
-			&& !this.ShouldIgnoreForValidation(mod.ID, folder.FileID)
+			&& !this.ShouldIgnoreForValidation(mod.ID, folder.ID)
 		let manifest = folder.RawFolder.Value.Manifest
-		
-		let names = 
+
+		let names =
 			(
 				from name in new[] { folder.ModDisplayName?.Trim(), mod.Name?.Trim() }
 				where !string.IsNullOrWhiteSpace(name)
@@ -290,7 +300,7 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedModData> mods)
 		let authorNames =
 			(
 				from name in
-					new[] { manifest?.Author?.Trim(), mod.Author?.Trim() }
+					new[] { manifest?.Author?.Trim(), mod.Author?.Trim(), mod.AuthorLabel?.Trim() }
 					.Where(p => p != null)
 					.SelectMany(p => p.Split(','))
 					.Select(p => p.Trim())
@@ -299,24 +309,24 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedModData> mods)
 				select name
 			)
 			.Distinct(StringComparer.InvariantCultureIgnoreCase)
-		
+
 		select new
 		{
-			NexusID = new Hyperlinq($"https://www.nexusmods.com/stardewvalley/mods/{mod.ID}", mod.ID.ToString()),
+			NexusID = new Hyperlinq(mod.PageUrl, mod.ID.ToString()),
 			NexusName = mod.Name,
 			NexusAuthor = mod.Author,
+			NexusAuthorLabel = mod.AuthorLabel,
 			NexusVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion nexusVersion) ? nexusVersion.ToString() : mod.Version,
-			NexusStatus = mod.Status,
-			folder.FileID,
-			folder.FileCategory,
-			folder.FileName,
+			folder.ID,
+			folder.Type,
+			folder.Name,
 			folder.ModType,
 			folder.ModID,
 			folder.ModVersion,
 			UpdateKeys = new Lazy<string[]>(() => manifest.UpdateKeys),
 			Manifest = new Lazy<Manifest>(() => manifest),
-			NexusMod = new Lazy<ParsedModData>(() => mod),
-			Folder = new Lazy<ParsedFileData>(() => folder),
+			NexusMod = new Lazy<ParsedMod>(() => mod),
+			Folder = new Lazy<ParsedFile>(() => folder),
 			WikiEntry = new Lazy<string>(() =>
 				"{{/entry\n"
 				+ $"  |name     = {string.Join(", ", names)}\n"
@@ -334,15 +344,15 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedModData> mods)
 
 /// <summary>Get mods which the SMAPI toolkit marked as invalid or unparseable.</summary>
 /// <param name="mods">The mods to check.</param>
-IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedModData> mods)
+IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 {
 	return (
 		from mod in mods
 		let invalid = mod.ModFolders
-			.Where(folder => 
+			.Where(folder =>
 				(folder.ModType == ModType.Invalid || folder.ModType == ModType.Ignored)
 				&& folder.ModError != ModParseError.EmptyFolder // contains only non-mod files (e.g. replacement PNG assets)
-				&& !this.ShouldIgnoreForValidation(mod.ID, folder.FileID)
+				&& !this.ShouldIgnoreForValidation(mod.ID, folder.ID)
 			)
 			.ToArray()
 		where invalid.Any()
@@ -353,18 +363,18 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedModData> mods)
 
 /// <summary>Get entries in <see cref="IgnoreNexusIDsForValidation" /> or <see cref="IgnoreFileIDsForValidation" /> which don't match any of the given mods.</summary>
 /// <param name="mods">The mods to check.</param>
-IEnumerable<dynamic> GetInvalidIgnoreEntries(IEnumerable<ParsedModData> mods)
+IEnumerable<dynamic> GetInvalidIgnoreEntries(IEnumerable<ParsedMod> mods)
 {
 	HashSet<int> invalidModIds = new HashSet<int>(this.IgnoreNexusIDsForValidation);
 	HashSet<int> invalidFileIds = new HashSet<int>(this.IgnoreFileIDsForValidation);
-	
-	foreach (ParsedModData mod in mods)
+
+	foreach (ParsedMod mod in mods)
 	{
 		invalidModIds.Remove(mod.ID);
 		foreach (var folder in mod.ModFolders)
-			invalidFileIds.Remove(folder.FileID);
+			invalidFileIds.Remove(folder.ID);
 	}
-	
+
 	foreach (int modId in invalidModIds)
 		yield return new { Type = "mod id", modId };
 	foreach (int fileId in invalidFileIds)
@@ -374,9 +384,9 @@ IEnumerable<dynamic> GetInvalidIgnoreEntries(IEnumerable<ParsedModData> mods)
 /// <summary>Get all mods which depend on the given mod.</summary>
 /// <param name="parsedMods">The mods to check.</param>
 /// <param name="modID">The dependency mod ID.</param>
-IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedModData> parsedMods, string modID)
+IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, string modID)
 {
-	foreach (ParsedModData mod in parsedMods)
+	foreach (ParsedMod mod in parsedMods)
 	{
 		foreach (ModFolder folder in mod.ModFolders.Select(p => p.RawFolder.Value))
 		{
@@ -404,7 +414,7 @@ async Task<int[]> ImportMods(NexusClient nexus, string gameKey, ISelectStrategy 
 	int[] modIDs = await fetchStrategy.GetModIds(nexus, gameKey);
 	if (!modIDs.Any())
 		return modIDs;
-	
+
 	// fetch mods
 	var progress = new IncrementalProgressBar(modIDs.Length).Dump();
 	foreach (int id in modIDs)
@@ -417,7 +427,7 @@ async Task<int[]> ImportMods(NexusClient nexus, string gameKey, ISelectStrategy 
 		// fetch
 		await this.ImportMod(nexus, gameKey, id, fetchStrategy, rootPath);
 	}
-	
+
 	progress.Caption = $"Fetched {modIDs.Length} updated mods ({progress.Percent}%)";
 	return modIDs;
 }
@@ -435,80 +445,69 @@ async Task ImportMod(NexusClient nexus, string gameKey, int id, ISelectStrategy 
 		try
 		{
 			// fetch mod data
-			Mod mod;
+			Mod nexusMod;
 			try
 			{
-				mod = await nexus.Mods.GetMod(gameKey, id);
+				nexusMod = await nexus.Mods.GetMod(gameKey, id);
 			}
 			catch (ApiException ex) when (ex.Status == HttpStatusCode.NotFound)
 			{
 				ConsoleHelper.Print($"Skipped mod {id} (HTTP 404).", Severity.Warning);
 				return;
 			}
-			if (!(await selectStrategy.ShouldUpdate(nexus, mod)))
+			if (!(await selectStrategy.ShouldUpdate(nexus, nexusMod)))
 			{
 				ConsoleHelper.Print($"Skipped mod {id} (select strategy didn't match).", Severity.Warning);
 				return;
 			}
 
 			// fetch file data
-			ModFile[] files = mod.Status == ModStatus.Published
+			ModFile[] nexusFiles = nexusMod.Status == ModStatus.Published
 				? (await nexus.ModFiles.GetModFiles(gameKey, id, FileCategory.Main, FileCategory.Optional)).Files
 				: new ModFile[0];
 
-			// reset cache folder
-			DirectoryInfo folder = new DirectoryInfo(Path.Combine(rootPath, id.ToString(CultureInfo.InvariantCulture)));
-			if (folder.Exists)
-			{
-				FileHelper.ForceDelete(folder);
-				folder.Refresh();
-			}
-			folder.Create();
-
-			// write mod metadata
-			{
-				var metadata = new ModMetadata
+			// create file models
+			GenericFile[] files = nexusFiles
+				.Select(file =>
 				{
-					Updated = mod.Updated,
-					Status = mod.Status,
-					Mod = mod,
-					Files = files
-				};
-				File.WriteAllText(Path.Combine(folder.FullName, "mod.json"), JsonConvert.SerializeObject(metadata, Newtonsoft.Json.Formatting.Indented));
-			}
-			
-			// save files
-			using (WebClient downloader = new WebClient())
-			{
-				foreach (ModFile file in files)
-				{
-					// create folder
-					FileInfo localFile = new FileInfo(Path.Combine(folder.FullName, "files", $"{file.FileID}{Path.GetExtension(file.FileName)}"));
-					localFile.Directory.Create();
-
-					// download file from first working CDN
-					Queue<ModFileDownloadLink> sources = new Queue<ModFileDownloadLink>((await nexus.ModFiles.GetDownloadLinks(gameKey, id, file.FileID)));
-					while (true)
+					GenericFileType type = file.Category switch
 					{
-						if (!sources.Any())
-						{
-							ConsoleHelper.Print($"Skipped file {id} > {file.FileID}: no download sources available for this file.", Severity.Error);
-							break;
-						}
+						FileCategory.Main => GenericFileType.Main,
+						FileCategory.Optional => GenericFileType.Optional,
+						_ => throw new InvalidOperationException($"Unknown file category from Nexus: {file.Category}")
+					};
+					return new GenericFile(id: file.FileID, type: type, name: file.Name, version: file.FileVersion, rawData: file);
+				})
+				.ToArray();
 
-						ModFileDownloadLink source = sources.Dequeue();
-						try
-						{
-							downloader.DownloadFile(source.Uri, localFile.FullName);
-							break;
-						}
-						catch (Exception ex)
-						{
-							ConsoleHelper.Print($"Failed downloading mod {id} > file {file.FileID} from {source.CdnName}.{(sources.Any() ? " Trying next CDN..." : "")}\n{ex}", Severity.Error);
-						}
-					}
-				}
+			// create mod model
+			GenericMod mod;
+			{
+				string author = nexusMod.User?.Name ?? nexusMod.Author;
+				string authorLabel = nexusMod.Author != null && !nexusMod.Author.Equals(author, StringComparison.InvariantCultureIgnoreCase)
+					? nexusMod.Author
+					: null;
+
+				mod = new GenericMod(
+					site: "Nexus",
+					id: nexusMod.ModID,
+					name: nexusMod.Name,
+					author: author,
+					authorLabel: authorLabel,
+					pageUrl: $"https://www.nexusmods.com/stardewvalley/mods/{nexusMod.ModID}",
+					version: nexusMod.Version,
+					updated: nexusMod.Updated,
+					rawData: nexusMod,
+					files: files
+				);
 			}
+
+			// save to cache
+			await this.DownloadAndCacheModDataAsync(
+				mod,
+				rootPath,
+				getDownloadLinks: async file => (await nexus.ModFiles.GetDownloadLinks(gameKey, id, file.ID)).Select(p => p.Uri).ToArray()
+			);
 
 			// break retry loop
 			break;
@@ -532,6 +531,59 @@ async Task ImportMod(NexusClient nexus, string gameKey, int id, ISelectStrategy 
 				throw; // abort
 			else
 				throw new NotSupportedException($"Invalid choice: '{choice}'", ex);
+		}
+	}
+}
+
+/// <summary>Write mod data to the cache directory and download the available files.</summary>
+/// <param name="mod">The mod data to save.</param>
+/// <param name="rootPath">The path in which to store cached data.</param>
+/// <param name="getDownloadLinks">Get the download URLs for a specific file. If this returns multiple URLs, the first working one will be used.</param>
+async Task DownloadAndCacheModDataAsync(GenericMod mod, string rootPath, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
+{
+	// reset cache folder
+	DirectoryInfo folder = new DirectoryInfo(Path.Combine(rootPath, mod.ID.ToString(CultureInfo.InvariantCulture)));
+	if (folder.Exists)
+	{
+		FileHelper.ForceDelete(folder);
+		folder.Refresh();
+	}
+	folder.Create();
+	folder.Refresh();
+
+	// save mod info
+	File.WriteAllText(Path.Combine(folder.FullName, "mod.json"), JsonConvert.SerializeObject(mod, this.JsonSettings));
+
+	// save files
+	using (WebClient downloader = new WebClient())
+	{
+		foreach (GenericFile file in mod.Files)
+		{
+			// create folder
+			FileInfo localFile = new FileInfo(Path.Combine(folder.FullName, "files", $"{file.ID}{Path.GetExtension(file.Name)}"));
+			localFile.Directory.Create();
+
+			// download file from first working CDN
+			Queue<Uri> sources = new Queue<Uri>(await getDownloadLinks(file));
+			while (true)
+			{
+				if (!sources.Any())
+				{
+					ConsoleHelper.Print($"Skipped file {file.ID} > {file.ID}: no download sources available for this file.", Severity.Error);
+					break;
+				}
+
+				Uri url = sources.Dequeue();
+				try
+				{
+					downloader.DownloadFile(url, localFile.FullName);
+					break;
+				}
+				catch (Exception ex)
+				{
+					ConsoleHelper.Print($"Failed downloading mod {mod.ID} > file {file.ID} from {url}.{(sources.Any() ? " Trying next CDN..." : "")}\n{ex}", Severity.Error);
+				}
+			}
 		}
 	}
 }
@@ -656,32 +708,32 @@ void UnpackMods(string rootPath, Func<int, bool> filter)
 
 /// <summary>Parse unpacked mod data in the given folder.</summary>
 /// <param name="rootPath">The full path to the folder containing unpacked mod files.</param>
-IEnumerable<ParsedModData> ReadMods(string rootPath)
+IEnumerable<ParsedMod> ReadMods(string rootPath)
 {
 	ModToolkit toolkit = new ModToolkit();
-	
+
 	var modFolders = this.GetSortedSubfolders(new DirectoryInfo(rootPath)).ToArray();
 	var progress = new IncrementalProgressBar(modFolders.Length).Dump();
 	foreach (DirectoryInfo modFolder in modFolders)
 	{
 		progress.Increment();
 		progress.Caption = $"Reading {modFolder.Name}...";
-		
+
 		// read metadata files
-		ModMetadata metadata = JsonConvert.DeserializeObject<ModMetadata>(File.ReadAllText(Path.Combine(modFolder.FullName, "mod.json")));
-		IDictionary<int, ModFile> fileMap = metadata.Files.ToDictionary(p => p.FileID);
+		GenericMod metadata = JsonConvert.DeserializeObject<GenericMod>(File.ReadAllText(Path.Combine(modFolder.FullName, "mod.json")));
+		IDictionary<int, GenericFile> fileMap = metadata.Files.ToDictionary(p => p.ID);
 
 		// load mod folders
-		IDictionary<ModFile, ModFolder[]> unpackedFileFolders = new Dictionary<ModFile, ModFolder[]>();
+		IDictionary<GenericFile, ModFolder[]> unpackedFileFolders = new Dictionary<GenericFile, ModFolder[]>();
 		DirectoryInfo unpackedFolder = new DirectoryInfo(Path.Combine(modFolder.FullName, "unpacked"));
 		if (unpackedFolder.Exists)
 		{
 			foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(unpackedFolder))
 			{
 				progress.Caption = $"Reading {modFolder.Name} > {fileDir.Name}...";
-				
+
 				// get Nexus file data
-				ModFile fileData = fileMap[int.Parse(fileDir.Name)];
+				GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
 
 				// get mod folders from toolkit
 				ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName).ToArray();
@@ -695,11 +747,11 @@ IEnumerable<ParsedModData> ReadMods(string rootPath)
 				unpackedFileFolders[fileData] = mods;
 			}
 		}
-		
+
 		// yield mod
-		yield return new ParsedModData(metadata, unpackedFileFolders);
+		yield return new ParsedMod(metadata, unpackedFileFolders);
 	}
-	
+
 	progress.Caption = $"Read {progress.Total} mods (100%)";
 }
 
@@ -763,35 +815,83 @@ private string GetRateLimitSummary(IRateLimitManager meta)
 	return $"{meta.DailyRemaining}/{meta.DailyLimit} daily resetting in {this.GetFormattedTime(meta.DailyReset - DateTimeOffset.UtcNow)}, {meta.HourlyRemaining}/{meta.HourlyLimit} hourly resetting in {this.GetFormattedTime(meta.HourlyReset - DateTimeOffset.UtcNow)}";
 }
 
-/// <summary>Contains parsed data about a mod page.</summary>
-class ParsedModData
+/// <summary>Metadata for a mod from any mod site.</summary>
+class GenericMod
 {
 	/*********
 	** Accessors
 	*********/
-	/// <summary>The Nexus mod name.</summary>
-	public string Name { get; }
+	/// <summary>The mod site which has the mod.</summary>
+	public string Site { get; set; }
 
-	/// <summary>The Nexus author names.</summary>
-	public string Author { get; }
+	/// <summary>The mod ID within the site.</summary>
+	public int ID { get; set; }
 
-	/// <summary>The Nexus mod ID.</summary>
-	public int ID { get; }
+	/// <summary>The mod display name.</summary>
+	public string Name { get; set; }
 
-	/// <summary>The mod publication status.</summary>
-	public ModStatus Status { get; }
+	/// <summary>The mod author name.</summary>
+	public string Author { get; set; }
 
-	/// <summary>The mod version number.</summary>
-	public string Version { get; }
+	/// <summary>Custom author text, if different from <see cref="Author" />.</summary>
+	public string AuthorLabel { get; set; }
 
+	/// <summary>The URL to the user-facing mod page.</summary>
+	public string PageUrl { get; set; }
+
+	/// <summary>The main mod version, if applicable.</summary>
+	public string Version { get; set; }
+
+	/// <summary>When the mod metadata or files were last updated.</summary>
+	public DateTimeOffset Updated { get; set; }
+
+	/// <summary>The original data from the mod site.</summary>
+	public object RawData { get; set; }
+
+	/// <summary>The available mod downloads.</summary>
+	public GenericFile[] Files { get; set; }
+
+
+	/*********
+	** Public methods
+	*********/
+	/// <summary>Construct an instance.</summary>
+	public GenericMod() { }
+
+	/// <summary>Construct an instance.</summary>
+	/// <param name="site">The mod site which has the mod.</param>
+	/// <param name="id">The mod ID within the site.</param>
+	/// <param name="name">The mod display name.</param>
+	/// <param name="author">The mod author name.</param>
+	/// <param name="authorLabel">Custom author text, if different from <paramref name="author" />.</param>
+	/// <param name="pageUrl">The URL to the user-facing mod page.</param>
+	/// <param name="version">The main mod version, if applicable.</param>
+	/// <param name="updated">When the mod metadata or files were last updated.</param>
+	/// <param name="rawData">The original data from the mod site.</param>
+	/// <param name="files">The available mod downloads.</param>
+	public GenericMod(string site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files)
+	{
+		this.Site = site;
+		this.ID = id;
+		this.Name = name;
+		this.Author = author;
+		this.AuthorLabel = authorLabel;
+		this.PageUrl = pageUrl;
+		this.Version = version;
+		this.Updated = updated;
+		this.RawData = rawData;
+		this.Files = files;
+	}
+}
+
+/// <summary>Parsed data about a mod page.</summary>
+class ParsedMod : GenericMod
+{
+	/*********
+	** Accessors
+	*********/
 	/// <summary>The parsed mod folders.</summary>
-	public ParsedFileData[] ModFolders { get; }
-
-	/// <summary>The raw mod metadata.</summary>
-	public Lazy<ModMetadata> RawMod { get; }
-
-	/// <summary>The raw mod download data.</summary>
-	public Lazy<IDictionary<ModFile, ModFolder[]>> RawDownloads { get; }
+	public ParsedFile[] ModFolders { get; }
 
 
 	/*********
@@ -800,29 +900,17 @@ class ParsedModData
 	/// <summary>Construct an instance.</summary>
 	/// <param name="mod">The raw mod metadata.</param>
 	/// <param name="downloads">The raw mod download data.</param>
-	public ParsedModData(ModMetadata mod, IDictionary<ModFile, ModFolder[]> downloads)
+	public ParsedMod(GenericMod mod, IDictionary<GenericFile, ModFolder[]> downloads)
+		: base(site: mod.Site, id: mod.ID, name: mod.Name, author: mod.Author, authorLabel: mod.AuthorLabel, pageUrl: mod.PageUrl, version: mod.Version, updated: mod.Updated, rawData: mod.RawData, files: mod.Files)
 	{
 		try
 		{
-			// set raw data
-			this.RawMod = new Lazy<ModMetadata>(() => mod);
-			this.RawDownloads = new Lazy<IDictionary<ModFile, ModFolder[]>>(() => downloads);
-
-			// set mod fields
-			this.Name = mod.Mod.Name;
-			this.Author = mod.Mod?.User?.Name ?? mod.Mod.Author;
-			if (!this.Author.Equals(mod.Mod.Author, StringComparison.InvariantCultureIgnoreCase))
-				this.Author += $", {mod.Mod.Author}";
-			this.ID = mod.Mod.ModID;
-			this.Status = mod.Mod.Status;
-			this.Version = mod.Mod.Version;
-
 			// set mod folders
 			this.ModFolders =
 				(
 					from entry in downloads
 					from folder in entry.Value
-					select new ParsedFileData(entry.Key, folder)
+					select new ParsedFile(entry.Key, folder)
 				)
 				.ToArray();
 		}
@@ -834,24 +922,66 @@ class ParsedModData
 	}
 }
 
-/// <summary>Contains parsed data about a mod download.</summary>
-class ParsedFileData
+/// <summary>A file category on a mod site.</summary>
+public enum GenericFileType
+{
+	/// <summary>The primary download.</summary>
+	Main,
+
+	/// <summary>A secondary download, often for preview or beta versions.</summary>
+	Optional
+}
+
+/// <summary>Metadata for a mod download on any mod site.</summary>
+public class GenericFile
 {
 	/*********
 	** Accessors
 	*********/
 	/// <summary>The file ID.</summary>
-	public int FileID { get; }
-	
-	/// <summary>The file category.</summary.
-	public FileCategory FileCategory { get; }
+	public int ID { get; set; }
 
-	/// <summary>The file name on Nexus.</summary>
-	public string FileName { get; }
+	/// <summary>The file type.</summary.
+	public GenericFileType Type { get; set; }
 
-	/// <summary>The file version on Nexus.</summary>
-	public string FileVersion { get; }
+	/// <summary>The file name on the mod site.</summary>
+	public string Name { get; set; }
 
+	/// <summary>The file version on the mod site.</summary>
+	public string Version { get; set; }
+
+	/// <summary>The original file data from the mod site.</summary>
+	public object RawData { get; set; }
+
+
+	/*********
+	** Public methods
+	*********/
+	/// <summary>Construct an instance.</summary>
+	public GenericFile() { }
+
+	/// <summary>Construct an instance.</summary>
+	/// <param name="id">The file ID.</param>
+	/// <param name="type">The file type.</param>
+	/// <param name="name">The file name on the mod site.</param>
+	/// <param name="version">The file version on the mod site.</param>
+	/// <param name="rawData">The original file data from the mod site.</param>
+	public GenericFile(int id, GenericFileType type, string name, string version, object rawData)
+	{
+		this.ID = id;
+		this.Type = type;
+		this.Name = name;
+		this.Version = version;
+		this.RawData = rawData;
+	}
+}
+
+/// <summary>Parsed data about a mod download.</summary>
+class ParsedFile : GenericFile
+{
+	/*********
+	** Accessors
+	*********/
 	/// <summary>The mod display name based on the manifest.</summary>
 	public string ModDisplayName { get; }
 
@@ -867,9 +997,6 @@ class ParsedFileData
 	/// <summary>The mod version from the manifest.</summary>
 	public string ModVersion { get; }
 
-	/// <summary>The raw mod file.</summary>
-	public Lazy<ModFile> RawDownload { get; }
-
 	/// <summary>The raw parsed mod folder.</summary>
 	public Lazy<ModFolder> RawFolder { get; }
 
@@ -880,42 +1007,17 @@ class ParsedFileData
 	/// <summary>Construct an instance.</summary>
 	/// <param name="download">The raw mod file.</param>
 	/// <param name="folder">The raw parsed mod folder.</param>
-	public ParsedFileData(ModFile download, ModFolder folder)
+	public ParsedFile(GenericFile download, ModFolder folder)
+		: base(id: download.ID, type: download.Type, name: download.Name, version: download.Version, rawData: download.RawData)
 	{
-		// set raw data
-		this.RawDownload = new Lazy<ModFile>(() => download);
 		this.RawFolder = new Lazy<ModFolder>(() => folder);
 
-		// set file fields
-		this.FileID = download.FileID;
-		this.FileCategory = download.Category;
-		this.FileName = download.FileName;
-		this.FileVersion = download.FileVersion;
-
-		// set folder fields
 		this.ModDisplayName = folder.DisplayName;
 		this.ModType = folder.Type;
 		this.ModError = folder.ManifestParseError == ModParseError.None ? (ModParseError?)null : folder.ManifestParseError;
 		this.ModID = folder.Manifest?.UniqueID;
 		this.ModVersion = folder.Manifest?.Version?.ToString();
 	}
-}
-
-/// <summary>The mod metadata written for each mod.</summary>
-class ModMetadata
-{
-	/// <summary>When the mod metadata or files were last updated.</summary>
-	public DateTimeOffset Updated { get; set; }
-
-	/// <summary>The mod publication status.</summary>
-	[JsonConverter(typeof(StringEnumConverter))]
-	public ModStatus Status { get; set; }
-
-	/// <summary>The mod data from the Nexus API.</summary>
-	public Mod Mod { get; set; }
-
-	/// <summary>The mod file metadata from the Nexus API.</summary>
-	public ModFile[] Files { get; set; }
 }
 
 /// <summary>Handles the logic for deciding which mods to fetch.</summary>
@@ -925,7 +1027,7 @@ interface ISelectStrategy
 	/// <param name="nexus">The Nexus API client.</param>
 	/// <param name="gameKey">The unique game key.</param>
 	Task<int[]> GetModIds(NexusClient nexus, string gameKey);
-	
+
 	/// <summary>Get whether the given mod should be refetched, including all files.</summary>
 	/// <param name="nexus">The Nexus API client.</summary>
 	/// <param name="gameKey">The mod metadata.</summary>
@@ -978,7 +1080,7 @@ public class FetchUpdatedStrategy : FetchAllFromStrategy
 	*********/
 	/// <summary>The date from which to fetch mod data, or <c>null</c> for no date filter. Mods last updated before this date will be ignored.</summary>
 	private DateTimeOffset StartFrom;
-	
+
 	/// <summary>The update period understood by the Nexus Mods API.</summary>
 	private string UpdatePeriod;
 
@@ -1018,7 +1120,7 @@ public class FetchUpdatedStrategy : FetchAllFromStrategy
 	{
 		if (period != "1d" && period != "1w" && period != "1m")
 			throw new InvalidOperationException($"The given period ({period}) is not a valid value; must be '1d', '1w', or '1m'.");
-		
+
 		this.UpdatePeriod = period;
 	}
 
