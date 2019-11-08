@@ -42,6 +42,7 @@
 /// <summary>The mod site clients from which to fetch mods.</summary>
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
 {
+	new CurseForgeApiClient(),
 	new NexusApiClient(
 		apiKey: "",
 		appName: "Pathoschild",
@@ -54,8 +55,8 @@ readonly string RootPath = @"D:\dev\mod-dump";
 
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
-	null;
-	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(7));
+	//null;
+	site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(7));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
 /// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
@@ -64,6 +65,7 @@ readonly bool ResetUnpacked = false;
 /// <summary>Mod site mod IDs to ignore when validating or cross-referencing mods.</summary>
 readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionary<ModSite, ISet<int>>
 {
+	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.Nexus] = new HashSet<int>
 	{
 		// non-mod tools
@@ -120,6 +122,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 /// <summary>Mod file IDs to ignore when validating or cross-referencing mods.</summary>
 readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
 {
+	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.Nexus] = new HashSet<int>
 	{
 		// pre-manifest SMAPI mods
@@ -296,6 +299,7 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 	ISet<string> manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
 	IDictionary<ModSite, ISet<int>> siteIDs = new Dictionary<ModSite, ISet<int>>
 	{
+		[ModSite.CurseForge] = new HashSet<int>(compatList.Mods.Where(p => p.CurseForgeID.HasValue).Select(p => p.CurseForgeID.Value)),
 		[ModSite.Nexus] = new HashSet<int>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => p.NexusID.Value))
 	};
 
@@ -357,6 +361,8 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 				+ $"  |name     = {string.Join(", ", names)}\n"
 				+ $"  |author   = {string.Join(", ", authorNames)}\n"
 				+ $"  |id       = {manifest?.UniqueID}\n"
+				+ (mod.Site == ModSite.CurseForge ? $"  |curseforge id  = {mod.ID}\n" : "")
+				+ (mod.Site == ModSite.CurseForge ? $"  |curseforge key = {mod.PageUrl.Split("/").Last()}\n" : "")
 				+ $"  |nexus id = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
 				+ $"  |github   = {manifest?.UpdateKeys?.Where(p => p.Trim().StartsWith("GitHub:")).Select(p => p.Trim().Substring("GitHub:".Length)).FirstOrDefault()}\n"
 				+ "}}"
@@ -477,13 +483,13 @@ async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPa
 	{
 		// update progress
 		progress.Increment();
-		progress.Caption = $"Fetching mod {id} ({progress.Percent}%)";
+		progress.Caption = $"Fetching {modSite.SiteKey} > mod {id} ({progress.Percent}%)";
 
 		// fetch
 		await this.ImportMod(modSite, id, rootPath);
 	}
 
-	progress.Caption = $"Fetched {modIds.Length} updated mods ({progress.Percent}%)";
+	progress.Caption = $"Fetched {modIds.Length} updated mods from {modSite.SiteKey} ({progress.Percent}%)";
 	return modIds;
 }
 
@@ -1064,11 +1070,14 @@ class RateLimitedException : Exception
 /// <summary>The identifier for a mod site used in update keys.</summary>
 enum ModSite
 {
+	/// <summary>The CurseForge site.</summary>
+	CurseForge,
+
 	/// <summary>The Nexus Mods site.</summary>
 	Nexus
 }
 
-/// <summary>A client which fetches mod from a particular mod site.</summary>
+/// <summary>A client which fetches mods from a particular mod site.</summary>
 interface IModSiteClient
 {
 	/*********
@@ -1104,7 +1113,205 @@ interface IModSiteClient
 	Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file);
 }
 
-/// <summary>A client which fetches mod from the Nexus Mods API.</summary>
+/// <summary>A client which fetches mods from the CurseForge API.</summary>
+class CurseForgeApiClient : IModSiteClient
+{
+	/*********
+	** Fields
+	*********/
+	/// <summary>The CurseForge game ID for Stardew Valley.</summary>
+	private int GameId = 669;
+	
+	/// <summary>A regex pattern which matches a version number in a CurseForge mod file name.</summary>
+	private readonly Regex VersionInNamePattern = new Regex(@"^(?:.+? | *)v?(\d+\.\d+(?:\.\d+)?(?:-.+?)?) *(?:\.(?:zip|rar|7z))?$", RegexOptions.Compiled);
+
+	/// <summary>The mod data fetched as part of a previous call.</summary>
+	private IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
+	
+	/// <summary>The CurseForge API client.</summary>
+	private IClient CurseForge = new FluentClient("https://addons-ecs.forgesvc.net/api/v2");
+
+	
+	/*********
+	** Accessors
+	*********/
+	/// <summary>The identifier for this mod site used in update keys.</summary>
+	public ModSite SiteKey { get; } = ModSite.CurseForge;
+
+
+	/*********
+	** Public methods
+	*********/
+	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
+	/// <param name="startFrom">The minimum mod ID to include.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null)
+	{
+		return this.GetModsUpdatedSinceAsync(DateTimeOffset.MinValue);
+	}
+
+	/// <summary>Get all mod IDs updated since the given date.</summary>
+	/// <param name="startFrom">The minimum date from which to start fetching.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
+	{
+		ISet<int> modIds = new HashSet<int>();
+		
+		const int pageSize = 100;
+		int page = 0;
+		while (true)
+		{
+			// fetch data
+			JArray response = await this.CurseForge
+				.GetAsync("addon/search")
+				.WithArguments(new
+				{
+					gameId = this.GameId,
+					index = page,
+					pageSize = pageSize,
+					sort = 2 // Last Updated
+				})
+				.AsRawJsonArray();
+			
+			// handle results
+			bool reachedEnd = response.Count < pageSize;
+			foreach (JObject rawMod in response)
+			{
+				// parse mod
+				GenericMod mod = this.Parse(rawMod);
+
+				// check if we found all the mods we need
+				if (modIds.Contains(mod.ID))
+				{
+					reachedEnd = true; // CurseForge starts repeating mods if we go past the end
+					break;
+				}
+				if (mod.Updated < startFrom)
+				{
+					reachedEnd = true;
+					break;
+				}
+
+				// add to list
+				this.Cache[mod.ID] = mod;
+				modIds.Add(mod.ID);
+			}
+			
+			// handle pagination
+			if (reachedEnd)
+				break;
+			page++;
+		}
+
+		return modIds.OrderBy(id => id).ToArray();
+	}
+
+	/// <summary>Get a mod from the mod site API.</summary>
+	/// <param name="id">The mod ID to fetch.</param>
+	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<GenericMod> GetModAsync(int id)
+	{
+		if (this.Cache.TryGetValue(id, out GenericMod mod))
+			return mod;
+
+		JObject rawMod = await this.CurseForge
+			.GetAsync($"addon/{id}")
+			.AsRawJsonObject();
+
+		return this.Cache[id] = this.Parse(rawMod);
+	}
+
+	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get a download URL.</param>
+	/// <param name="file">The file for which to get a download URL.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
+	{
+		JObject rawFile = (JObject)file.RawData;
+		string downloadUrl = rawFile["downloadUrl"].Value<string>();
+
+		return Task.FromResult(new[] { new Uri(downloadUrl) });
+	}
+
+
+	/*********
+	** Private methods
+	*********/
+	/// <summary>Parse raw mod data from the CurseForge API.</summary>
+	/// <param name="rawMod">The raw mod data.</param>
+	private GenericMod Parse(JObject rawMod)
+	{
+		// get author names
+		string[] authorNames = rawMod["authors"].AsEnumerable().Select(p => p["name"].Value<string>()).ToArray();
+		
+		// get last updated
+		DateTimeOffset lastUpdated;
+		{
+			DateTime created = rawMod["dateCreated"].Value<DateTime>();
+			DateTime modified = rawMod["dateModified"].Value<DateTime>();
+			DateTime released = rawMod["dateReleased"].Value<DateTime>();
+
+			DateTime latest = created;
+			if (modified > latest)
+				latest = modified;
+			if (released > latest)
+				latest = released;
+
+			lastUpdated = new DateTimeOffset(latest, TimeSpan.Zero);
+		}
+		
+		// get files
+		List<GenericFile> files = new List<GenericFile>();
+		foreach (JObject rawFile in rawMod["latestFiles"].AsEnumerable())
+		{
+			string displayName = rawFile["displayName"].Value<string>();
+			string fileName = rawFile["fileName"].Value<string>();
+			
+			files.Add(new GenericFile(
+				id: rawFile["id"].Value<int>(),
+				type: rawFile["isAlternate"].Value<bool>() ? GenericFileType.Optional : GenericFileType.Main,
+				displayName: displayName,
+				fileName: fileName,
+				version: this.GetFileVersion(displayName, fileName),
+				rawData: rawFile
+			));
+		}
+		
+		// get model
+		JObject rawModWithoutFiles = (JObject)rawMod.DeepClone();
+		rawModWithoutFiles.Property("latestFiles").Remove();
+
+		return new GenericMod(
+			site: ModSite.CurseForge,
+			id: rawMod["id"].Value<int>(),
+			name: rawMod["name"].Value<string>(),
+			author: authorNames.FirstOrDefault(),
+			authorLabel: authorNames.Length > 1 ? string.Join(", ", authorNames) : null,
+			pageUrl: rawMod["websiteUrl"].Value<string>(),
+			version: null,
+			updated: lastUpdated,
+			rawData: rawModWithoutFiles,
+			files: files.ToArray()
+		);
+	}
+
+	/// <summary>Get a raw version string for a mod file, if available.</summary>
+	/// <param name="displayName">The file's display name.</param>
+	/// <param name="fileName">The filename.</param>
+	private string GetFileVersion(string displayName, string fileName)
+	{
+		Match match = this.VersionInNamePattern.Match(displayName);
+		if (!match.Success)
+			match = this.VersionInNamePattern.Match(fileName);
+
+		return match.Success
+			? match.Groups[1].Value
+			: null;
+	}
+}
+
+/// <summary>A client which fetches mods from the Nexus Mods API.</summary>
 class NexusApiClient : IModSiteClient
 {
 	/*********

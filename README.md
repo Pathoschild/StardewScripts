@@ -14,9 +14,9 @@ Usage:
 4. Run the script to fetch & display metadata.
 
 ### Fetch mods
-`src/fetch mods.linq` downloads every Stardew Valley mod from Nexus Mods, unpacks the downloads,
-and runs LINQ queries on them. Once downloaded, the local cache can be updated incrementally with
-new/updated mods.
+`src/fetch mods.linq` downloads every Stardew Valley mod from CurseForge + Nexus Mods, unpacks the
+downloads, and runs LINQ queries on them. Once downloaded, the local cache can be updated
+incrementally with new/updated mods.
 
 Usage:
 1. [Install SMAPI](https://smapi.io/).
