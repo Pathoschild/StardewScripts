@@ -36,7 +36,7 @@ private readonly Regex[] IgnoreLegitNames =
 {
 	// folders
 	new Regex(@"^\.git$", RegexOptions.Compiled),
-	
+
 	// files
 	new Regex(@"^\.gitattributes$", RegexOptions.Compiled),
 	new Regex(@"^\.gitignore$", RegexOptions.Compiled)
@@ -51,7 +51,7 @@ private readonly Regex[] IgnoreIncorrectNames =
 	new Regex(@"^bin$", RegexOptions.Compiled),
 	new Regex(@"^obj$", RegexOptions.Compiled),
 	new Regex(@"^packages$", RegexOptions.Compiled),
-	
+
 	// files
 	new Regex(@"\.csproj\.user$", RegexOptions.Compiled),
 	new Regex(@"\.DotSettings\.user$", RegexOptions.Compiled),
@@ -110,7 +110,7 @@ async Task Main()
 		mods = mods
 			.Where(mod => !this.IgnoreSourceUrls.Contains(mod.GitHubRepo) && !this.IgnoreSourceUrls.Contains(mod.CustomSourceUrl))
 			.ToArray();
-		
+
 		// fetch repositories
 		repos.AddRange(
 			mods
@@ -394,10 +394,10 @@ class ModRepository
 		string name = this.Mods.Length == 1
 			? this.Mods.Single().Name.FirstOrDefault()
 			: $"~{this.RepositoryOwner}";
-		
+
 		foreach (char invalidCh in Path.GetInvalidFileNameChars())
 			name = name.Replace(invalidCh, '_');
-		
+
 		return name;
 	}
 

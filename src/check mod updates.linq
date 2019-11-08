@@ -830,7 +830,7 @@ class ReportEntry
 
 	/// <summary>The compatibility status from the wiki.</summary>
 	public WikiCompatibilityStatus? WikiStatus { get; }
-	
+
 	/// <summary>The compatibility 'broke in' field from the wiki.</summary>
 	public string WikiBrokeIn { get; }
 

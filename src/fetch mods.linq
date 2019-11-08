@@ -61,177 +61,183 @@ readonly ISelectStrategy FetchMods =
 /// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
 readonly bool ResetUnpacked = false;
 
-/// <summary>Nexus mod IDs to ignore when validating or cross-referencing mods.</summary>
-readonly HashSet<int> IgnoreNexusIDsForValidation = new HashSet<int>
+/// <summary>Mod site mod IDs to ignore when validating or cross-referencing mods.</summary>
+readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionary<ModSite, ISet<int>>
 {
-	// non-mod tools
-	3431, // BFAV JSON Update [tool]
-	4241, // Dreamy Valley Reshade
-	1080, // Easy XNB for Xnb Node
-	1213, // Natural Color - Reshade
-	21,   // SDVMM/Stardew Valley Mod Manager
-	1022, // SDV MultiTweak
-	4429, // Separated layers for easy custom recoloring - For Gimp and Photoshop
-	2400, // SMAPI
-	2367, // SMAPI Templates [for Visual Studio]
-	782,  // Sound Modding Tools
-	1298, // Stardew Editor
-	3814, // Stardew Valley Hack Player for Name_Yusuf (???)
-	4536, // Stardew Valley Mod Manager 2
-	3916, // Stardew Valley Money Hack
-	3787, // Stardew Valley Planner
-	2451, // StardewZem - Very Easy XNB Merger
-	337,  // SVPM/Stardew Valley Package Manager
-	1832, // Twelfth Night - American Gothic - ReShade
-	1770, // Twelfth Night - Depixelate - ReShade
-	1798, // Twelfth Night - Gameboy Pocket - ReShade
-	2152, // Updated XACT file for audio modding [.xap file],
+	[ModSite.Nexus] = new HashSet<int>
+	{
+		// non-mod tools
+		3431, // BFAV JSON Update [tool]
+		4241, // Dreamy Valley Reshade
+		1080, // Easy XNB for Xnb Node
+		1213, // Natural Color - Reshade
+		21,   // SDVMM/Stardew Valley Mod Manager
+		1022, // SDV MultiTweak
+		4429, // Separated layers for easy custom recoloring - For Gimp and Photoshop
+		2400, // SMAPI
+		2367, // SMAPI Templates [for Visual Studio]
+		782,  // Sound Modding Tools
+		1298, // Stardew Editor
+		3814, // Stardew Valley Hack Player for Name_Yusuf (???)
+		4536, // Stardew Valley Mod Manager 2
+		3916, // Stardew Valley Money Hack
+		3787, // Stardew Valley Planner
+		2451, // StardewZem - Very Easy XNB Merger
+		337,  // SVPM/Stardew Valley Package Manager
+		1832, // Twelfth Night - American Gothic - ReShade
+		1770, // Twelfth Night - Depixelate - ReShade
+		1798, // Twelfth Night - Gameboy Pocket - ReShade
+		2152, // Updated XACT file for audio modding [.xap file],
 
-	// mod translations
-	2825, // Auto-Grabber Mod (zh)
-	4305, // Climates of Ferngill (pt)
-	3954, // Happy Birthday (pt)
-	4197, // Companion NPCs (pt)
-	4339, // Lunar Disturbances (pt)
-	4265, // Magic (pt)
-	4370, // Trent's New Animals (pt)
+		// mod translations
+		2825, // Auto-Grabber Mod (zh)
+		4305, // Climates of Ferngill (pt)
+		3954, // Happy Birthday (pt)
+		4197, // Companion NPCs (pt)
+		4339, // Lunar Disturbances (pt)
+		4265, // Magic (pt)
+		4370, // Trent's New Animals (pt)
 
-	// mods which include a copy of another mod for some reason
-	3496, // Farm Extended (content pack with a copy of Farm Type Manager)
-	1692, // New NPC Alec (content pack with a copy of Custom Element Handler, Custom Farming, Custom Furniture, and Custom NPC)
-	1128, // New Shirts and 2 new Skirts (includes Get Dressed)
-	2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
+		// mods which include a copy of another mod for some reason
+		3496, // Farm Extended (content pack with a copy of Farm Type Manager)
+		1692, // New NPC Alec (content pack with a copy of Custom Element Handler, Custom Farming, Custom Furniture, and Custom NPC)
+		1128, // New Shirts and 2 new Skirts (includes Get Dressed)
+		2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
 
-	// reposts
-	1765, // Console Commands
-	1427, // Prairie King Made Easy
-	887,  // Reseed
-	1363, // Save Anywhere
-	1077, // UI Mod Suite
+		// reposts
+		1765, // Console Commands
+		1427, // Prairie King Made Easy
+		887,  // Reseed
+		1363, // Save Anywhere
+		1077, // UI Mod Suite
 
-	// special cases
-	4109, // PPJA Home of Abandoned Mods - CFR Conversions
-	4181  // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
+		// special cases
+		4109, // PPJA Home of Abandoned Mods - CFR Conversions
+		4181  // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
+	}
 };
 
-/// <summary>Nexus file IDs to ignore when validating or cross-referencing mods.</summary>
-readonly HashSet<int> IgnoreFileIDsForValidation = new HashSet<int>
+/// <summary>Mod file IDs to ignore when validating or cross-referencing mods.</summary>
+readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
 {
-	// pre-manifest SMAPI mods
-	239,   // Rise and Shine (#3)
-	294,   // Sprint (#2)
-	456,   // Taxes Mod (#38)
+	[ModSite.Nexus] = new HashSet<int>
+	{
+		// pre-manifest SMAPI mods
+		239,   // Rise and Shine (#3)
+		294,   // Sprint (#2)
+		456,   // Taxes Mod (#38)
 
-	// SMAPI mods with outdated manifest formats (e.g. old version format)
-	929,   // No Soil Decay (#283)
-	2949,  // Siv's Marriage Mod (#366)
-	3757,  // SmartMod (#1048)
+		// SMAPI mods with outdated manifest formats (e.g. old version format)
+		929,   // No Soil Decay (#283)
+		2949,  // Siv's Marriage Mod (#366)
+		3757,  // SmartMod (#1048)
 
-	// replacement files (e.g. tbin to drop into downloaded mod)
-	12282, // Ace's Expanded Farms MTN (#2711) > MelodicLullaby Less Saturated Valley Compatibility
-	2051,  // Add a Room and Attic (#379)
-	16992, // Bears in the Barn for BFAV (#4000) > BFAV JSON Update data file
-	17704, // Better Woods (#3995) > Selective compatibility Immersive Farm 2
-	17688, // BFAV Bulls (#4136) > BFAV JSON Update
-	17685, // BFAV Cel's sheep (#3399) > Animals file to BFAV Json Update
-	16979, // BFAV Cutter Animals (#4016) > Animals file to BFAV Json Update
-	17296, // BFAV Dragons (#3991) > BFAV JSON Update
-	17687, // BFAV Pokemons (#3396) > Animals file to BFAV Json Update
-	17684, // BFAV More Blue Chickens (#3400) > file for BFAV Json Update
-	17686, // BFAV Round Chickens mod (#3398) > Animals file to BFAV Json Update
-	16975, // BFAV Velociraptors (#4015) > Animals file to BFAV Json Update
-	9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
-	13120, // Immersive Farm 2 (#1531)
-	13647, // Immersive Farm 2 (#1531)
-	12863, // Secret Gardens Greenhouse (#3067) > "" for Immersive Farm 2
-	17756, // Stardew Valley Reimagined (#4119) > compatibility patches
-	17692, // Trent's New Animals (#3634) > JSON Update
+		// replacement files (e.g. tbin to drop into downloaded mod)
+		12282, // Ace's Expanded Farms MTN (#2711) > MelodicLullaby Less Saturated Valley Compatibility
+		2051,  // Add a Room and Attic (#379)
+		16992, // Bears in the Barn for BFAV (#4000) > BFAV JSON Update data file
+		17704, // Better Woods (#3995) > Selective compatibility Immersive Farm 2
+		17688, // BFAV Bulls (#4136) > BFAV JSON Update
+		17685, // BFAV Cel's sheep (#3399) > Animals file to BFAV Json Update
+		16979, // BFAV Cutter Animals (#4016) > Animals file to BFAV Json Update
+		17296, // BFAV Dragons (#3991) > BFAV JSON Update
+		17687, // BFAV Pokemons (#3396) > Animals file to BFAV Json Update
+		17684, // BFAV More Blue Chickens (#3400) > file for BFAV Json Update
+		17686, // BFAV Round Chickens mod (#3398) > Animals file to BFAV Json Update
+		16975, // BFAV Velociraptors (#4015) > Animals file to BFAV Json Update
+		9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
+		13120, // Immersive Farm 2 (#1531)
+		13647, // Immersive Farm 2 (#1531)
+		12863, // Secret Gardens Greenhouse (#3067) > "" for Immersive Farm 2
+		17756, // Stardew Valley Reimagined (#4119) > compatibility patches
+		17692, // Trent's New Animals (#3634) > JSON Update
 
-	// legacy zipped Seasonal Immersion content packs
-	5438,  // Seasonal Custom Farm Buildings (#1451)
-	5439,  // Seasonal Custom Farm Buildings (#1451)
-	3164,  // Seasonal Victorian Buildings and Flowers (#891)
+		// legacy zipped Seasonal Immersion content packs
+		5438,  // Seasonal Custom Farm Buildings (#1451)
+		5439,  // Seasonal Custom Farm Buildings (#1451)
+		3164,  // Seasonal Victorian Buildings and Flowers (#891)
 
-	// legacy CustomNPC pack (files to drop into Mods/CustomNPC/Npcs)
-	8179,  // Costum Npc Base (#1964)
-	8203,  // Costum Npc Base (#1964)
-	7569,  // CustomNPCs Nagito Komaeda (#1964)
-	6423,  // NPC Alec (#1692)
-	8870,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
-	8871,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
+		// legacy CustomNPC pack (files to drop into Mods/CustomNPC/Npcs)
+		8179,  // Costum Npc Base (#1964)
+		8203,  // Costum Npc Base (#1964)
+		7569,  // CustomNPCs Nagito Komaeda (#1964)
+		6423,  // NPC Alec (#1692)
+		8870,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
+		8871,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
 
-	// legacy Stardew Symphony pack (files to drop into Mods/StardewSymphonyRemastered/Content/Music/Wav)
-	12421, // Chill of Winter Music Pack (#3015)
+		// legacy Stardew Symphony pack (files to drop into Mods/StardewSymphonyRemastered/Content/Music/Wav)
+		12421, // Chill of Winter Music Pack (#3015)
 
-	// Better Farm Animal Variety pack (files to merge into BFAV's config file)
-	14395, // Gray Chicken (#3416)
-	14394, // Harvest Moon Cows (#3419)
-	14365, // Yoshis (#3420)
-	14366, // Zelda LTTP Lifestock Animals (#3421)
+		// Better Farm Animal Variety pack (files to merge into BFAV's config file)
+		14395, // Gray Chicken (#3416)
+		14394, // Harvest Moon Cows (#3419)
+		14365, // Yoshis (#3420)
+		14366, // Zelda LTTP Lifestock Animals (#3421)
 
-	// collections of zipped content packs
-	13533, // A Less Yellow Stardew (#2415) > All Lanuage Version In One File
-	17433, // A Less Yellow Stardew (#2415) > ALYSD Map update (invalid manifest)
-	9295,  // Clint Narrative Overhaul (#1067)
-	9297,  // Demetrius Narrative Overhaul (#1120)
-	9303,  // Dwarf Narrative Overhaul (#1250)
-	9299,  // Gus Narrative Overhaul (#1144)
-	9307,  // Linus Narrative Overhaul (#1488)
-	9301,  // Marnie Narrative Overhaul (#1192)
-	9309,  // Pam Narrative Overhaul (#1978)
-	9293,  // Willy Narrative Overhaul (#1047)
-	9305,  // Wizard Narrative Overhaul (#1309)
+		// collections of zipped content packs
+		13533, // A Less Yellow Stardew (#2415) > All Lanuage Version In One File
+		17433, // A Less Yellow Stardew (#2415) > ALYSD Map update (invalid manifest)
+		9295,  // Clint Narrative Overhaul (#1067)
+		9297,  // Demetrius Narrative Overhaul (#1120)
+		9303,  // Dwarf Narrative Overhaul (#1250)
+		9299,  // Gus Narrative Overhaul (#1144)
+		9307,  // Linus Narrative Overhaul (#1488)
+		9301,  // Marnie Narrative Overhaul (#1192)
+		9309,  // Pam Narrative Overhaul (#1978)
+		9293,  // Willy Narrative Overhaul (#1047)
+		9305,  // Wizard Narrative Overhaul (#1309)
 
-	// XNB mods with non-standard files
-	9634,  // Ali's Foraging Map With a Few Changes (#2381), includes redundant .zip files
-	445,   // Better Pigs and Recolours (#10), collection of zipped XNB mods
-	2008,  // Chickens to Cardinal or Toucan (#578), XNB mod with misnamed `White Chickenxnb`
-	10040, // Hero Academia Shota Mod (#2490), includes .zip file
-	4462,  // Hope's Secret Cave (#1155), includes unpacked files
-	535,   // New Rabbit Sprites and Recolours (#535), collection of zipped XNB mods
-	2118,  // Semi-Realistic Animal Replacer (#597), collection of zipped XNB mods
-	1680,  // Simple Building Cleaner (#493), has a `ModInfo.ini` file for some reason
-	15332, // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
-	2224,  // Toddlers Take After Parents (#626), files misnamed with `.zip_`
+		// XNB mods with non-standard files
+		9634,  // Ali's Foraging Map With a Few Changes (#2381), includes redundant .zip files
+		445,   // Better Pigs and Recolours (#10), collection of zipped XNB mods
+		2008,  // Chickens to Cardinal or Toucan (#578), XNB mod with misnamed `White Chickenxnb`
+		10040, // Hero Academia Shota Mod (#2490), includes .zip file
+		4462,  // Hope's Secret Cave (#1155), includes unpacked files
+		535,   // New Rabbit Sprites and Recolours (#535), collection of zipped XNB mods
+		2118,  // Semi-Realistic Animal Replacer (#597), collection of zipped XNB mods
+		1680,  // Simple Building Cleaner (#493), has a `ModInfo.ini` file for some reason
+		15332, // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
+		2224,  // Toddlers Take After Parents (#626), files misnamed with `.zip_`
 
-	// utility mods that are part of a larger mod
-	14752, // Always On Server for Multiplayer (#2677) > Server Connection Reset
-	9477,  // Even More Secret Woods (#2364) > Bush Reset
-	3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
-	14167, // Village Map Mod (#3355) > Village Console Commands
+		// utility mods that are part of a larger mod
+		14752, // Always On Server for Multiplayer (#2677) > Server Connection Reset
+		9477,  // Even More Secret Woods (#2364) > Bush Reset
+		3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
+		14167, // Village Map Mod (#3355) > Village Console Commands
 
-	// legacy/broken content packs
-	7425,  // Earth and Water Obelisks (#1980) > Fahnestock - Seasonal Immersion
-	7426,  // Earth and Water Obelisks (#1980) > Garrison - Seasonal Immersion
-	7427,  // Earth and Water Obelisks (#1980) > Nantucket - Seasonal Immersion
-	7428,  // Earth and Water Obelisks (#1980) > Rhinebeck - Seasonal Immersion
-	7429,  // Earth and Water Obelisks (#1980) > Stonybrook - Seasonal Immersion
-	7430,  // Earth and Water Obelisks (#1980) > Saratoga - Seasonal Immersion
-	5534,  // Hudson Valley Buildings (#1478) > Fahnestock
-	5531,  // Hudson Valley Buildings (#1478) > Garrison
-	5532,  // Hudson Valley Buildings (#1478) > Nantucket
-	5533,  // Hudson Valley Buildings (#1478) > Rhinebeck
-	5530,  // Hudson Valley Buildings (#1478) > Saratoga
-	5529,  // Hudson Valley Buildings (#1478) > Stonybrook
-	10660, // katekatpixels Portrait Overhauls (#2602) > Content Patcher Version
+		// legacy/broken content packs
+		7425,  // Earth and Water Obelisks (#1980) > Fahnestock - Seasonal Immersion
+		7426,  // Earth and Water Obelisks (#1980) > Garrison - Seasonal Immersion
+		7427,  // Earth and Water Obelisks (#1980) > Nantucket - Seasonal Immersion
+		7428,  // Earth and Water Obelisks (#1980) > Rhinebeck - Seasonal Immersion
+		7429,  // Earth and Water Obelisks (#1980) > Stonybrook - Seasonal Immersion
+		7430,  // Earth and Water Obelisks (#1980) > Saratoga - Seasonal Immersion
+		5534,  // Hudson Valley Buildings (#1478) > Fahnestock
+		5531,  // Hudson Valley Buildings (#1478) > Garrison
+		5532,  // Hudson Valley Buildings (#1478) > Nantucket
+		5533,  // Hudson Valley Buildings (#1478) > Rhinebeck
+		5530,  // Hudson Valley Buildings (#1478) > Saratoga
+		5529,  // Hudson Valley Buildings (#1478) > Stonybrook
+		10660, // katekatpixels Portrait Overhauls (#2602) > Content Patcher Version
 
-	// other
-	10976, // Always On Server (#2677) > AutoHotKey Paste Every 2 Minutes
-	12257, // Always On Server (#2677) > Auto Restart SDV
-	13516, // Battle Royalley (#3199) > World File for Hosting
-	14839, // Battle Royalley (#3199), custom .bat/.command/.sh launch script
-	15901, // Better Crab Pots (#3159) > Config Updater
-	10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
-	5721,  // Chao Replacement for Cat (#1524), .wav files
-	15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
-	14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
-	9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
-	18065, // Spouse Rooms Redesigned (#828) > All Options
-	16623, // Stardew In-Game Daily Planner > Example Plan
-	16660, // Stardew In-Game Daily Planner > Example Checklist
-	18999, // Stardew Valley Expanded (#3753) > Wallpapers, Event Guide and Script
-	11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
-	9495,  // Quieter Cat Dog and Keg (#2371), .wav files
+		// other
+		10976, // Always On Server (#2677) > AutoHotKey Paste Every 2 Minutes
+		12257, // Always On Server (#2677) > Auto Restart SDV
+		13516, // Battle Royalley (#3199) > World File for Hosting
+		14839, // Battle Royalley (#3199), custom .bat/.command/.sh launch script
+		15901, // Better Crab Pots (#3159) > Config Updater
+		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
+		5721,  // Chao Replacement for Cat (#1524), .wav files
+		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
+		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
+		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
+		18065, // Spouse Rooms Redesigned (#828) > All Options
+		16623, // Stardew In-Game Daily Planner > Example Plan
+		16660, // Stardew In-Game Daily Planner > Example Checklist
+		18999, // Stardew Valley Expanded (#3753) > Wallpapers, Event Guide and Script
+		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
+		9495   // Quieter Cat Dog and Keg (#2371), .wav files
+	}
 };
 
 /// <summary>The settings to use when writing JSON files.</summary>
@@ -272,7 +278,8 @@ async Task Main()
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
 	await this.GetModsNotOnWikiAsync(mods).Dump("SMAPI mods not on the wiki");
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
-	this.GetInvalidIgnoreEntries(mods).Dump($"{nameof(IgnoreNexusIDsForValidation)}/{nameof(IgnoreFileIDsForValidation)} values which don't match any downloaded mod/file");
+	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreModsForValidation)} values which don't match any local mod");
+	this.GetInvalidIgnoreFileEntries(mods).Dump($"{nameof(IgnoreFilesForValidation)} values which don't match any local mod file");
 }
 
 
@@ -286,8 +293,11 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 	// fetch mods on the wiki
 	ModToolkit toolkit = new ModToolkit();
 	WikiModList compatList = await toolkit.GetWikiCompatibilityListAsync();
-	HashSet<string> knownModIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
-	HashSet<int> knownNexusIDs = new HashSet<int>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => p.NexusID.Value));
+	ISet<string> manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
+	IDictionary<ModSite, ISet<int>> siteIDs = new Dictionary<ModSite, ISet<int>>
+	{
+		[ModSite.Nexus] = new HashSet<int>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => p.NexusID.Value))
+	};
 
 	// fetch report
 	return (
@@ -296,8 +306,11 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 		where
 			folder.ModType == ModType.Smapi
 			&& !string.IsNullOrWhiteSpace(folder.ModID)
-			&& (!knownModIDs.Contains(folder.ModID) || !knownNexusIDs.Contains(mod.ID))
-			&& !this.ShouldIgnoreForValidation(mod.ID, folder.ID)
+			&& (
+				!manifestIDs.Contains(folder.ModID)
+				|| !siteIDs[mod.Site].Contains(mod.ID) // deliberately crash if the site isn't defined, so we can fix that
+			)
+			&& !this.ShouldIgnoreForValidation(mod.Site, mod.ID, folder.ID)
 		let manifest = folder.RawFolder.Value.Manifest
 
 		let names =
@@ -324,33 +337,33 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 
 		select new
 		{
-			NexusID = new Hyperlinq(mod.PageUrl, mod.ID.ToString()),
-			NexusName = mod.Name,
-			NexusAuthor = mod.Author,
-			NexusAuthorLabel = mod.AuthorLabel,
-			NexusVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion nexusVersion) ? nexusVersion.ToString() : mod.Version,
-			folder.ID,
-			folder.Type,
-			folder.DisplayName,
-			folder.ModType,
+			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
+			SiteName = mod.Name,
+			SiteAuthor = mod.Author,
+			SiteAuthorLabel = mod.AuthorLabel,
+			SiteVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : mod.Version,
+			FileID = folder.ID,
+			FileCategory = folder.Type,
+			FileName = folder.DisplayName,
+			FileType = folder.ModType,
 			folder.ModID,
 			folder.ModVersion,
 			UpdateKeys = new Lazy<string[]>(() => manifest.UpdateKeys),
 			Manifest = new Lazy<Manifest>(() => manifest),
-			NexusMod = new Lazy<ParsedMod>(() => mod),
+			Mod = new Lazy<ParsedMod>(() => mod),
 			Folder = new Lazy<ParsedFile>(() => folder),
 			WikiEntry = new Lazy<string>(() =>
 				"{{/entry\n"
 				+ $"  |name     = {string.Join(", ", names)}\n"
 				+ $"  |author   = {string.Join(", ", authorNames)}\n"
 				+ $"  |id       = {manifest?.UniqueID}\n"
-				+ $"  |nexus id = {mod.ID}\n"
+				+ $"  |nexus id = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
 				+ $"  |github   = {manifest?.UpdateKeys?.Where(p => p.Trim().StartsWith("GitHub:")).Select(p => p.Trim().Substring("GitHub:".Length)).FirstOrDefault()}\n"
 				+ "}}"
 			)
 		}
 	)
-	.OrderBy(p => p.NexusName)
+	.OrderBy(p => p.SiteName)
 	.ToArray();
 }
 
@@ -364,7 +377,7 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 			.Where(folder =>
 				(folder.ModType == ModType.Invalid || folder.ModType == ModType.Ignored)
 				&& folder.ModError != ModParseError.EmptyFolder // contains only non-mod files (e.g. replacement PNG assets)
-				&& !this.ShouldIgnoreForValidation(mod.ID, folder.ID)
+				&& !this.ShouldIgnoreForValidation(mod.Site, mod.ID, folder.ID)
 			)
 			.ToArray()
 		where invalid.Any()
@@ -373,24 +386,47 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 	.ToArray();
 }
 
-/// <summary>Get entries in <see cref="IgnoreNexusIDsForValidation" /> or <see cref="IgnoreFileIDsForValidation" /> which don't match any of the given mods.</summary>
+/// <summary>Get entries in <see cref="IgnoreModsForValidation" /> which don't match any of the given mods.</summary>
 /// <param name="mods">The mods to check.</param>
-IEnumerable<dynamic> GetInvalidIgnoreEntries(IEnumerable<ParsedMod> mods)
+IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 {
-	HashSet<int> invalidModIds = new HashSet<int>(this.IgnoreNexusIDsForValidation);
-	HashSet<int> invalidFileIds = new HashSet<int>(this.IgnoreFileIDsForValidation);
+	// index known mods
+	ISet<string> index = new HashSet<string>(mods.Select(mod =>$"{mod.Site}:{mod.ID}"), StringComparer.InvariantCultureIgnoreCase);
 
-	foreach (ParsedMod mod in mods)
+	// show unknown entries
+	foreach (ModSite site in this.IgnoreModsForValidation.Keys)
 	{
-		invalidModIds.Remove(mod.ID);
-		foreach (var folder in mod.ModFolders)
-			invalidFileIds.Remove(folder.ID);
+		foreach (int modId in this.IgnoreModsForValidation[site])
+		{
+			if (!index.Contains($"{site}:{modId}"))
+				yield return new { Site = site, ID = modId };
+		}
 	}
+}
 
-	foreach (int modId in invalidModIds)
-		yield return new { Type = "mod id", modId };
-	foreach (int fileId in invalidFileIds)
-		yield return new { Type = "file id", fileId };
+/// <summary>Get entries in <see cref="IgnoreFilesForValidation" /> which don't match any of the given mods' files.</summary>
+/// <param name="mods">The mods to check.</param>
+IEnumerable<dynamic> GetInvalidIgnoreFileEntries(IEnumerable<ParsedMod> mods)
+{
+	// index known files
+	ISet<string> index = new HashSet<string>(
+		(
+			from mod in mods
+			from file in mod.Files
+			select $"{mod.Site}:{file.ID}"
+		),
+		StringComparer.InvariantCultureIgnoreCase
+	);
+
+	// show unknown entries
+	foreach (ModSite site in this.IgnoreFilesForValidation.Keys)
+	{
+		foreach (int fileId in this.IgnoreFilesForValidation[site])
+		{
+			if (!index.Contains($"{site}:{fileId}"))
+				yield return new { Site = site, ID = fileId };
+		}
+	}
 }
 
 /// <summary>Get all mods which depend on the given mod.</summary>
@@ -443,7 +479,7 @@ async Task<int[]> ImportMods(IModSiteClient modSite, ISelectStrategy fetchStrate
 }
 
 /// <summary>Import data for a given mod.</summary>
-/// <param name="nexus">The Nexus API client.</param>
+/// <param name="modSite">The mod site API client.</param>
 /// <param name="id">The unique mod ID.</param>
 /// <param name="selectStrategy">The strategy which decides which mods to fetch.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
@@ -698,7 +734,7 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 				{
 					progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name} > {fileDir.Name}...";
 
-					// get Nexus file data
+					// get file data
 					GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
 
 					// get mod folders from toolkit
@@ -758,11 +794,20 @@ void ExtractFile(FileInfo file, DirectoryInfo extractTo)
 }
 
 /// <summary>Get whether a given mod and file ID should be ignored when validating mods.</summary>
-/// <param name="modID">The Nexus mod ID.</param>
-/// <param name="fileID">The Nexus file ID.</param>
-private bool ShouldIgnoreForValidation(int modID, int fileID)
+/// <param name="site">The mod site.</param>
+/// <param name="modID">The mod ID on the mod site.</param>
+/// <param name="fileID">The file ID on the mod site.</param>
+private bool ShouldIgnoreForValidation(ModSite site, int modID, int fileID)
 {
-	return this.IgnoreNexusIDsForValidation.Contains(modID) || this.IgnoreFileIDsForValidation.Contains(fileID);
+	// ignored mod
+	if (this.IgnoreModsForValidation.TryGetValue(site, out ISet<int> ignoreMods) && ignoreMods.Contains(modID))
+		return true;
+
+	// ignored file
+	if (this.IgnoreFilesForValidation.TryGetValue(site, out ISet<int> ignoreFiles) && ignoreFiles.Contains(fileID))
+		return true;
+
+	return false;
 }
 
 /// <summary>Get a human-readable formatted time span.</summary>
@@ -781,7 +826,7 @@ class GenericMod
 	** Accessors
 	*********/
 	/// <summary>The mod site which has the mod.</summary>
-	public string Site { get; set; }
+	public ModSite Site { get; set; }
 
 	/// <summary>The mod ID within the site.</summary>
 	public int ID { get; set; }
@@ -828,7 +873,7 @@ class GenericMod
 	/// <param name="updated">When the mod metadata or files were last updated.</param>
 	/// <param name="rawData">The original data from the mod site.</param>
 	/// <param name="files">The available mod downloads.</param>
-	public GenericMod(string site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files)
+	public GenericMod(ModSite site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files)
 	{
 		this.Site = site;
 		this.ID = id;
@@ -988,7 +1033,7 @@ class ParsedFile : GenericFile
 interface ISelectStrategy
 {
 	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="nexus">The mod site API client.</param>
+	/// <param name="modSite">The mod site API client.</param>
 	Task<int[]> GetModIds(IModSiteClient modSite);
 }
 
@@ -1099,7 +1144,7 @@ interface IModSiteClient
 	*********/
 	/// <summary>The identifier for this mod site used in update keys.</summary>
 	ModSite SiteKey { get; }
-	
+
 
 	/*********
 	** Methods
@@ -1138,7 +1183,7 @@ class NexusApiClient : IModSiteClient
 	*********/
 	/// <summary>The Nexus Mods game key for Stardew Valley.</summary>
 	private readonly string GameKey = "stardewvalley";
-	
+
 	/// <summary>The underlying FluentNexus API client.</summary>
 	private NexusClient Nexus;
 
@@ -1232,7 +1277,7 @@ class NexusApiClient : IModSiteClient
 					: null;
 
 				mod = new GenericMod(
-					site: "Nexus",
+					site: ModSite.Nexus,
 					id: nexusMod.ModID,
 					name: nexusMod.Name,
 					author: author,
@@ -1300,7 +1345,7 @@ class NexusApiClient : IModSiteClient
 		TimeSpan unblockTime = rateLimits.GetTimeUntilRenewal();
 		throw new RateLimitedException(unblockTime, this.GetRateLimitSummary(rateLimits));
 	}
-	
+
 	/// <summary>Get a human-readable summary for the current rate limits.</summary>
 	/// <param name="meta">The current rate limits.</param>
 	private string GetRateLimitSummary(IRateLimitManager meta)
