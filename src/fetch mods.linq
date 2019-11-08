@@ -32,25 +32,31 @@
 	 4. optionally runs custom queries over the metadata & downloads.
 
 */
-#load "Framework/ConsoleHelper.linq"
-#load "Framework/FileHelper.linq"
-#load "Framework/IncrementalProgressBar.linq"
+#load "Utilities/ConsoleHelper.linq"
+#load "Utilities/FileHelper.linq"
+#load "Utilities/IncrementalProgressBar.linq"
 
 /*********
 ** Configuration
 *********/
-/// <summary>The Nexus API key.</summary>
-readonly string ApiKey = "";
+/// <summary>The mod site clients from which to fetch mods.</summary>
+readonly IModSiteClient[] ModSites = new IModSiteClient[]
+{
+	new NexusApiClient(
+		apiKey: "",
+		appName: "Pathoschild",
+		appVersion: "1.0.0"
+	)
+};
 
 /// <summary>The path in which to store cached data.</summary>
-readonly string RootPath = @"D:\dev\nexus";
+readonly string RootPath = @"D:\dev\mod-dump";
 
-/// <summary>Which mods to refetch from Nexus (or <c>null</c> to not refetch any).</summary>
+/// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly ISelectStrategy FetchMods =
 	null;
 	//new FetchAllFromStrategy(startFrom: 3792);
 	//new FetchUpdatedStrategy(TimeSpan.FromDays(3));
-	//new FetchUpdatedStrategy("1w"); // "1d", "1w", "1m", or a custom timespan/date up to 28 days ago
 
 /// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
 readonly bool ResetUnpacked = false;
@@ -245,16 +251,22 @@ readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
 async Task Main()
 {
 	Directory.CreateDirectory(this.RootPath);
-	NexusClient nexus = new NexusClient(this.ApiKey, "Pathoschild", "1.0.0");
 
-	// fetch mods from Nexus API
-	HashSet<int> unpackMods = new HashSet<int>();
+	// fetch mods
+	HashSet<string> unpackMods = new HashSet<string>();
 	if (this.FetchMods != null)
-		unpackMods = new HashSet<int>(await this.ImportMods(nexus, gameKey: "stardewvalley", fetchStrategy: this.FetchMods, rootPath: this.RootPath));
+	{
+		foreach (IModSiteClient modSite in this.ModSites)
+		{
+			int[] imported = await this.ImportMods(modSite, fetchStrategy: this.FetchMods, rootPath: this.RootPath);
+			foreach (int id in imported)
+				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString(CultureInfo.InvariantCulture)));
+		}
+	}
 
 	// unpack fetched files
-	HashSet<int> modIdsToUnpack = new HashSet<int>(this.GetModIdsWithFilesNotUnpacked(this.RootPath));
-	this.UnpackMods(rootPath: this.RootPath, filter: id => this.ResetUnpacked || unpackMods.Contains(id) || modIdsToUnpack.Contains(id));
+	HashSet<string> modFoldersToUnpack = new HashSet<string>(this.GetModFoldersWithFilesNotUnpacked(this.RootPath), StringComparer.InvariantCultureIgnoreCase);
+	this.UnpackMods(rootPath: this.RootPath, filter: folder => this.ResetUnpacked || unpackMods.Any(p => folder.FullName.EndsWith(p)) || modFoldersToUnpack.Any(p => folder.FullName.EndsWith(p)));
 
 	// run analysis
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
@@ -319,7 +331,7 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 			NexusVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion nexusVersion) ? nexusVersion.ToString() : mod.Version,
 			folder.ID,
 			folder.Type,
-			folder.Name,
+			folder.DisplayName,
 			folder.ModType,
 			folder.ModID,
 			folder.ModVersion,
@@ -403,15 +415,14 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 ** Implementation
 *********/
 /// <summary>Import data for matching mods.</summary>
-/// <param name="apiKey">The Nexus API client.</param>
-/// <param name="gameKey">The unique game key.</param>
+/// <param name="modSite">The mod site API client.</param>
 /// <param name="fetchStrategy">The strategy which decides which mods to fetch.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
 /// <returns>Returns the imported mod IDs.</returns>
-async Task<int[]> ImportMods(NexusClient nexus, string gameKey, ISelectStrategy fetchStrategy, string rootPath)
+async Task<int[]> ImportMods(IModSiteClient modSite, ISelectStrategy fetchStrategy, string rootPath)
 {
 	// get mod IDs
-	int[] modIDs = await fetchStrategy.GetModIds(nexus, gameKey);
+	int[] modIDs = await fetchStrategy.GetModIds(modSite);
 	if (!modIDs.Any())
 		return modIDs;
 
@@ -421,11 +432,10 @@ async Task<int[]> ImportMods(NexusClient nexus, string gameKey, ISelectStrategy 
 	{
 		// update progress
 		progress.Increment();
-		var rateLimits = await nexus.GetRateLimits();
 		progress.Caption = $"Fetching mod {id} ({progress.Percent}%)";
 
 		// fetch
-		await this.ImportMod(nexus, gameKey, id, fetchStrategy, rootPath);
+		await this.ImportMod(modSite, id, fetchStrategy, rootPath);
 	}
 
 	progress.Caption = $"Fetched {modIDs.Length} updated mods ({progress.Percent}%)";
@@ -434,94 +444,41 @@ async Task<int[]> ImportMods(NexusClient nexus, string gameKey, ISelectStrategy 
 
 /// <summary>Import data for a given mod.</summary>
 /// <param name="nexus">The Nexus API client.</param>
-/// <param name="gameKey">The unique game key.</param>
 /// <param name="id">The unique mod ID.</param>
 /// <param name="selectStrategy">The strategy which decides which mods to fetch.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
-async Task ImportMod(NexusClient nexus, string gameKey, int id, ISelectStrategy selectStrategy, string rootPath)
+async Task ImportMod(IModSiteClient modSite, int id, ISelectStrategy selectStrategy, string rootPath)
 {
 	while (true)
 	{
 		try
 		{
 			// fetch mod data
-			Mod nexusMod;
+			GenericMod mod;
 			try
 			{
-				nexusMod = await nexus.Mods.GetMod(gameKey, id);
+				mod = await modSite.GetModAsync(id);
 			}
-			catch (ApiException ex) when (ex.Status == HttpStatusCode.NotFound)
+			catch (KeyNotFoundException)
 			{
 				ConsoleHelper.Print($"Skipped mod {id} (HTTP 404).", Severity.Warning);
 				return;
 			}
-			if (!(await selectStrategy.ShouldUpdate(nexus, nexusMod)))
+			catch (RateLimitedException ex)
 			{
-				ConsoleHelper.Print($"Skipped mod {id} (select strategy didn't match).", Severity.Warning);
-				return;
-			}
-
-			// fetch file data
-			ModFile[] nexusFiles = nexusMod.Status == ModStatus.Published
-				? (await nexus.ModFiles.GetModFiles(gameKey, id, FileCategory.Main, FileCategory.Optional)).Files
-				: new ModFile[0];
-
-			// create file models
-			GenericFile[] files = nexusFiles
-				.Select(file =>
-				{
-					GenericFileType type = file.Category switch
-					{
-						FileCategory.Main => GenericFileType.Main,
-						FileCategory.Optional => GenericFileType.Optional,
-						_ => throw new InvalidOperationException($"Unknown file category from Nexus: {file.Category}")
-					};
-					return new GenericFile(id: file.FileID, type: type, name: file.Name, version: file.FileVersion, rawData: file);
-				})
-				.ToArray();
-
-			// create mod model
-			GenericMod mod;
-			{
-				string author = nexusMod.User?.Name ?? nexusMod.Author;
-				string authorLabel = nexusMod.Author != null && !nexusMod.Author.Equals(author, StringComparison.InvariantCultureIgnoreCase)
-					? nexusMod.Author
-					: null;
-
-				mod = new GenericMod(
-					site: "Nexus",
-					id: nexusMod.ModID,
-					name: nexusMod.Name,
-					author: author,
-					authorLabel: authorLabel,
-					pageUrl: $"https://www.nexusmods.com/stardewvalley/mods/{nexusMod.ModID}",
-					version: nexusMod.Version,
-					updated: nexusMod.Updated,
-					rawData: nexusMod,
-					files: files
-				);
+				TimeSpan unblockTime = ex.TimeUntilRetry;
+				ConsoleHelper.Print($"Rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
+				Thread.Sleep(unblockTime);
+				continue;
 			}
 
 			// save to cache
-			await this.DownloadAndCacheModDataAsync(
-				mod,
-				rootPath,
-				getDownloadLinks: async file => (await nexus.ModFiles.GetDownloadLinks(gameKey, id, file.ID)).Select(p => p.Uri).ToArray()
-			);
-
-			// break retry loop
+			await this.DownloadAndCacheModDataAsync(modSite.SiteKey, mod, rootPath, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
 			break;
 		}
-		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
+		catch (Exception ex)
 		{
-			var rateLimits = await nexus.GetRateLimits();
-			TimeSpan unblockTime = rateLimits.GetTimeUntilRenewal();
-			ConsoleHelper.Print($"Rate limit exhausted: {this.GetRateLimitSummary(rateLimits)}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
-			Thread.Sleep(unblockTime);
-		}
-		catch (ApiException ex)
-		{
-			new { error = ex, response = await ex.Response.AsString() }.Dump("error occurred");
+			new { error = ex, response = await (ex as ApiException)?.Response?.AsString() }.Dump("error occurred");
 			string choice = ConsoleHelper.GetChoice("What do you want to do?", "r", "s", "a");
 			if (choice == "r")
 				continue; // retry
@@ -536,13 +493,14 @@ async Task ImportMod(NexusClient nexus, string gameKey, int id, ISelectStrategy 
 }
 
 /// <summary>Write mod data to the cache directory and download the available files.</summary>
+/// <param name="siteKey">The mod site from which to fetch.</param>
 /// <param name="mod">The mod data to save.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
 /// <param name="getDownloadLinks">Get the download URLs for a specific file. If this returns multiple URLs, the first working one will be used.</param>
-async Task DownloadAndCacheModDataAsync(GenericMod mod, string rootPath, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
+async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string rootPath, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
 {
 	// reset cache folder
-	DirectoryInfo folder = new DirectoryInfo(Path.Combine(rootPath, mod.ID.ToString(CultureInfo.InvariantCulture)));
+	DirectoryInfo folder = new DirectoryInfo(Path.Combine(rootPath, siteKey.ToString(), mod.ID.ToString(CultureInfo.InvariantCulture)));
 	if (folder.Exists)
 	{
 		FileHelper.ForceDelete(folder);
@@ -560,7 +518,7 @@ async Task DownloadAndCacheModDataAsync(GenericMod mod, string rootPath, Func<Ge
 		foreach (GenericFile file in mod.Files)
 		{
 			// create folder
-			FileInfo localFile = new FileInfo(Path.Combine(folder.FullName, "files", $"{file.ID}{Path.GetExtension(file.Name)}"));
+			FileInfo localFile = new FileInfo(Path.Combine(folder.FullName, "files", $"{file.ID}{Path.GetExtension(file.FileName)}"));
 			localFile.Directory.Create();
 
 			// download file from first working CDN
@@ -588,31 +546,34 @@ async Task DownloadAndCacheModDataAsync(GenericMod mod, string rootPath, Func<Ge
 	}
 }
 
-/// <summary>Get all mod IDs which have files that haven't been unpacked.</summary>
+/// <summary>Get all mod folders which have files that haven't been unpacked.</summary>
 /// <param name="rootPath">The path containing mod folders.</param>
-IEnumerable<int> GetModIdsWithFilesNotUnpacked(string rootPath)
+IEnumerable<string> GetModFoldersWithFilesNotUnpacked(string rootPath)
 {
 	// unpack files
-	foreach (DirectoryInfo modDir in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
+	foreach (DirectoryInfo siteDir in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
 	{
-		// get packed folder
-		DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
-		if (!packedDir.Exists)
-			continue;
-
-		// check for files that need unpacking
-		DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
-		foreach (FileInfo archiveFile in packedDir.GetFiles())
+		foreach (DirectoryInfo modDir in this.GetSortedSubfolders(siteDir))
 		{
-			if (archiveFile.Extension == ".exe")
+			// get packed folder
+			DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
+			if (!packedDir.Exists)
 				continue;
 
-			string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
-			DirectoryInfo targetDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, id));
-			if (!targetDir.Exists)
+			// check for files that need unpacking
+			DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
+			foreach (FileInfo archiveFile in packedDir.GetFiles())
 			{
-				yield return int.Parse(modDir.Name);
-				break;
+				if (archiveFile.Extension == ".exe")
+					continue;
+
+				string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
+				DirectoryInfo targetDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, id));
+				if (!targetDir.Exists)
+				{
+					yield return Path.Combine(siteDir.Name, modDir.Name);
+					break;
+				}
 			}
 		}
 	}
@@ -620,90 +581,92 @@ IEnumerable<int> GetModIdsWithFilesNotUnpacked(string rootPath)
 
 /// <summary>Unpack all mods in the given folder.</summary>
 /// <param name="rootPath">The path in which to store cached data.</param>
-/// <param name="filter">A filter which indicates whether a mod ID should be unpacked.</param>
-void UnpackMods(string rootPath, Func<int, bool> filter)
+/// <param name="filter">A filter which indicates whether a mod folder should be unpacked.</param>
+void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 {
-		SevenZipBase.SetLibraryPath(Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess
-			? @"C:\Program Files (x86)\7-Zip\7z.dll"
-			: @"C:\Program Files\7-Zip\7z.dll"
-		);
+	SevenZipBase.SetLibraryPath(Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess
+		? @"C:\Program Files (x86)\7-Zip\7z.dll"
+		: @"C:\Program Files\7-Zip\7z.dll"
+	);
 
-	// get folders to unpack
-	DirectoryInfo[] modDirs = this
-		.GetSortedSubfolders(new DirectoryInfo(rootPath))
-		.Where(p => filter(int.Parse(p.Name)))
-		.ToArray();
-	if (!modDirs.Any())
-		return;
-
-	// unpack files
-	var progress = new IncrementalProgressBar(modDirs.Count()).Dump();
-	foreach (DirectoryInfo modDir in modDirs)
+	foreach (DirectoryInfo siteDir in new DirectoryInfo(rootPath).EnumerateDirectories())
 	{
-		progress.Increment();
-		progress.Caption = $"Unpacking {modDir.Name} ({progress.Percent}%)...";
+		// get folders to unpack
+		DirectoryInfo[] modDirs = this
+			.GetSortedSubfolders(siteDir)
+			.Where(filter)
+			.ToArray();
+		if (!modDirs.Any())
+			return;
 
-		// get packed folder
-		DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
-		if (!packedDir.Exists)
-			continue;
-
-		// create/reset unpacked folder
-		DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
-		if (unpackedDir.Exists)
+		// unpack files
+		var progress = new IncrementalProgressBar(modDirs.Count()).Dump();
+		foreach (DirectoryInfo modDir in modDirs)
 		{
-			FileHelper.ForceDelete(unpackedDir);
-			unpackedDir.Refresh();
-		}
-		unpackedDir.Create();
+			progress.Increment();
+			progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} ({progress.Percent}%)...";
 
-		// unzip each download
-		foreach (FileInfo archiveFile in packedDir.GetFiles())
-		{
-			ConsoleHelper.AutoRetry(() =>
+			// get packed folder
+			DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
+			if (!packedDir.Exists)
+				continue;
+
+			// create/reset unpacked folder
+			DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
+			if (unpackedDir.Exists)
 			{
-				progress.Caption = $"Unpacking {modDir.Name} > {archiveFile.Name} ({progress.Percent}%)...";
+				FileHelper.ForceDelete(unpackedDir);
+				unpackedDir.Refresh();
+			}
+			unpackedDir.Create();
+
+			// unzip each download
+			foreach (FileInfo archiveFile in packedDir.GetFiles())
+			{
+				ConsoleHelper.AutoRetry(() =>
+				{
+					progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} > {archiveFile.Name} ({progress.Percent}%)...";
 
 				// validate
 				if (archiveFile.Extension == ".exe")
-				{
-					ConsoleHelper.Print($"  Skipped {archiveFile.FullName} (not an archive).", Severity.Error);
-					return;
-				}
+					{
+						ConsoleHelper.Print($"  Skipped {archiveFile.FullName} (not an archive).", Severity.Error);
+						return;
+					}
 
 				// unzip into temporary folder
 				string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
-				DirectoryInfo tempDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp", $"{archiveFile.Name}"));
-				if (tempDir.Exists)
-					FileHelper.ForceDelete(tempDir);
-				tempDir.Create();
-				tempDir.Refresh();
+					DirectoryInfo tempDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp", $"{archiveFile.Name}"));
+					if (tempDir.Exists)
+						FileHelper.ForceDelete(tempDir);
+					tempDir.Create();
+					tempDir.Refresh();
 
-				try
-				{
-					this.ExtractFile(archiveFile, tempDir);
-				}
-				catch (Exception ex)
-				{
-					ConsoleHelper.Print($"  Could not unpack {archiveFile.FullName}:\n{(ex is SevenZipArchiveException ? ex.Message : ex.ToString())}", Severity.Error);
-					Console.WriteLine();
-					FileHelper.ForceDelete(tempDir);
-					return;
-				}
+					try
+					{
+						this.ExtractFile(archiveFile, tempDir);
+					}
+					catch (Exception ex)
+					{
+						ConsoleHelper.Print($"  Could not unpack {archiveFile.FullName}:\n{(ex is SevenZipArchiveException ? ex.Message : ex.ToString())}", Severity.Error);
+						Console.WriteLine();
+						FileHelper.ForceDelete(tempDir);
+						return;
+					}
 
 				// move into final location
 				if (tempDir.EnumerateFiles().Any() || tempDir.EnumerateDirectories().Count() > 1) // no root folder in zip
 					tempDir.Parent.MoveTo(Path.Combine(unpackedDir.FullName, id));
-				else
-				{
-					tempDir.MoveTo(Path.Combine(unpackedDir.FullName, id));
-					FileHelper.ForceDelete(new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp")));
-				}
-			});
+					else
+					{
+						tempDir.MoveTo(Path.Combine(unpackedDir.FullName, id));
+						FileHelper.ForceDelete(new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp")));
+					}
+				});
+			}
 		}
+		progress.Caption = $"Unpacked {progress.Total} mods from {siteDir.Name} (100%)";
 	}
-
-	progress.Caption = $"Unpacked {progress.Total} mods (100%)";
 }
 
 /// <summary>Parse unpacked mod data in the given folder.</summary>
@@ -712,47 +675,50 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 {
 	ModToolkit toolkit = new ModToolkit();
 
-	var modFolders = this.GetSortedSubfolders(new DirectoryInfo(rootPath)).ToArray();
-	var progress = new IncrementalProgressBar(modFolders.Length).Dump();
-	foreach (DirectoryInfo modFolder in modFolders)
+	foreach (DirectoryInfo siteFolder in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
 	{
-		progress.Increment();
-		progress.Caption = $"Reading {modFolder.Name}...";
+		var modFolders = this.GetSortedSubfolders(siteFolder).ToArray();
+		var progress = new IncrementalProgressBar(modFolders.Length).Dump();
 
-		// read metadata files
-		GenericMod metadata = JsonConvert.DeserializeObject<GenericMod>(File.ReadAllText(Path.Combine(modFolder.FullName, "mod.json")));
-		IDictionary<int, GenericFile> fileMap = metadata.Files.ToDictionary(p => p.ID);
-
-		// load mod folders
-		IDictionary<GenericFile, ModFolder[]> unpackedFileFolders = new Dictionary<GenericFile, ModFolder[]>();
-		DirectoryInfo unpackedFolder = new DirectoryInfo(Path.Combine(modFolder.FullName, "unpacked"));
-		if (unpackedFolder.Exists)
+		foreach (DirectoryInfo modFolder in modFolders)
 		{
-			foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(unpackedFolder))
+			progress.Increment();
+			progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name}...";
+
+			// read metadata files
+			GenericMod metadata = JsonConvert.DeserializeObject<GenericMod>(File.ReadAllText(Path.Combine(modFolder.FullName, "mod.json")));
+			IDictionary<int, GenericFile> fileMap = metadata.Files.ToDictionary(p => p.ID);
+
+			// load mod folders
+			IDictionary<GenericFile, ModFolder[]> unpackedFileFolders = new Dictionary<GenericFile, ModFolder[]>();
+			DirectoryInfo unpackedFolder = new DirectoryInfo(Path.Combine(modFolder.FullName, "unpacked"));
+			if (unpackedFolder.Exists)
 			{
-				progress.Caption = $"Reading {modFolder.Name} > {fileDir.Name}...";
-
-				// get Nexus file data
-				GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
-
-				// get mod folders from toolkit
-				ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName).ToArray();
-				if (mods.Length == 0)
+				foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(unpackedFolder))
 				{
-					ConsoleHelper.Print($"   Ignored {fileDir.FullName}, folder is empty?");
-					continue;
+					progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name} > {fileDir.Name}...";
+
+					// get Nexus file data
+					GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
+
+					// get mod folders from toolkit
+					ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName).ToArray();
+					if (mods.Length == 0)
+					{
+						ConsoleHelper.Print($"   Ignored {fileDir.FullName}, folder is empty?");
+						continue;
+					}
+
+					// store metadata
+					unpackedFileFolders[fileData] = mods;
 				}
-
-				// store metadata
-				unpackedFileFolders[fileData] = mods;
 			}
+
+			// yield mod
+			yield return new ParsedMod(metadata, unpackedFileFolders);
 		}
-
-		// yield mod
-		yield return new ParsedMod(metadata, unpackedFileFolders);
+		progress.Caption = $"Read {progress.Total} mods from {siteFolder.Name} (100%)";
 	}
-
-	progress.Caption = $"Read {progress.Total} mods (100%)";
 }
 
 /// <summary>Get the subfolders of a given folder sorted by numerical or alphabetical order.</summary>
@@ -806,13 +772,6 @@ private string GetFormattedTime(TimeSpan span)
 	int hours = (int)span.TotalHours;
 	int minutes = (int)span.TotalMinutes - (hours * 60);
 	return $"{hours:00}:{minutes:00}";
-}
-
-/// <summary>Get a human-readable summary for the current rate limits.</summary>
-/// <param name="meta">The current rate limits.</param>
-private string GetRateLimitSummary(IRateLimitManager meta)
-{
-	return $"{meta.DailyRemaining}/{meta.DailyLimit} daily resetting in {this.GetFormattedTime(meta.DailyReset - DateTimeOffset.UtcNow)}, {meta.HourlyRemaining}/{meta.HourlyLimit} hourly resetting in {this.GetFormattedTime(meta.HourlyReset - DateTimeOffset.UtcNow)}";
 }
 
 /// <summary>Metadata for a mod from any mod site.</summary>
@@ -944,8 +903,11 @@ public class GenericFile
 	/// <summary>The file type.</summary.
 	public GenericFileType Type { get; set; }
 
+	/// <summary>The display name on the mod site.</summary>
+	public string DisplayName { get; set; }
+
 	/// <summary>The file name on the mod site.</summary>
-	public string Name { get; set; }
+	public string FileName { get; set; }
 
 	/// <summary>The file version on the mod site.</summary>
 	public string Version { get; set; }
@@ -963,14 +925,16 @@ public class GenericFile
 	/// <summary>Construct an instance.</summary>
 	/// <param name="id">The file ID.</param>
 	/// <param name="type">The file type.</param>
-	/// <param name="name">The file name on the mod site.</param>
+	/// <param name="displayName">The display name on the mod site.</param>
+	/// <param name="fileName">The filename on the mod site.</param>
 	/// <param name="version">The file version on the mod site.</param>
 	/// <param name="rawData">The original file data from the mod site.</param>
-	public GenericFile(int id, GenericFileType type, string name, string version, object rawData)
+	public GenericFile(int id, GenericFileType type, string displayName, string fileName, string version, object rawData)
 	{
 		this.ID = id;
 		this.Type = type;
-		this.Name = name;
+		this.DisplayName = displayName;
+		this.FileName = fileName;
 		this.Version = version;
 		this.RawData = rawData;
 	}
@@ -1008,7 +972,7 @@ class ParsedFile : GenericFile
 	/// <param name="download">The raw mod file.</param>
 	/// <param name="folder">The raw parsed mod folder.</param>
 	public ParsedFile(GenericFile download, ModFolder folder)
-		: base(id: download.ID, type: download.Type, name: download.Name, version: download.Version, rawData: download.RawData)
+		: base(id: download.ID, type: download.Type, displayName: download.DisplayName, fileName: download.FileName, version: download.Version, rawData: download.RawData)
 	{
 		this.RawFolder = new Lazy<ModFolder>(() => folder);
 
@@ -1024,18 +988,12 @@ class ParsedFile : GenericFile
 interface ISelectStrategy
 {
 	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="nexus">The Nexus API client.</param>
-	/// <param name="gameKey">The unique game key.</param>
-	Task<int[]> GetModIds(NexusClient nexus, string gameKey);
-
-	/// <summary>Get whether the given mod should be refetched, including all files.</summary>
-	/// <param name="nexus">The Nexus API client.</summary>
-	/// <param name="gameKey">The mod metadata.</summary>
-	Task<bool> ShouldUpdate(NexusClient nexus, Mod mod);
+	/// <param name="nexus">The mod site API client.</param>
+	Task<int[]> GetModIds(IModSiteClient modSite);
 }
 
 /// <summary>Fetch all mods starting from a given mod ID.</summary>
-public class FetchAllFromStrategy : ISelectStrategy
+class FetchAllFromStrategy : ISelectStrategy
 {
 	/*********
 	** Fields
@@ -1051,38 +1009,31 @@ public class FetchAllFromStrategy : ISelectStrategy
 	/// <param name="startFrom">The minimum mod ID to fetch.</param>
 	public FetchAllFromStrategy(int startFrom)
 	{
-		this.StartFrom = Math.Max(1, startFrom);
+		this.StartFrom = startFrom;
 	}
 
 	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="nexus">The Nexus API client.</param>
-	/// <param name="gameKey">The unique game key.</param>
-	public virtual async Task<int[]> GetModIds(NexusClient nexus, string gameKey)
+	/// <param name="modSite">The mod site API client.</param>
+	public virtual async Task<int[]> GetModIds(IModSiteClient modSite)
 	{
-		int lastID = (await nexus.Mods.GetLatestAdded(gameKey)).Max(p => p.ModID);
-		return Enumerable.Range(this.StartFrom, lastID - this.StartFrom + 1).ToArray();
-	}
+		int minID = Math.Max(this.StartFrom, await modSite.GetMinIdAsync());
+		int maxID = await modSite.GetLatestIdAsync();
 
-	/// <summary>Get whether the given mod should be refetched, including all files.</summary>
-	/// <param name="nexus">The Nexus API client.</summary>
-	/// <param name="gameKey">The mod metadata.</summary>
-	public async Task<bool> ShouldUpdate(NexusClient nexus, Mod mod)
-	{
-		return true;
+		if (minID > maxID)
+			return new int[0];
+
+		return Enumerable.Range(minID, maxID - minID + 1).ToArray();
 	}
 }
 
 /// <summary>Fetch mods which were updated since the given date.</summary>
-public class FetchUpdatedStrategy : FetchAllFromStrategy
+class FetchUpdatedStrategy : FetchAllFromStrategy
 {
 	/*********
 	** Fields
 	*********/
 	/// <summary>The date from which to fetch mod data, or <c>null</c> for no date filter. Mods last updated before this date will be ignored.</summary>
 	private DateTimeOffset StartFrom;
-
-	/// <summary>The update period understood by the Nexus Mods API.</summary>
-	private string UpdatePeriod;
 
 
 	/*********
@@ -1093,19 +1044,7 @@ public class FetchUpdatedStrategy : FetchAllFromStrategy
 	public FetchUpdatedStrategy(DateTimeOffset startFrom)
 		: base(startFrom: 1)
 	{
-		// save start date
 		this.StartFrom = startFrom;
-
-		// calculate update period
-		TimeSpan duration = DateTimeOffset.UtcNow - this.StartFrom;
-		if (duration.TotalDays <= 1)
-			this.UpdatePeriod = "1d";
-		else if (duration.TotalDays <= 7)
-			this.UpdatePeriod = "1w";
-		else if (duration.TotalDays <= 28)
-			this.UpdatePeriod = "1m";
-		else
-			throw new InvalidOperationException($"The given date ({this.StartFrom}) can't be used with {this.GetType().Name} because it exceeds the maximum update period for the Nexus API.");
 	}
 
 	/// <summary>Construct an instance.</summary>
@@ -1113,36 +1052,268 @@ public class FetchUpdatedStrategy : FetchAllFromStrategy
 	public FetchUpdatedStrategy(TimeSpan startFrom)
 		: this(DateTimeOffset.UtcNow.Subtract(startFrom)) { }
 
-	/// <summary>Construct an instance.</summary>
-	/// <param name="startFrom">The period to fetch. The supported values are <c>1d</c>, <c>1w</c>, or <c>1m</c>.</param>
-	public FetchUpdatedStrategy(string period)
-		: base(startFrom: 1)
+	/// <summary>Get the mod IDs to try fetching.</summary>
+	/// <param name="modSite">The mod site API client.</param>
+	public override async Task<int[]> GetModIds(IModSiteClient modSite)
 	{
-		if (period != "1d" && period != "1w" && period != "1m")
-			throw new InvalidOperationException($"The given period ({period}) is not a valid value; must be '1d', '1w', or '1m'.");
+		return await modSite.GetModsUpdatedSinceAsync(this.StartFrom);
+	}
+}
 
-		this.UpdatePeriod = period;
+/// <summary>An exception raised when API client exceeds the rate limits for an API.</summary>
+class RateLimitedException : Exception
+{
+	/*********
+	** Accessors
+	*********/
+	/// <summary>The amount of time to wait until it's safe to retry the request.</summary>
+	public TimeSpan TimeUntilRetry { get; }
+
+	/// <summary>A human-readable of current rate limit values, if available.</summary>
+	public string RateLimitSummary { get; }
+
+
+	/*********
+	** Accessors
+	*********/
+	public RateLimitedException(TimeSpan timeUntilRetry, string rateLimitSummary)
+		: base("Rate limits have been exceeded for this API.")
+	{
+		this.TimeUntilRetry = timeUntilRetry;
+		this.RateLimitSummary = rateLimitSummary;
+	}
+}
+
+/// <summary>The identifier for a mod site used in update keys.</summary>
+enum ModSite
+{
+	/// <summary>The Nexus Mods site.</summary>
+	Nexus
+}
+
+/// <summary>A client which fetches mod from a particular mod site.</summary>
+interface IModSiteClient
+{
+	/*********
+	** Accessors
+	*********/
+	/// <summary>The identifier for this mod site used in update keys.</summary>
+	ModSite SiteKey { get; }
+	
+
+	/*********
+	** Methods
+	*********/
+	/// <summary>Get the current lowest mod ID.</summary>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	Task<int> GetMinIdAsync();
+
+	/// <summary>Get the current highest mod ID.</summary>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	Task<int> GetLatestIdAsync();
+
+	/// <summary>Get a mod from the mod site API.</summary>
+	/// <param name="id">The mod ID to fetch.</param>
+	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	Task<GenericMod> GetModAsync(int id);
+
+	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get a download URL.</param>
+	/// <param name="file">The file for which to get a download URL.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file);
+
+	/// <summary>Get all mod IDs updated since the given date.</summary>
+	/// <param name="startFrom">The minimum date from which to start fetching.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom);
+}
+
+/// <summary>A client which fetches mod from the Nexus Mods API.</summary>
+class NexusApiClient : IModSiteClient
+{
+	/*********
+	** Fields
+	*********/
+	/// <summary>The Nexus Mods game key for Stardew Valley.</summary>
+	private readonly string GameKey = "stardewvalley";
+	
+	/// <summary>The underlying FluentNexus API client.</summary>
+	private NexusClient Nexus;
+
+
+	/*********
+	** Accessors
+	*********/
+	/// <summary>The identifier for this mod site used in update keys.</summary>
+	public ModSite SiteKey { get; } = ModSite.Nexus;
+
+
+	/*********
+	** Public methods
+	*********/
+	/// <summary>Construct an instance.</summary>
+	/// <param name="apiKey">The Nexus API key with which to authenticate.</param>
+	/// <param name="appName">An arbitrary name for the app/script using the client, reported to the Nexus Mods API and used in the user agent.</param>
+	/// <param name="appVersion">An arbitrary version number for the <paramref name="appName" /> (ideally a semantic version).</param>
+	public NexusApiClient(string apiKey, string appName, string appVersion)
+	{
+		this.Nexus = new NexusClient(apiKey, appName, appVersion);
 	}
 
-	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="nexus">The Nexus API client.</param>
-	/// <param name="gameKey">The unique game key.</param>
-	public override async Task<int[]> GetModIds(NexusClient nexus, string gameKey)
+	/// <summary>Get the current lowest mod ID.</summary>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public Task<int> GetMinIdAsync()
 	{
-		List<int> modIDs = new List<int>();
-		foreach (ModUpdate mod in await nexus.Mods.GetUpdated(gameKey, this.UpdatePeriod))
+		return Task.FromResult(1);
+	}
+
+	/// <summary>Get the current highest mod ID.</summary>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<int> GetLatestIdAsync()
+	{
+		try
 		{
-			if (mod.LatestFileUpdate >= this.StartFrom)
+			return
+				(await this.Nexus.Mods.GetLatestAdded(this.GameKey))
+				.Max(p => p.ModID);
+		}
+		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
+		{
+			throw await this.GetRateLimitExceptionAsync();
+		}
+	}
+
+	/// <summary>Get a mod from the mod site API.</summary>
+	/// <param name="id">The mod ID to fetch.</param>
+	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<GenericMod> GetModAsync(int id)
+	{
+		try
+		{
+			// fetch mod data
+			Mod nexusMod;
+			try
+			{
+				nexusMod = await this.Nexus.Mods.GetMod(this.GameKey, id);
+			}
+			catch (ApiException ex) when (ex.Status == HttpStatusCode.NotFound)
+			{
+				throw new KeyNotFoundException($"There is no Nexus mod with ID {id}");
+			}
+
+			// fetch file data
+			ModFile[] nexusFiles = nexusMod.Status == ModStatus.Published
+				? (await this.Nexus.ModFiles.GetModFiles(this.GameKey, id, FileCategory.Main, FileCategory.Optional)).Files
+				: new ModFile[0];
+
+			// create file models
+			GenericFile[] files = nexusFiles
+				.Select(file =>
+				{
+					GenericFileType type = file.Category switch
+					{
+						FileCategory.Main => GenericFileType.Main,
+						FileCategory.Optional => GenericFileType.Optional,
+						_ => throw new InvalidOperationException($"Unknown file category from Nexus: {file.Category}")
+					};
+					return new GenericFile(id: file.FileID, type: type, displayName: file.Name, fileName: file.FileName, version: file.FileVersion, rawData: file);
+				})
+				.ToArray();
+
+			// create mod model
+			GenericMod mod;
+			{
+				string author = nexusMod.User?.Name ?? nexusMod.Author;
+				string authorLabel = nexusMod.Author != null && !nexusMod.Author.Equals(author, StringComparison.InvariantCultureIgnoreCase)
+					? nexusMod.Author
+					: null;
+
+				mod = new GenericMod(
+					site: "Nexus",
+					id: nexusMod.ModID,
+					name: nexusMod.Name,
+					author: author,
+					authorLabel: authorLabel,
+					pageUrl: $"https://www.nexusmods.com/stardewvalley/mods/{nexusMod.ModID}",
+					version: nexusMod.Version,
+					updated: nexusMod.Updated,
+					rawData: nexusMod,
+					files: files
+				);
+			}
+
+			return mod;
+		}
+		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
+		{
+			throw await this.GetRateLimitExceptionAsync();
+		}
+	}
+
+	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get a download URL.</param>
+	/// <param name="file">The file for which to get a download URL.</param>
+	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
+	{
+		ModFileDownloadLink[] downloadLinks = await this.Nexus.ModFiles.GetDownloadLinks(this.GameKey, mod.ID, file.ID);
+		return downloadLinks.Select(p => p.Uri).ToArray();
+	}
+
+	/// <summary>Get all mod IDs updated since the given date.</summary>
+	/// <param name="startFrom">The minimum date from which to start fetching.</param>
+	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
+	{
+		// calculate update period
+		string updatePeriod = null;
+		{
+			TimeSpan duration = DateTimeOffset.UtcNow - startFrom;
+			if (duration.TotalDays <= 1)
+				updatePeriod = "1d";
+			else if (duration.TotalDays <= 7)
+				updatePeriod = "1w";
+			else if (duration.TotalDays <= 28)
+				updatePeriod = "1m";
+			else
+				throw new NotSupportedException($"The given date ({startFrom}) can't be used with {this.GetType().Name} because it exceeds the maximum update period of 28 days for the Nexus API.");
+		}
+
+		List<int> modIDs = new List<int>();
+		foreach (ModUpdate mod in await this.Nexus.Mods.GetUpdated(this.GameKey, updatePeriod))
+		{
+			if (mod.LatestFileUpdate >= startFrom)
 				modIDs.Add(mod.ModID);
 		}
 		return modIDs.ToArray();
 	}
 
-	/// <summary>Get whether the given mod should be refetched, including all files.</summary>
-	/// <param name="nexus">The Nexus API client.</summary>
-	/// <param name="gameKey">The mod metadata.</summary>
-	public async Task<bool> ShouldUpdate(NexusClient nexus, Mod mod)
+
+	/*********
+	** Private methods
+	*********/
+	/// <summary>Get an exception indicating that rate limits have been exceeded.</summary>
+	private async Task<RateLimitedException> GetRateLimitExceptionAsync()
 	{
-		return true;
+		IRateLimitManager rateLimits = await this.Nexus.GetRateLimits();
+		TimeSpan unblockTime = rateLimits.GetTimeUntilRenewal();
+		throw new RateLimitedException(unblockTime, this.GetRateLimitSummary(rateLimits));
+	}
+	
+	/// <summary>Get a human-readable summary for the current rate limits.</summary>
+	/// <param name="meta">The current rate limits.</param>
+	private string GetRateLimitSummary(IRateLimitManager meta)
+	{
+		return $"{meta.DailyRemaining}/{meta.DailyLimit} daily resetting in {this.GetFormattedTime(meta.DailyReset - DateTimeOffset.UtcNow)}, {meta.HourlyRemaining}/{meta.HourlyLimit} hourly resetting in {this.GetFormattedTime(meta.HourlyReset - DateTimeOffset.UtcNow)}";
+	}
+
+	/// <summary>Get a human-readable formatted time span.</summary>
+	/// <param name="span">The time span to format.</param>
+	private string GetFormattedTime(TimeSpan span)
+	{
+		int hours = (int)span.TotalHours;
+		int minutes = (int)span.TotalMinutes - (hours * 60);
+		return $"{hours:00}:{minutes:00}";
 	}
 }
