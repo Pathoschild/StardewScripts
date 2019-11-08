@@ -53,10 +53,10 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 readonly string RootPath = @"D:\dev\mod-dump";
 
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
-readonly ISelectStrategy FetchMods =
+readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//new FetchAllFromStrategy(startFrom: 3792);
-	//new FetchUpdatedStrategy(TimeSpan.FromDays(3));
+	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(7));
+	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
 /// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
 readonly bool ResetUnpacked = false;
@@ -264,7 +264,7 @@ async Task Main()
 	{
 		foreach (IModSiteClient modSite in this.ModSites)
 		{
-			int[] imported = await this.ImportMods(modSite, fetchStrategy: this.FetchMods, rootPath: this.RootPath);
+			int[] imported = await this.ImportMods(modSite, modIds: await this.FetchMods(modSite), rootPath: this.RootPath);
 			foreach (int id in imported)
 				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString(CultureInfo.InvariantCulture)));
 		}
@@ -394,14 +394,19 @@ IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 	ISet<string> index = new HashSet<string>(mods.Select(mod =>$"{mod.Site}:{mod.ID}"), StringComparer.InvariantCultureIgnoreCase);
 
 	// show unknown entries
+	List<dynamic> entries = new List<dynamic>();
 	foreach (ModSite site in this.IgnoreModsForValidation.Keys)
 	{
 		foreach (int modId in this.IgnoreModsForValidation[site])
 		{
 			if (!index.Contains($"{site}:{modId}"))
-				yield return new { Site = site, ID = modId };
+				entries.Add(new { Site = site, ID = modId });
 		}
 	}
+
+	return entries
+		.OrderBy(p => p.Site)
+		.ThenBy(p => p.ID);
 }
 
 /// <summary>Get entries in <see cref="IgnoreFilesForValidation" /> which don't match any of the given mods' files.</summary>
@@ -419,14 +424,19 @@ IEnumerable<dynamic> GetInvalidIgnoreFileEntries(IEnumerable<ParsedMod> mods)
 	);
 
 	// show unknown entries
+	List<dynamic> entries = new List<dynamic>();
 	foreach (ModSite site in this.IgnoreFilesForValidation.Keys)
 	{
 		foreach (int fileId in this.IgnoreFilesForValidation[site])
 		{
 			if (!index.Contains($"{site}:{fileId}"))
-				yield return new { Site = site, ID = fileId };
+				entries.Add(new { Site = site, ID = fileId });
 		}
 	}
+
+	return entries
+		.OrderBy(p => p.Site)
+		.ThenBy(p => p.ID);
 }
 
 /// <summary>Get all mods which depend on the given mod.</summary>
@@ -452,38 +462,36 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 *********/
 /// <summary>Import data for matching mods.</summary>
 /// <param name="modSite">The mod site API client.</param>
-/// <param name="fetchStrategy">The strategy which decides which mods to fetch.</param>
+/// <param name="modIds">The mod IDs to try fetching.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
 /// <returns>Returns the imported mod IDs.</returns>
-async Task<int[]> ImportMods(IModSiteClient modSite, ISelectStrategy fetchStrategy, string rootPath)
+async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPath)
 {
 	// get mod IDs
-	int[] modIDs = await fetchStrategy.GetModIds(modSite);
-	if (!modIDs.Any())
-		return modIDs;
+	if (!modIds.Any())
+		return modIds;
 
 	// fetch mods
-	var progress = new IncrementalProgressBar(modIDs.Length).Dump();
-	foreach (int id in modIDs)
+	var progress = new IncrementalProgressBar(modIds.Length).Dump();
+	foreach (int id in modIds)
 	{
 		// update progress
 		progress.Increment();
 		progress.Caption = $"Fetching mod {id} ({progress.Percent}%)";
 
 		// fetch
-		await this.ImportMod(modSite, id, fetchStrategy, rootPath);
+		await this.ImportMod(modSite, id, rootPath);
 	}
 
-	progress.Caption = $"Fetched {modIDs.Length} updated mods ({progress.Percent}%)";
-	return modIDs;
+	progress.Caption = $"Fetched {modIds.Length} updated mods ({progress.Percent}%)";
+	return modIds;
 }
 
 /// <summary>Import data for a given mod.</summary>
 /// <param name="modSite">The mod site API client.</param>
 /// <param name="id">The unique mod ID.</param>
-/// <param name="selectStrategy">The strategy which decides which mods to fetch.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
-async Task ImportMod(IModSiteClient modSite, int id, ISelectStrategy selectStrategy, string rootPath)
+async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 {
 	while (true)
 	{
@@ -1029,82 +1037,6 @@ class ParsedFile : GenericFile
 	}
 }
 
-/// <summary>Handles the logic for deciding which mods to fetch.</summary>
-interface ISelectStrategy
-{
-	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="modSite">The mod site API client.</param>
-	Task<int[]> GetModIds(IModSiteClient modSite);
-}
-
-/// <summary>Fetch all mods starting from a given mod ID.</summary>
-class FetchAllFromStrategy : ISelectStrategy
-{
-	/*********
-	** Fields
-	*********/
-	/// <summary>The minimum mod ID to fetch.</summary>
-	private int StartFrom;
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="startFrom">The minimum mod ID to fetch.</param>
-	public FetchAllFromStrategy(int startFrom)
-	{
-		this.StartFrom = startFrom;
-	}
-
-	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="modSite">The mod site API client.</param>
-	public virtual async Task<int[]> GetModIds(IModSiteClient modSite)
-	{
-		int minID = Math.Max(this.StartFrom, await modSite.GetMinIdAsync());
-		int maxID = await modSite.GetLatestIdAsync();
-
-		if (minID > maxID)
-			return new int[0];
-
-		return Enumerable.Range(minID, maxID - minID + 1).ToArray();
-	}
-}
-
-/// <summary>Fetch mods which were updated since the given date.</summary>
-class FetchUpdatedStrategy : FetchAllFromStrategy
-{
-	/*********
-	** Fields
-	*********/
-	/// <summary>The date from which to fetch mod data, or <c>null</c> for no date filter. Mods last updated before this date will be ignored.</summary>
-	private DateTimeOffset StartFrom;
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	public FetchUpdatedStrategy(DateTimeOffset startFrom)
-		: base(startFrom: 1)
-	{
-		this.StartFrom = startFrom;
-	}
-
-	/// <summary>Construct an instance.</summary>
-	/// <param name="startFrom">The amount of time to fetch, working back from today.</param>
-	public FetchUpdatedStrategy(TimeSpan startFrom)
-		: this(DateTimeOffset.UtcNow.Subtract(startFrom)) { }
-
-	/// <summary>Get the mod IDs to try fetching.</summary>
-	/// <param name="modSite">The mod site API client.</param>
-	public override async Task<int[]> GetModIds(IModSiteClient modSite)
-	{
-		return await modSite.GetModsUpdatedSinceAsync(this.StartFrom);
-	}
-}
-
 /// <summary>An exception raised when API client exceeds the rate limits for an API.</summary>
 class RateLimitedException : Exception
 {
@@ -1149,13 +1081,15 @@ interface IModSiteClient
 	/*********
 	** Methods
 	*********/
-	/// <summary>Get the current lowest mod ID.</summary>
+	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
+	/// <param name="startFrom">The minimum mod ID to include.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<int> GetMinIdAsync();
+	Task<int[]> GetPossibleModIdsAsync(int? startFrom = null);
 
-	/// <summary>Get the current highest mod ID.</summary>
+	/// <summary>Get all mod IDs updated since the given date.</summary>
+	/// <param name="startFrom">The minimum date from which to start fetching.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<int> GetLatestIdAsync();
+	Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom);
 
 	/// <summary>Get a mod from the mod site API.</summary>
 	/// <param name="id">The mod ID to fetch.</param>
@@ -1168,11 +1102,6 @@ interface IModSiteClient
 	/// <param name="file">The file for which to get a download URL.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
 	Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file);
-
-	/// <summary>Get all mod IDs updated since the given date.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom);
 }
 
 /// <summary>A client which fetches mod from the Nexus Mods API.</summary>
@@ -1207,27 +1136,52 @@ class NexusApiClient : IModSiteClient
 		this.Nexus = new NexusClient(apiKey, appName, appVersion);
 	}
 
-	/// <summary>Get the current lowest mod ID.</summary>
+	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
+	/// <param name="startFrom">The minimum mod ID to include.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public Task<int> GetMinIdAsync()
-	{
-		return Task.FromResult(1);
-	}
-
-	/// <summary>Get the current highest mod ID.</summary>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<int> GetLatestIdAsync()
+	public async Task<int[]> GetPossibleModIdsAsync(int? startFrom = null)
 	{
 		try
 		{
-			return
-				(await this.Nexus.Mods.GetLatestAdded(this.GameKey))
-				.Max(p => p.ModID);
+			int minID = Math.Max(1, startFrom ?? 1);
+			int maxID = (await this.Nexus.Mods.GetLatestAdded(this.GameKey)).Max(p => p.ModID);
+
+			if (minID > maxID)
+				return new int[0];
+
+			return Enumerable.Range(minID, maxID - minID + 1).ToArray();
 		}
 		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
 		{
 			throw await this.GetRateLimitExceptionAsync();
 		}
+	}
+
+	/// <summary>Get all mod IDs updated since the given date.</summary>
+	/// <param name="startFrom">The minimum date from which to start fetching.</param>
+	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
+	{
+		// calculate update period
+		string updatePeriod = null;
+		{
+			TimeSpan duration = DateTimeOffset.UtcNow - startFrom;
+			if (duration.TotalDays <= 1)
+				updatePeriod = "1d";
+			else if (duration.TotalDays <= 7)
+				updatePeriod = "1w";
+			else if (duration.TotalDays <= 28)
+				updatePeriod = "1m";
+			else
+				throw new NotSupportedException($"The given date ({startFrom}) can't be used with {this.GetType().Name} because it exceeds the maximum update period of 28 days for the Nexus API.");
+		}
+
+		List<int> modIDs = new List<int>();
+		foreach (ModUpdate mod in await this.Nexus.Mods.GetUpdated(this.GameKey, updatePeriod))
+		{
+			if (mod.LatestFileUpdate >= startFrom)
+				modIDs.Add(mod.ModID);
+		}
+		return modIDs.ToArray();
 	}
 
 	/// <summary>Get a mod from the mod site API.</summary>
@@ -1305,33 +1259,6 @@ class NexusApiClient : IModSiteClient
 	{
 		ModFileDownloadLink[] downloadLinks = await this.Nexus.ModFiles.GetDownloadLinks(this.GameKey, mod.ID, file.ID);
 		return downloadLinks.Select(p => p.Uri).ToArray();
-	}
-
-	/// <summary>Get all mod IDs updated since the given date.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
-	{
-		// calculate update period
-		string updatePeriod = null;
-		{
-			TimeSpan duration = DateTimeOffset.UtcNow - startFrom;
-			if (duration.TotalDays <= 1)
-				updatePeriod = "1d";
-			else if (duration.TotalDays <= 7)
-				updatePeriod = "1w";
-			else if (duration.TotalDays <= 28)
-				updatePeriod = "1m";
-			else
-				throw new NotSupportedException($"The given date ({startFrom}) can't be used with {this.GetType().Name} because it exceeds the maximum update period of 28 days for the Nexus API.");
-		}
-
-		List<int> modIDs = new List<int>();
-		foreach (ModUpdate mod in await this.Nexus.Mods.GetUpdated(this.GameKey, updatePeriod))
-		{
-			if (mod.LatestFileUpdate >= startFrom)
-				modIDs.Add(mod.ModID);
-		}
-		return modIDs.ToArray();
 	}
 
 
