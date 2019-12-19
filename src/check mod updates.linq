@@ -88,15 +88,18 @@ public bool UpdateCheckLocal = true;
 /// <summary>Whether to show installed mods not found on the compatibility list.</summary>
 public bool ShowMissingCompatMods = true;
 
+/// <summary>Whether to show mods on the compatibility list that aren't installed locally. This should be false in most cases.</summary>
+public bool ShowMissingLocalMods = false;
+
 /// <summary>Whether to show potential errors in the compatibility list.</summary>
 public bool ShowCompatListErrors = true;
 
 /****
 ** Mod exception lists
 ****/
-/// <summary>Mod IDs, update keys, custom URLs, or entry DLLs to ignore when checking if a compatibility list mod is installed locally.</summary>
+/// <summary>Mod IDs, update keys, custom URLs, or entry DLLs to ignore when checking if a local mod is on the wiki.</summary>
 /// <remarks>This should only be used when a mod can't be cross-referenced because it has no ID and isn't released anywhere valid that can be used as an update key.</summary>
-public string[] IgnoreMissingMods = new[]
+public string[] IgnoreMissingWikiMods = new[]
 {
 	// no ID
 	"Nexus:450", // XmlSerializerRetool
@@ -115,6 +118,19 @@ public string[] IgnoreMissingMods = new[]
 
 	// local mods
 	"Pathoschild.TestContentMod"
+};
+
+/// <summary>Mod IDs to ignore when checking if a wiki mod is installed locally.</summary>
+public string[] IgnoreMissingLocalMods = new[]
+{
+	// bundled with SMAPI
+	"SMAPI.ConsoleCommands",
+	"SMAPI.SaveBackup",
+
+	// no longer available for download
+	"BALANCEMOD_AntiExhaustion", // Less Strict Over-Exertion by Permamiss: Nexus page hidden
+	"ConfigurableShippingDates", // Configurable Shipping Dates by Nishtra: Nexus page hidden
+	"Pathoschild.NoDebugMode"    // No Debug Mode by Pathoschild: Nexus page deleted
 };
 
 /// <summary>Maps mod IDs to the equivalent mod page URLs, in cases where that can't be determined from the mod data.</summary>
@@ -184,9 +200,9 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 public IDictionary<string, Tuple<string, string>> EquivalentModVersions = new Dictionary<string, Tuple<string, string>>(StringComparer.InvariantCultureIgnoreCase)
 {
 	// broke in 1.2
-	["439"] = Tuple.Create("1.2.1", "1.21"), // Almighty Tool
-	["FileLoading"] = Tuple.Create("1.1", "1.12"), // File Loading
-	["stephansstardewcrops"] = Tuple.Create("1.4.1", "1.41"), // Stephen's Stardew Crops
+	["439"] = Tuple.Create("1.2.1", "1.21.0"), // Almighty Tool
+	["FileLoading"] = Tuple.Create("1.1.0", "1.12.0"), // File Loading
+	["stephansstardewcrops"] = Tuple.Create("1.4.1", "1.41.0"), // Stephen's Stardew Crops
 
 	// okay
 	["alphablackwolf.skillPrestige"] = Tuple.Create("1.0.9-unofficial.1-huancz", "1.2.3"), // Skill Prestige (unofficial update is for an older version)
@@ -201,7 +217,7 @@ public IDictionary<string, Tuple<string, string>> EquivalentModVersions = new Di
 /// <summary>The data cache for expensive fetches.</summary>
 private IBarrel Cache;
 
-void Main()
+async Task Main()
 {
 	/****
 	** Initialize
@@ -294,7 +310,8 @@ void Main()
 		{
 			IncrementalProgressBar progress = new IncrementalProgressBar(fetchQueue.Count) { HideWhenCompleted = true }.Dump();
 
-			WebApiClient client = new WebApiClient("http://api.smapi.io/", new SemanticVersion("3.0"));
+			ISemanticVersion apiVersion = new SemanticVersion("3.0");
+			WebApiClient client = new WebApiClient("http://api.smapi.io/", apiVersion);
 			foreach (var pair in fetchQueue)
 			{
 				string id = pair.Key;
@@ -303,9 +320,10 @@ void Main()
 				progress.Increment();
 
 				// fetch data
-				ModSearchEntryModel searchModel = new ModSearchEntryModel(id, mod.UpdateKeys);
+				Platform platform = EnvironmentUtility.DetectPlatform();
+				ModSearchEntryModel searchModel = new ModSearchEntryModel(id, apiVersion, mod.UpdateKeys, isBroken: true); // isBroken ensures unofficial updates always listed
 				string cacheKey = $"{id}|{string.Join(", ", mod.UpdateKeys)}|{this.ForBeta}";
-				ModEntryModel result = this.CacheOrFetch(cacheKey, () => client.GetModInfo(new[] { searchModel }, includeExtendedMetadata: true).Select(p => p.Value).FirstOrDefault());
+				ModEntryModel result = this.CacheOrFetch(cacheKey, () => client.GetModInfo(new[] { searchModel }, apiVersion, gameVersion: null, platform, includeExtendedMetadata: true).Select(p => p.Value).FirstOrDefault());
 
 				// select latest version
 				mod.ApiRecord = result;
@@ -423,7 +441,7 @@ void Main()
 			let metadata = mod?.ApiRecord?.Metadata
 			where metadata != null
 
-			orderby metadata.Name.Replace(" ", "").Replace("'", "")
+			orderby (metadata?.Name ?? mod.Folder.DisplayName).Replace(" ", "").Replace("'", "")
 			let compatHasID = metadata.ID.Any() == true
 			let ids = mod.IDs.ToArray()
 			let modHasID = ids.Any()
@@ -453,7 +471,7 @@ void Main()
 	}
 
 	/****
-	** Report missing mods
+	** Report mods missing from the wiki
 	****/
 	if (this.ShowMissingCompatMods)
 	{
@@ -464,9 +482,9 @@ void Main()
 					mod.ApiRecord?.Metadata == null
 					&& mod.IsInstalled
 					&& mod.Folder.Manifest.ContentPackFor == null
-					&& !this.IgnoreMissingMods.Intersect(mod.UpdateKeys).Any()
-					&& !this.IgnoreMissingMods.Intersect(mod.IDs).Any()
-					&& !this.IgnoreMissingMods.Contains(mod.Folder.Manifest.EntryDll)
+					&& !this.IgnoreMissingWikiMods.Intersect(mod.UpdateKeys).Any()
+					&& !this.IgnoreMissingWikiMods.Intersect(mod.IDs).Any()
+					&& !this.IgnoreMissingWikiMods.Contains(mod.Folder.Manifest.EntryDll)
 				select mod
 			)
 			.Where(p => p.IDs.Count() > 1 || !p.IDs.FirstOrDefault()?.Contains("FAKE.") == true)
@@ -487,6 +505,58 @@ void Main()
 				})
 				.Dump("Installed mods not on compatibility list");
 		}
+	}
+
+	/****
+	** Report mods on the wiki not installed locally
+	****/
+	if (this.ShowMissingLocalMods)
+	{
+		// get mods installed locally
+		ISet<string> localIds = new HashSet<string>(
+			mods.Select(p => p.Folder.Manifest.UniqueID),
+			StringComparer.InvariantCultureIgnoreCase
+		);
+
+		// fetch mods on the wiki that aren't installed
+		WikiModList compatList = await toolkit.GetWikiCompatibilityListAsync();
+		var missing =
+			(
+				from mod in compatList.Mods
+				where
+					// has an ID
+					mod.ID.Any()
+					&& !mod.ID.All(p => p == "none")
+
+					// isn't ignored
+					&& !this.IgnoreMissingLocalMods.Intersect(mod.ID).Any()
+
+					// isn't a content pack
+					&& mod.ContentPackFor == null
+
+					// isn't installed locally
+					&& !mod.ID.Any(id => localIds.Contains(id))
+				
+				let links = this.GetReportLinks(mod)
+
+				select new
+				{
+					Name = mod.Name.First(),
+					Author = mod.Author.First(),
+					Nexus = links.Nexus,
+					ModDrop = links.ModDrop,
+					CurseForge = links.CurseForge,
+					Chucklefish = links.Chucklefish,
+					GitHub = links.GitHub,
+					Custom = links.Custom,
+					ID = mod.ID
+				}
+			)
+			.OrderBy(p => p.Name, StringComparer.InvariantCultureIgnoreCase)
+			.ToArray();
+		
+		if (missing.Any())
+			missing.Dump("Mods on compatibility list not installed locally");
 	}
 
 	/****
@@ -514,7 +584,8 @@ void Main()
 				UpdateCheckErrors = mod.UpdateCheckErrors.Length > 0 ? Util.WithStyle(string.Join("\n", mod.UpdateCheckErrors), $"font-size: 0.8em; {(hasMajorUpdateCheckErrors ? errorStyle : "color: gray;")}") : "",
 				NormalizedFolder = new Lazy<string>(() => mod.NormalizedFolder),
 				Manifest = new Lazy<Manifest>(() => mod.Manifest),
-				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null
+				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
+				Links = new Lazy<object>(() => mod.Links)
 			};
 		})
 		.Dump("mods");
@@ -523,6 +594,43 @@ void Main()
 /*********
 ** Helpers
 *********/
+/// <summary>Get links for a mod.</summary>
+/// <param name="mod">The wiki entry for the mod.</param>
+private dynamic GetReportLinks(WikiModEntry mod)
+{
+	if (mod == null)
+		return null;
+	
+	return new
+	{
+		Nexus = mod.NexusID.HasValue ? new Hyperlinq($"https://www.nexusmods.com/stardewvalley/mods/{mod.NexusID}", $"Nexus:{mod.NexusID}") : null,
+		ModDrop = mod.ModDropID.HasValue ? new Hyperlinq($"https://www.moddrop.com/sdv/mod/{mod.ModDropID}", $"ModDrop:{mod.ModDropID}") : null,
+		CurseForge = mod.CurseForgeID.HasValue ? new Hyperlinq($"https://stardewvalley.curseforge.com/projects/{mod.CurseForgeKey}", $"CurseForge:{mod.CurseForgeKey}") : null,
+		Chucklefish = mod.ChucklefishID.HasValue ? new Hyperlinq($"https://community.playstarbound.com/resources/{mod.ChucklefishID}", $"Chucklefish:{mod.ChucklefishID}") : null,
+		GitHub = mod.GitHubRepo != null ? new Hyperlinq($"https://github.com/{mod.GitHubRepo}", $"GitHub:{mod.GitHubRepo}") : null,
+		Custom = mod.CustomUrl != null ? new Hyperlinq(mod.CustomUrl, "custom") : null,
+	};
+}
+
+/// <summary>Get links for a mod.</summary>
+/// <param name="mod">The API metadata for the mod.</param>
+private dynamic GetReportLinks(ModEntryModel mod)
+{
+	if (mod?.Metadata == null)
+		return null;
+
+	var meta = mod.Metadata;
+	return new
+	{
+		Nexus = meta.NexusID.HasValue ? new Hyperlinq($"https://www.nexusmods.com/stardewvalley/mods/{meta.NexusID}", $"Nexus:{meta.NexusID}") : null,
+		ModDrop = meta.ModDropID.HasValue ? new Hyperlinq($"https://www.moddrop.com/sdv/mod/{meta.ModDropID}", $"ModDrop:{meta.ModDropID}") : null,
+		CurseForge = meta.CurseForgeID.HasValue ? new Hyperlinq($"https://stardewvalley.curseforge.com/projects/{meta.CurseForgeKey}", $"CurseForge:{meta.CurseForgeKey}") : null,
+		Chucklefish = meta.ChucklefishID.HasValue ? new Hyperlinq($"https://community.playstarbound.com/resources/{meta.ChucklefishID}", $"Chucklefish:{meta.ChucklefishID}") : null,
+		GitHub = meta.GitHubRepo != null ? new Hyperlinq($"https://github.com/{meta.GitHubRepo}", $"GitHub:{meta.GitHubRepo}") : null,
+		Custom = meta.CustomUrl != null ? new Hyperlinq(meta.CustomUrl, "custom") : null,
+	};
+}
+
 /// <summary>Get a flattened view of the mod data.</summary>
 /// <param name="mods">The mods to represent.</param>
 /// <param name="forBeta">Whether to render data for the beta version of Stardew Valley (if any).</param>
@@ -539,11 +647,11 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 			// get latest version + URL
 			var downloads = new[]
 			{
-				new { Version = mod.ApiRecord?.Main?.Version, Url = mod.ApiRecord?.Main?.Url },
-				new { Version = mod.ApiRecord?.Optional?.Version, Url = mod.ApiRecord?.Optional?.Url },
+				new { Version = mod.ApiRecord?.Metadata?.Main?.Version, Url = mod.ApiRecord?.Metadata?.Main?.Url },
+				new { Version = mod.ApiRecord?.Metadata.Optional?.Version, Url = mod.ApiRecord?.Metadata?.Optional?.Url },
 				new { Version = mod.GetUnofficialVersion(forBeta), Url = $"https://stardewvalleywiki.com/Modding:SMAPI_compatibility#{this.GetAnchor(mod.ApiRecord?.Metadata?.Name ?? mod.Folder.DisplayName)}" }
 			};
-			ISemanticVersion latestVersion = mod.InstalledVersion;
+			ISemanticVersion latestVersion = null;
 			string downloadUrl = null;
 			foreach (var download in downloads)
 			{
@@ -559,7 +667,7 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 
 			// override update check
 			bool ignoreUpdate = false;
-			if (latestVersion != mod.InstalledVersion)
+			if (latestVersion != null && latestVersion != mod.InstalledVersion)
 			{
 				foreach (string id in mod.IDs)
 				{
@@ -575,7 +683,7 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 			}
 
 			// build model
-			yield return new ReportEntry(mod, latestVersion, downloadUrl, forBeta, ignoreUpdate);
+			yield return new ReportEntry(mod, latestVersion, downloadUrl, forBeta, ignoreUpdate, this.GetReportLinks(mod.ApiRecord));
 		}
 	}
 }
@@ -674,9 +782,9 @@ class ModData
 	/// <param name="forBeta">If there's an ongoing Stardew Valley or SMAPI beta which affects compatibility, whether to return the unofficial update for that beta version instead of the one for the stable version.</param>
 	public ISemanticVersion GetUnofficialVersion(bool forBeta)
 	{
-		return forBeta && this.ApiRecord?.HasBetaInfo == true
-			? this.ApiRecord.UnofficialForBeta?.Version
-			: this.ApiRecord.Unofficial?.Version;
+		return forBeta
+			? this.ApiRecord?.Metadata?.UnofficialForBeta?.Version ?? this.ApiRecord?.Metadata?.Unofficial?.Version
+			: this.ApiRecord?.Metadata.Unofficial?.Version;
 	}
 
 	/// <summary>Get the URL to this mod's web page.</summary>
@@ -686,6 +794,15 @@ class ModData
 		string nexusID = this.GetModID("Nexus");
 		if (nexusID != null)
 			return $"https://www.nexusmods.com/stardewvalley/mods/{nexusID}";
+
+		// ModDrop ID
+		string modDropId = this.GetModID("ModDrop");
+		if (modDropId != null)
+			return $"https://www.moddrop.com/stardew-valley/mod/{modDropId}";
+
+		// CurseForge key
+		if (this.ApiRecord?.Metadata?.CurseForgeKey != null)
+			return $"https://stardewvalley.curseforge.com/projects/{this.ApiRecord.Metadata.CurseForgeKey}";
 
 		// Chucklefish ID
 		string chucklefishID = this.GetModID("Chucklefish");
@@ -845,12 +962,15 @@ class ReportEntry
 
 	/// <summary>The code repository URL, if any.</summary>
 	public string SourceUrl { get; }
+	
+	/// <summary>An exportable list of links.</summary>
+	public dynamic Links { get; }
 
 
 	/********
 	** Public methods
 	********/
-	public ReportEntry(ModData mod, ISemanticVersion latestVersion, string downloadUrl, bool forBeta, bool ignoreUpdate)
+	public ReportEntry(ModData mod, ISemanticVersion latestVersion, string downloadUrl, bool forBeta, bool ignoreUpdate, dynamic links)
 	{
 		var manifest = mod.Folder.Manifest;
 		var apiMetadata = mod.ApiRecord?.Metadata;
@@ -869,6 +989,7 @@ class ReportEntry
 		this.DownloadUrl = downloadUrl;
 		this.UpdateCheckErrors = mod.ApiRecord.Errors;
 		this.SourceUrl = mod.GetSourceUrl();
+		this.Links = links;
 		if (forBeta)
 		{
 			this.WikiStatus = apiMetadata?.BetaCompatibilityStatus ?? apiMetadata?.CompatibilityStatus;

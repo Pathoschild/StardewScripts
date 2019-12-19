@@ -43,6 +43,7 @@
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
 {
 	new CurseForgeApiClient(),
+	new ModDropApiClient(),
 	new NexusApiClient(
 		apiKey: "",
 		appName: "Pathoschild",
@@ -72,6 +73,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		3431, // BFAV JSON Update [tool]
 		4241, // Dreamy Valley Reshade
 		1080, // Easy XNB for Xnb Node
+		4701, // Miss Coriel's NPC Creator
 		1213, // Natural Color - Reshade
 		21,   // SDVMM/Stardew Valley Mod Manager
 		1022, // SDV MultiTweak
@@ -82,6 +84,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1298, // Stardew Editor
 		3814, // Stardew Valley Hack Player for Name_Yusuf (???)
 		4536, // Stardew Valley Mod Manager 2
+		4567, // Stardew Valley MOD Manager - Integrated Package
 		3916, // Stardew Valley Money Hack
 		3787, // Stardew Valley Planner
 		2451, // StardewZem - Very Easy XNB Merger
@@ -96,14 +99,17 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4305, // Climates of Ferngill (pt)
 		3954, // Happy Birthday (pt)
 		4197, // Companion NPCs (pt)
+		4693, // Happy Birthday (pt)
 		4339, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
+		4206, // SVE (pt)
 		4370, // Trent's New Animals (pt)
 
 		// mods which include a copy of another mod for some reason
 		3496, // Farm Extended (content pack with a copy of Farm Type Manager)
 		1692, // New NPC Alec (content pack with a copy of Custom Element Handler, Custom Farming, Custom Furniture, and Custom NPC)
 		1128, // New Shirts and 2 new Skirts (includes Get Dressed)
+		3753, // Stardew Valley Expanded
 		2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
 
 		// reposts
@@ -114,6 +120,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1077, // UI Mod Suite
 
 		// special cases
+		4707, // Cooler Abigail Character Mod (XNB mod with a .mdp file)
 		4109, // PPJA Home of Abandoned Mods - CFR Conversions
 		4181  // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
 	}
@@ -199,7 +206,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		535,   // New Rabbit Sprites and Recolours (#535), collection of zipped XNB mods
 		2118,  // Semi-Realistic Animal Replacer (#597), collection of zipped XNB mods
 		1680,  // Simple Building Cleaner (#493), has a `ModInfo.ini` file for some reason
-		15332, // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
+		20575, // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
 		2224,  // Toddlers Take After Parents (#626), files misnamed with `.zip_`
 
 		// utility mods that are part of a larger mod
@@ -229,6 +236,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		13516, // Battle Royalley (#3199) > World File for Hosting
 		14839, // Battle Royalley (#3199), custom .bat/.command/.sh launch script
 		15901, // Better Crab Pots (#3159) > Config Updater
+		19950, // Better Mixed Seeds (#3012) > Config Updater
 		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
 		5721,  // Chao Replacement for Cat (#1524), .wav files
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
@@ -237,9 +245,11 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		18065, // Spouse Rooms Redesigned (#828) > All Options
 		16623, // Stardew In-Game Daily Planner > Example Plan
 		16660, // Stardew In-Game Daily Planner > Example Checklist
-		18999, // Stardew Valley Expanded (#3753) > Wallpapers, Event Guide and Script
 		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
-		9495   // Quieter Cat Dog and Keg (#2371), .wav files
+		9495,  // Quieter Cat Dog and Keg (#2371), .wav files
+		
+		// just broken
+		19998 // Clint Removes Apron - Slightly Cuter Sprites (broken manifest)
 	}
 };
 
@@ -300,6 +310,7 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 	IDictionary<ModSite, ISet<int>> siteIDs = new Dictionary<ModSite, ISet<int>>
 	{
 		[ModSite.CurseForge] = new HashSet<int>(compatList.Mods.Where(p => p.CurseForgeID.HasValue).Select(p => p.CurseForgeID.Value)),
+		[ModSite.ModDrop] = new HashSet<int>(compatList.Mods.Where(p => p.ModDropID.HasValue).Select(p => p.ModDropID.Value)),
 		[ModSite.Nexus] = new HashSet<int>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => p.NexusID.Value))
 	};
 
@@ -505,31 +516,48 @@ async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 		{
 			// fetch mod data
 			GenericMod mod;
-			try
+			while (true)
 			{
-				mod = await modSite.GetModAsync(id);
-			}
-			catch (KeyNotFoundException)
-			{
-				ConsoleHelper.Print($"Skipped mod {id} (HTTP 404).", Severity.Warning);
-				return;
-			}
-			catch (RateLimitedException ex)
-			{
-				TimeSpan unblockTime = ex.TimeUntilRetry;
-				ConsoleHelper.Print($"Rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
-				Thread.Sleep(unblockTime);
-				continue;
+				try
+				{
+					mod = await modSite.GetModAsync(id);
+					break;
+				}
+				catch (KeyNotFoundException)
+				{
+					ConsoleHelper.Print($"Skipped mod {id} (HTTP 404).", Severity.Warning);
+					return;
+				}
+				catch (RateLimitedException ex)
+				{
+					TimeSpan unblockTime = ex.TimeUntilRetry;
+					ConsoleHelper.Print($"Rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
+					Thread.Sleep(unblockTime);
+					continue;
+				}
 			}
 
 			// save to cache
-			await this.DownloadAndCacheModDataAsync(modSite.SiteKey, mod, rootPath, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
-			break;
+			while (true)
+			{
+				try
+				{
+					await this.DownloadAndCacheModDataAsync(modSite.SiteKey, mod, rootPath, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
+					break;
+				}
+				catch (RateLimitedException ex)
+				{
+					TimeSpan unblockTime = ex.TimeUntilRetry;
+					ConsoleHelper.Print($"Rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
+					Thread.Sleep(unblockTime);
+					continue;
+				}
+			}
 		}
 		catch (Exception ex)
 		{
-			new { error = ex, response = await (ex as ApiException)?.Response?.AsString() }.Dump("error occurred");
-			string choice = ConsoleHelper.GetChoice("What do you want to do?", "r", "s", "a");
+			new { error = ex, response = ex is ApiException apiEx ? await apiEx.Response.AsString() : null }.Dump("error occurred");
+			string choice = ConsoleHelper.GetChoice("What do you want to do? [r]etry, [s]kip, [a]bort", "r", "s", "a");
 			if (choice == "r")
 				continue; // retry
 			else if (choice == "s")
@@ -539,6 +567,7 @@ async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 			else
 				throw new NotSupportedException($"Invalid choice: '{choice}'", ex);
 		}
+		break;
 	}
 }
 
@@ -647,7 +676,7 @@ void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 			.Where(filter)
 			.ToArray();
 		if (!modDirs.Any())
-			return;
+			continue;
 
 		// unpack files
 		var progress = new IncrementalProgressBar(modDirs.Count()).Dump();
@@ -677,15 +706,15 @@ void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 				{
 					progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} > {archiveFile.Name} ({progress.Percent}%)...";
 
-				// validate
-				if (archiveFile.Extension == ".exe")
+					// validate
+					if (archiveFile.Extension == ".exe")
 					{
 						ConsoleHelper.Print($"  Skipped {archiveFile.FullName} (not an archive).", Severity.Error);
 						return;
 					}
 
-				// unzip into temporary folder
-				string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
+					// unzip into temporary folder
+					string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
 					DirectoryInfo tempDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp", $"{archiveFile.Name}"));
 					if (tempDir.Exists)
 						FileHelper.ForceDelete(tempDir);
@@ -704,8 +733,8 @@ void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 						return;
 					}
 
-				// move into final location
-				if (tempDir.EnumerateFiles().Any() || tempDir.EnumerateDirectories().Count() > 1) // no root folder in zip
+					// move into final location
+					if (tempDir.EnumerateFiles().Any() || tempDir.EnumerateDirectories().Count() > 1) // no root folder in zip
 					tempDir.Parent.MoveTo(Path.Combine(unpackedDir.FullName, id));
 					else
 					{
@@ -1073,6 +1102,9 @@ enum ModSite
 	/// <summary>The CurseForge site.</summary>
 	CurseForge,
 
+	/// <summary>The CurseForge site.</summary>
+	ModDrop,
+
 	/// <summary>The Nexus Mods site.</summary>
 	Nexus
 }
@@ -1308,6 +1340,210 @@ class CurseForgeApiClient : IModSiteClient
 		return match.Success
 			? match.Groups[1].Value
 			: null;
+	}
+}
+
+/// <summary>A client which fetches mods from the ModDrop API.</summary>
+class ModDropApiClient : IModSiteClient
+{
+	/*********
+	** Fields
+	*********/
+	/// <summary>The ModDrop game ID for Stardew Valley.</summary>
+	private int GameId = 27;
+
+	/// <summary>The mod data fetched as part of a previous call.</summary>
+	private IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
+
+	/// <summary>The ModDrop API client.</summary>
+	private IClient ModDrop = new FluentClient("https://www.moddrop.com/api");
+
+
+	/*********
+	** Accessors
+	*********/
+	/// <summary>The identifier for this mod site used in update keys.</summary>
+	public ModSite SiteKey { get; } = ModSite.ModDrop;
+
+
+	/*********
+	** Public methods
+	*********/
+	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
+	/// <param name="startFrom">The minimum mod ID to include.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null)
+	{
+		return this.GetModsUpdatedSinceAsync(DateTimeOffset.MinValue);
+	}
+
+	/// <summary>Get all mod IDs updated since the given date.</summary>
+	/// <param name="startFrom">The minimum date from which to start fetching.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
+	{
+		ISet<int> modIds = new HashSet<int>();
+
+		int offset = 0;
+		while (true)
+		{
+			// fetch data
+			JObject response = await this.ModDrop
+				.GetAsync("v1/mods/search")
+				.WithArguments(new
+				{
+					gameid = this.GameId,
+					start = offset,
+					order = "updated", // 'updated' or 'published'
+					includeFiles = true
+				})
+				.AsRawJsonObject();
+
+			// handle results
+			int total = response["total"].Value<int>();
+			JObject[] mods = response["mods"].Values<JObject>().ToArray();
+			bool reachedEnd = mods.Length == 0 || offset + mods.Length >= total;
+
+			foreach (JObject rawMod in mods)
+			{
+				// parse mod
+				GenericMod mod = this.Parse(rawMod);
+
+				// check if we found all the mods we need
+				if (mod.Updated < startFrom)
+				{
+					reachedEnd = true;
+					break;
+				}
+
+				// add to list
+				this.Cache[mod.ID] = mod;
+				modIds.Add(mod.ID);
+			}
+
+			// handle pagination
+			if (reachedEnd)
+				break;
+			offset += mods.Length;
+		}
+
+		return modIds.OrderBy(id => id).ToArray();
+	}
+
+	/// <summary>Get a mod from the mod site API.</summary>
+	/// <param name="id">The mod ID to fetch.</param>
+	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<GenericMod> GetModAsync(int id)
+	{
+		if (this.Cache.TryGetValue(id, out GenericMod mod))
+			return mod;
+
+		JObject rawMod = await this.ModDrop
+			.GetAsync($"mods/data/{id}")
+			.AsRawJsonObject();
+
+		return this.Cache[id] = this.Parse(rawMod["mods"][$"{id}"].Value<JObject>());
+	}
+
+	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get a download URL.</param>
+	/// <param name="file">The file for which to get a download URL.</param>
+	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
+	{
+		try
+		{
+			var response = await this.ModDrop
+				.PostAsync($"v1/mod-{mod.ID}/file-{file.ID}/download")
+				.AsRawJsonObject();
+
+			return new[]
+			{
+				new Uri(response["url"].Value<string>())
+			};
+		}
+		catch (Exception ex)
+		{
+			string error = $"Can't fetch download URL for \"{mod.Name}\" (#{mod.ID}) > file \"{file.DisplayName} {file.Version}\" (#{file.ID}).";
+			if (ex is ApiException apiEx)
+				error += $"\n\nHTTP {apiEx.Response.Status}: {await apiEx.Response.AsString()}";
+			error += $"\n\n{ex.ToString()}";
+
+			ConsoleHelper.Print(error, Severity.Error);
+			return new Uri[0];
+		}
+	}
+
+
+	/*********
+	** Private methods
+	*********/
+	/// <summary>Parse raw mod data from the ModDrop API.</summary>
+	/// <param name="rawMod">The raw mod data.</param>
+	private GenericMod Parse(JObject rawEntry)
+	{
+		JObject rawMod = rawEntry["mod"].Value<JObject>();
+		JObject[] rawFiles = rawEntry["files"].Values<JObject>().ToArray();
+		
+		// get author names
+		string author = rawMod["userName"].Value<string>()?.Trim();
+		string authorLabel = rawMod["authorName"].Value<string>()?.Trim();
+		if (author.Equals(authorLabel, StringComparison.InvariantCultureIgnoreCase))
+			authorLabel = null;
+
+		// get last updated
+		DateTimeOffset lastUpdated = DateTimeOffset.FromUnixTimeMilliseconds(rawMod["dateUpdated"].Value<long>());
+		{
+			DateTimeOffset published = DateTimeOffset.FromUnixTimeMilliseconds(rawMod["datePublished"].Value<long>());
+			if (published > lastUpdated)
+				lastUpdated = published;
+		}
+
+		// get files
+		List<GenericFile> files = new List<GenericFile>();
+		foreach (JObject rawFile in rawFiles)
+		{
+			try
+			{
+				if (rawFile["isOld"].Value<bool>() || rawFile["isDeleted"].Value<bool>() || rawFile["isHidden"].Value<bool>())
+					continue;
+				
+				int id = rawFile["id"].Value<int>();
+				string title = rawFile["title"]?.Value<string>();
+				string version = rawFile["version"]?.Value<string>();
+				string fileName = rawFile["fileName"].Value<string>();
+				bool isMain = !rawFile["isPreRelease"].Value<bool>() && !rawFile["isAlternative"].Value<bool>();
+	
+				files.Add(new GenericFile(
+					id: id,
+					type: isMain ? GenericFileType.Main : GenericFileType.Optional,
+					displayName: title,
+					fileName: fileName,
+					version: version,
+					rawData: rawFile
+				));
+			}
+			catch (Exception ex)
+			{
+				new { mod = new Lazy<JObject>(() => rawMod), files = new Lazy<JObject[]>(() => rawFiles), file = new Lazy<JObject>(() => rawFile) }.Dump();
+				throw;
+			}
+		}
+
+		// get model
+		return new GenericMod(
+			site: ModSite.ModDrop,
+			id: rawMod["id"].Value<int>(),
+			name: rawMod["title"].Value<string>(),
+			author: author,
+			authorLabel: authorLabel,
+			pageUrl: rawMod["pageUrl"].Value<string>(),
+			version: null,
+			updated: lastUpdated,
+			rawData: rawMod,
+			files: files.ToArray()
+		);
 	}
 }
 
