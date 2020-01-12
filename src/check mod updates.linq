@@ -23,6 +23,7 @@
   <Namespace>StardewModdingAPI.Toolkit.Utilities</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
+  <Namespace>System.Globalization</Namespace>
 </Query>
 
 /*
@@ -448,20 +449,22 @@ async Task Main()
 			let commonID = metadata.ID.Intersect(ids).FirstOrDefault()
 			where
 				((modHasID || compatHasID) && commonID == null)
-				|| !EqualsInvariant(metadata.NexusID?.ToString(), mod.GetModID("Nexus"))
-				|| !EqualsInvariant(metadata.ChucklefishID?.ToString(), mod.GetModID("Chucklefish"))
+				|| !EqualsInvariant(metadata.NexusID?.ToString(), mod.GetModID("Nexus", mustBeInt: true))
+				|| !EqualsInvariant(metadata.ChucklefishID?.ToString(), mod.GetModID("Chucklefish", mustBeInt: true))
 				|| !EqualsInvariant(metadata.GitHubRepo, mod.GetModID("GitHub"))
 			select new
 			{
 				ID = ids.FirstOrDefault(),
-				Wiki = new
-				{
-					Name = metadata.Name,
-					ID = Format(commonID ?? (compatHasID ? string.Join(", ", metadata.ID) : null), commonID ?? (modHasID ? string.Join(", ", ids) : null)),
-					NexusID = Format(metadata.NexusID?.ToString(), mod.GetModID("Nexus")),
-					ChucklefishID = Format(metadata.ChucklefishID?.ToString(), mod.GetModID("Chucklefish")),
-					GitHub = Format(metadata.GitHubRepo, mod.GetModID("GitHub"))
-				},
+				Wiki = metadata?.Name != null
+					? new
+					{
+						Name = metadata.Name,
+						ID = Format(commonID ?? (compatHasID ? string.Join(", ", metadata.ID) : null), commonID ?? (modHasID ? string.Join(", ", ids) : null)),
+						NexusID = Format(metadata.NexusID?.ToString(), mod.GetModID("Nexus", mustBeInt: true)),
+						ChucklefishID = Format(metadata.ChucklefishID?.ToString(), mod.GetModID("Chucklefish", mustBeInt: true)),
+						GitHub = Format(metadata.GitHubRepo, mod.GetModID("GitHub"))
+					}
+					: (object)Format("not on wiki", null),
 				UpdateKeys = string.Join(", ", mod.UpdateKeys),
 				Raw = new Lazy<ModData>(() => mod)
 			}
@@ -571,21 +574,70 @@ async Task Main()
 			if (!mod.IsValid)
 				return (dynamic)new { NormalizedFolder = Util.WithStyle(mod.NormalizedFolder, "color: red;") };
 
-			bool hasMajorUpdateCheckErrors = mod.UpdateCheckErrors.Any() && mod.UpdateCheckErrors.Any(p => !p.Contains("matches a mod with invalid semantic version"));
+			const string smallStyle = "font-size: 0.8em;";
 			const string errorStyle = "color: red; font-weight: bold;";
+			const string fadedStyle = "color: gray;";
+
+			// get mod info
+			bool highlightStatus = mod.WikiStatus != null && this.HighlightStatuses.Contains(mod.WikiStatus.Value);
+			string[] majorUpdateCheckErrors = mod.UpdateCheckErrors.Where(p => !p.Contains("matches a mod with invalid semantic version")).ToArray();
+			string[] minorUpdateCheckErrors = mod.UpdateCheckErrors.Except(majorUpdateCheckErrors).ToArray();
+			var apiMetadata = mod.ModData.ApiRecord?.Metadata;
+
+			// issues to highlight
+			List<string> issues = new List<string>();
+			if (mod.WikiStatus == null)
+				issues.Add("not on wiki");
+			if (mod.Installed != null && mod.Latest != null && new SemanticVersion(mod.Latest).IsOlderThan(mod.Installed))
+				issues.Add("official version is older");
+			if (mod.Installed != null && mod.WikiUnofficialVersion != null && mod.WikiUnofficialVersion.IsOlderThan(mod.Installed))
+				issues.Add("unofficial version on wiki is older");
+			if (string.IsNullOrWhiteSpace(mod.UpdateKeys))
+				issues.Add("no valid update keys in manifest or wiki");
+			if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => new SemanticVersion(p.Key).CompareTo(new SemanticVersion(mod.Installed)) == 0))
+				issues.Add($"wiki maps local versions which don't match installed version.");
+			if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => new SemanticVersion(p.Key).IsOlderThan(mod.Latest)))
+				issues.Add($"wiki maps remote versions older than the latest available version.");
+			issues.AddRange(majorUpdateCheckErrors);
+
+			// warnings
+			List<string> minorWarnings = new List<string>();
+			minorWarnings.AddRange(minorUpdateCheckErrors);
+
+			// format version
+			string versionHtml;
+			if (mod.Latest == null)
+				versionHtml = $"<span style='{smallStyle} {errorStyle}'>not found</span>";
+			else if (mod.HasUpdate)
+				versionHtml = $"<a href='{mod.DownloadUrl}' style='{smallStyle}'>{mod.Latest}</a>";
+			else
+				versionHtml = $"<span style='{smallStyle} {fadedStyle}'>{mod.Latest}</span>";
+
+
 			return new
 			{
-				Name = Util.WithStyle(mod.Author != null ? $"{mod.Name}\n  by {mod.Author}" : mod.Name, "font-size: 0.8em;"),
-				Installed = Util.WithStyle(mod.Installed, "font-size: 0.8em"),
-				Latest = Util.WithStyle(mod.HasUpdate ? new Hyperlinq(mod.DownloadUrl, mod.Latest) : (mod.Latest == null ? (object)Util.WithStyle("not found", errorStyle) : (object)Util.WithStyle(mod.Latest, "color: gray;")), "font-size: 0.8em"),
-				WikiSummary = Util.WithStyle($"{mod.WikiSummary} [{mod.WikiStatus}{(!string.IsNullOrWhiteSpace(mod.WikiBrokeIn) ? $" in {mod.WikiBrokeIn}" : "")}]".Trim(), "font-size: 0.8em;" + (mod.WikiStatus != null && this.HighlightStatuses.Contains(mod.WikiStatus.Value) ? errorStyle : "")),
-				ManifestUpdateKeys = mod.ManifestUpdateKeys != null ? mod.ManifestUpdateKeys : Util.WithStyle("none", errorStyle),
-				UpdateKeys = Util.WithStyle(mod.UpdateKeys, "font-size: 0.8em;"),
-				UpdateCheckErrors = mod.UpdateCheckErrors.Length > 0 ? Util.WithStyle(string.Join("\n", mod.UpdateCheckErrors), $"font-size: 0.8em; {(hasMajorUpdateCheckErrors ? errorStyle : "color: gray;")}") : "",
+				Name = Util.WithStyle(mod.Author != null ? $"{mod.Name}\n  by {mod.Author}" : mod.Name, smallStyle),
+				Installed = Util.WithStyle(mod.Installed, smallStyle),
+				Latest = Util.RawHtml(versionHtml),
+				Status = Util.WithStyle(mod.WikiStatus, $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
+				Summary = Util.WithStyle($"{mod.WikiSummary} {(!string.IsNullOrWhiteSpace(mod.WikiBrokeIn) ? $"[broke in {mod.WikiBrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
+				Issues = (issues.Any()
+					? Util.WithStyle("⚠ " + string.Join("\n⚠ ", issues), $"{smallStyle} {errorStyle}")
+					: ""
+				),
+				MinorWarnings = (minorWarnings.Any()
+					? Util.WithStyle("⚠ " + string.Join("\n⚠ ", minorWarnings), $"{smallStyle} {fadedStyle}")
+					: ""
+				),
+				UpdateKeys = new Lazy<string>(() => mod.UpdateKeys),
+				ManifestUpdateKeys = new Lazy<object>(() => mod.ManifestUpdateKeys != null ? mod.ManifestUpdateKeys : Util.WithStyle("none", errorStyle)),
 				NormalizedFolder = new Lazy<string>(() => mod.NormalizedFolder),
 				Manifest = new Lazy<Manifest>(() => mod.Manifest),
 				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
-				Links = new Lazy<object>(() => mod.Links)
+				Links = new Lazy<object>(() => mod.Links),
+				VersionMaps = apiMetadata?.MapLocalVersions?.Any() == true || apiMetadata?.MapRemoteVersions?.Any() == true
+					? new Lazy<object>(() => new { apiMetadata.MapLocalVersions, apiMetadata.MapRemoteVersions })
+					: null
 			};
 		})
 		.Dump("mods");
@@ -761,12 +813,27 @@ class ModData
 
 	/// <summary>Get the mod ID in a repository from the mod's update keys, if available.</summary>
 	/// <param name="repositoryKey">The case-insensitive repository key (like Nexus or Chucklefish) to match.</summary>
-	public string GetModID(string repositoryKey)
+	/// <param name="mustBeInt">Whether the mod must be an integer value.</param>
+	/// <returns>Retudns the mod ID, or <c>null</c> if not found.</returns>
+	public string GetModID(string repositoryKey, bool mustBeInt = false)
 	{
-		string key = this.UpdateKeys.FirstOrDefault(p => p != null && p.StartsWith($"{repositoryKey}:", StringComparison.InvariantCultureIgnoreCase));
-		return key != null
-			? key.Substring($"{repositoryKey}:".Length)
-			: null;
+		foreach (string key in this.UpdateKeys.Where(p => p != null && p.StartsWith($"{repositoryKey}:", StringComparison.InvariantCultureIgnoreCase)))
+		{
+			string[] parts = key.Split(new[] { ':' }, 2);
+			if (parts[1].Length <= 0)
+				continue;
+			
+			if (mustBeInt)
+			{
+				if (int.TryParse(parts[1], out int id))
+					return id.ToString(CultureInfo.InvariantCulture);
+				continue;
+			}
+			
+			return parts[1];
+		}
+		
+		return null;
 	}
 
 	/// <summary>Get a display name for this mod.</summary>
@@ -791,12 +858,12 @@ class ModData
 	public string GetModPageUrl()
 	{
 		// Nexus ID
-		string nexusID = this.GetModID("Nexus");
+		string nexusID = this.GetModID("Nexus", mustBeInt: true);
 		if (nexusID != null)
 			return $"https://www.nexusmods.com/stardewvalley/mods/{nexusID}";
 
 		// ModDrop ID
-		string modDropId = this.GetModID("ModDrop");
+		string modDropId = this.GetModID("ModDrop", mustBeInt: true);
 		if (modDropId != null)
 			return $"https://www.moddrop.com/stardew-valley/mod/{modDropId}";
 
@@ -805,7 +872,7 @@ class ModData
 			return $"https://stardewvalley.curseforge.com/projects/{this.ApiRecord.Metadata.CurseForgeKey}";
 
 		// Chucklefish ID
-		string chucklefishID = this.GetModID("Chucklefish");
+		string chucklefishID = this.GetModID("Chucklefish", mustBeInt: true);
 		if (chucklefishID != null)
 			return $"https://community.playstarbound.com/resources/{chucklefishID}";
 
@@ -954,6 +1021,9 @@ class ReportEntry
 	/// <summary>The compatibility summary from the wiki.</summary>
 	public string WikiSummary { get; }
 
+	/// <summary>The unofficial version from the wiki, if any.</summary>
+	public ISemanticVersion WikiUnofficialVersion { get; }
+
 	/// <summary>The URL to download the latest version.</summary>
 	public string DownloadUrl { get; set; }
 
@@ -987,7 +1057,7 @@ class ReportEntry
 		this.UpdateKeys = string.Join(", ", mod.UpdateKeys);
 		this.HasUpdate = !ignoreUpdate && latestVersion != null && latestVersion.IsNewerThan(mod.InstalledVersion);
 		this.DownloadUrl = downloadUrl;
-		this.UpdateCheckErrors = mod.ApiRecord.Errors;
+		this.UpdateCheckErrors = mod.ApiRecord?.Errors ?? new string[0];
 		this.SourceUrl = mod.GetSourceUrl();
 		this.Links = links;
 		if (forBeta)
@@ -995,6 +1065,7 @@ class ReportEntry
 			this.WikiStatus = apiMetadata?.BetaCompatibilityStatus ?? apiMetadata?.CompatibilityStatus;
 			this.WikiSummary = apiMetadata?.BetaCompatibilitySummary ?? apiMetadata?.CompatibilitySummary;
 			this.WikiBrokeIn = apiMetadata?.BetaBrokeIn ?? apiMetadata?.BrokeIn;
+			this.WikiUnofficialVersion = apiMetadata?.UnofficialForBeta?.Version ?? apiMetadata?.Unofficial?.Version;
 		}
 		else
 		{

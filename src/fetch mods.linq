@@ -67,6 +67,15 @@ readonly bool ResetUnpacked = false;
 readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionary<ModSite, ISet<int>>
 {
 	[ModSite.CurseForge] = new HashSet<int>(),
+	[ModSite.ModDrop] = new HashSet<int>
+	{
+		// reposts
+		509776, // Object Progress Bars
+		509780, // Running Late
+	
+		// special cases
+		580803, // PPJA Home of Abandoned Mods - CFR Conversions
+	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
 		// non-mod tools
@@ -103,6 +112,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4339, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
 		4206, // SVE (pt)
+		4325, // SVE (zh)
 		4370, // Trent's New Animals (pt)
 
 		// mods which include a copy of another mod for some reason
@@ -130,6 +140,14 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
 {
 	[ModSite.CurseForge] = new HashSet<int>(),
+	[ModSite.ModDrop] = new HashSet<int>
+	{
+		// broken downloads
+		455872, // Teh's Fishing Overhaul (#123679) - extra DLL above mod folder
+		
+		// XNB mods
+		119589 // Hope's Secret Spring Cave (#129237)
+	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
 		// pre-manifest SMAPI mods
@@ -213,6 +231,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		14752, // Always On Server for Multiplayer (#2677) > Server Connection Reset
 		9477,  // Even More Secret Woods (#2364) > Bush Reset
 		3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
+		21863, // Shipment Tracker (#321) > Stat Viewer
 		14167, // Village Map Mod (#3355) > Village Console Commands
 
 		// legacy/broken content packs
@@ -230,6 +249,12 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		5529,  // Hudson Valley Buildings (#1478) > Stonybrook
 		10660, // katekatpixels Portrait Overhauls (#2602) > Content Patcher Version
 
+		// source code
+		22505, // Breath of Fire 3 Fishing sounds (#5105)
+		22503, // No More Accidental Exhaustion (#5113)
+		22518, // Tab Autoloot (#5115)
+		22519, // Instantly Eat Item (#5116)
+
 		// other
 		10976, // Always On Server (#2677) > AutoHotKey Paste Every 2 Minutes
 		12257, // Always On Server (#2677) > Auto Restart SDV
@@ -239,6 +264,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		19950, // Better Mixed Seeds (#3012) > Config Updater
 		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
 		5721,  // Chao Replacement for Cat (#1524), .wav files
+		21237, // Decrafting Mod (#4158) > source code
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
 		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
