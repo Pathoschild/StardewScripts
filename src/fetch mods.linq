@@ -106,13 +106,18 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		// mod translations
 		2825, // Auto-Grabber Mod (zh)
 		4305, // Climates of Ferngill (pt)
+		5396, // Dwarvish (pt)
+		5428, // Dwarvish (zh)
 		3954, // Happy Birthday (pt)
 		4197, // Companion NPCs (pt)
 		4693, // Happy Birthday (pt)
 		4339, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
-		4206, // SVE (pt)
-		4325, // SVE (zh)
+		5328, // More Rings (pt)
+		5329, // Prismatic Tools (pt)
+		5259, // Stardew Valley Expanded (de)
+		4206, // Stardew Valley Expanded (pt)
+		4325, // Stardew Valley Expanded (zh)
 		4370, // Trent's New Animals (pt)
 
 		// mods which include a copy of another mod for some reason
@@ -131,8 +136,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 
 		// special cases
 		4707, // Cooler Abigail Character Mod (XNB mod with a .mdp file)
-		4109, // PPJA Home of Abandoned Mods - CFR Conversions
-		4181  // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
+		4181, // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
+		4109 // PPJA Home of Abandoned Mods - CFR Conversions
 	}
 };
 
@@ -146,7 +151,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		455872, // Teh's Fishing Overhaul (#123679) - extra DLL above mod folder
 		
 		// XNB mods
-		119589 // Hope's Secret Spring Cave (#129237)
+		119589, // Hope's Secret Spring Cave (#129237)
+		711129 // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
 	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
@@ -224,7 +230,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		535,   // New Rabbit Sprites and Recolours (#535), collection of zipped XNB mods
 		2118,  // Semi-Realistic Animal Replacer (#597), collection of zipped XNB mods
 		1680,  // Simple Building Cleaner (#493), has a `ModInfo.ini` file for some reason
-		20575, // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
 		2224,  // Toddlers Take After Parents (#626), files misnamed with `.zip_`
 
 		// utility mods that are part of a larger mod

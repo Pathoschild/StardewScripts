@@ -21,9 +21,9 @@
   <Namespace>StardewModdingAPI.Toolkit.Serialization</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Serialization.Models</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Utilities</Namespace>
+  <Namespace>System.Globalization</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
-  <Namespace>System.Globalization</Namespace>
 </Query>
 
 /*
@@ -544,8 +544,8 @@ async Task Main()
 
 				select new
 				{
-					Name = mod.Name.First(),
-					Author = mod.Author.First(),
+					Name = mod.Name.FirstOrDefault(),
+					Author = mod.Author.FirstOrDefault(),
 					Nexus = links.Nexus,
 					ModDrop = links.ModDrop,
 					CurseForge = links.CurseForge,
