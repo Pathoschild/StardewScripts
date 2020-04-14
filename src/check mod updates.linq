@@ -177,11 +177,18 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["spacechase0.SpaceCore"] = "@@SpaceCore",
 	["TehPers.CoreMod"] = "@@Teh's Core Mod",
 
+	// fix invalid names
+	["jahangmar.CompostPestsCultivation"] = "Compost, Pets, and Cultivation", // commas stripped by wiki
+	["minervamaga.FeelingLucky"] = "Feeling Lucky", // ? replaced with _, just strip it instead
+
 	// fix duplicate IDs (Slime Minigame)
 	["Tofu.SlimeMinigame"] = "Slime Mods - Slime Minigame",
 	["Tofu.SlimeQOL"] = "Slime Mods - SlimeQoL Alt",
 
 	// fix ambiguous names
+	["stellarashes.Autowatering"] = "Auto Watering (stellarashes)",
+	["AutoWater"] = "Auto Watering (Roy Li)",
+	
 	["Vrakyas.CurrentLocation"] = "Current Location (Vrakyas)",
 	["CurrentLocation102120161203"] = "Current Location (Omegasis)",
 

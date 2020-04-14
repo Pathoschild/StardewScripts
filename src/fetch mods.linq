@@ -72,7 +72,21 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		// reposts
 		509776, // Object Progress Bars
 		509780, // Running Late
-	
+
+		// reposts (spacechase0 mods accidentally posted twice)
+		771513,
+		771514,
+		771515,
+		771516,
+		771529,
+		771530,
+		771531,
+		771532,
+		771546,
+		771548,
+		771550,
+		771583,
+
 		// special cases
 		580803, // PPJA Home of Abandoned Mods - CFR Conversions
 	},
@@ -96,6 +110,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4567, // Stardew Valley MOD Manager - Integrated Package
 		3916, // Stardew Valley Money Hack
 		3787, // Stardew Valley Planner
+		127,  // Stardew Valley Save Editor
 		2451, // StardewZem - Very Easy XNB Merger
 		337,  // SVPM/Stardew Valley Package Manager
 		1832, // Twelfth Night - American Gothic - ReShade
@@ -116,6 +131,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5328, // More Rings (pt)
 		5329, // Prismatic Tools (pt)
 		5259, // Stardew Valley Expanded (de)
+		5788, // Stardew Valley Expanded (ja)
+		5321, // Stardew Valley Expanded (ko)
 		4206, // Stardew Valley Expanded (pt)
 		4325, // Stardew Valley Expanded (zh)
 		4370, // Trent's New Animals (pt)
@@ -144,12 +161,16 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 /// <summary>Mod file IDs to ignore when validating or cross-referencing mods.</summary>
 readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
 {
-	[ModSite.CurseForge] = new HashSet<int>(),
+	[ModSite.CurseForge] = new HashSet<int>
+	{
+		// broken downloads
+		2880005, // Portraiture (#308062 / portaiture) - extra zip above mod folder
+	},
 	[ModSite.ModDrop] = new HashSet<int>
 	{
 		// broken downloads
 		455872, // Teh's Fishing Overhaul (#123679) - extra DLL above mod folder
-		
+
 		// XNB mods
 		119589, // Hope's Secret Spring Cave (#129237)
 		711129 // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
@@ -182,7 +203,10 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
 		13120, // Immersive Farm 2 (#1531)
 		13647, // Immersive Farm 2 (#1531)
+		25531, // Jen's Simple Greenhousr (#5344) > IF2 version
+		24554, // Project Moonlight Map Resources (#4699) - map files for other modders to use
 		12863, // Secret Gardens Greenhouse (#3067) > "" for Immersive Farm 2
+		24565, // Slime Pets for Adopt'n'Skin (#5497)
 		17756, // Stardew Valley Reimagined (#4119) > compatibility patches
 		17692, // Trent's New Animals (#3634) > JSON Update
 
@@ -194,13 +218,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		// legacy CustomNPC pack (files to drop into Mods/CustomNPC/Npcs)
 		8179,  // Costum Npc Base (#1964)
 		8203,  // Costum Npc Base (#1964)
-		7569,  // CustomNPCs Nagito Komaeda (#1964)
 		6423,  // NPC Alec (#1692)
 		8870,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
 		8871,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
-
-		// legacy Stardew Symphony pack (files to drop into Mods/StardewSymphonyRemastered/Content/Music/Wav)
-		12421, // Chill of Winter Music Pack (#3015)
 
 		// Better Farm Animal Variety pack (files to merge into BFAV's config file)
 		14395, // Gray Chicken (#3416)
@@ -209,8 +229,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		14366, // Zelda LTTP Lifestock Animals (#3421)
 
 		// collections of zipped content packs
-		13533, // A Less Yellow Stardew (#2415) > All Lanuage Version In One File
-		17433, // A Less Yellow Stardew (#2415) > ALYSD Map update (invalid manifest)
 		9295,  // Clint Narrative Overhaul (#1067)
 		9297,  // Demetrius Narrative Overhaul (#1120)
 		9303,  // Dwarf Narrative Overhaul (#1250)
@@ -222,15 +240,16 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		9305,  // Wizard Narrative Overhaul (#1309)
 
 		// XNB mods with non-standard files
-		9634,  // Ali's Foraging Map With a Few Changes (#2381), includes redundant .zip files
-		445,   // Better Pigs and Recolours (#10), collection of zipped XNB mods
-		2008,  // Chickens to Cardinal or Toucan (#578), XNB mod with misnamed `White Chickenxnb`
-		10040, // Hero Academia Shota Mod (#2490), includes .zip file
-		4462,  // Hope's Secret Cave (#1155), includes unpacked files
-		535,   // New Rabbit Sprites and Recolours (#535), collection of zipped XNB mods
-		2118,  // Semi-Realistic Animal Replacer (#597), collection of zipped XNB mods
-		1680,  // Simple Building Cleaner (#493), has a `ModInfo.ini` file for some reason
-		2224,  // Toddlers Take After Parents (#626), files misnamed with `.zip_`
+		24058, // African American George (#5410) - includes .zip file
+		9634,  // Ali's Foraging Map With a Few Changes (#2381)- includes redundant .zip files
+		445,   // Better Pigs and Recolours (#10) - collection of zipped XNB mods
+		2008,  // Chickens to Cardinal or Toucan (#578) - XNB mod with misnamed `White Chickenxnb`
+		10040, // Hero Academia Shota Mod (#2490) - includes .zip file
+		4462,  // Hope's Secret Cave (#1155) - includes unpacked files
+		535,   // New Rabbit Sprites and Recolours (#535) - collection of zipped XNB mods
+		2118,  // Semi-Realistic Animal Replacer (#597) - collection of zipped XNB mods
+		1680,  // Simple Building Cleaner (#493) - has a `ModInfo.ini` file for some reason
+		2224,  // Toddlers Take After Parents (#626) - files misnamed with `.zip_`
 
 		// utility mods that are part of a larger mod
 		14752, // Always On Server for Multiplayer (#2677) > Server Connection Reset
@@ -254,8 +273,18 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		5529,  // Hudson Valley Buildings (#1478) > Stonybrook
 		10660, // katekatpixels Portrait Overhauls (#2602) > Content Patcher Version
 
+		// broken downloads
+		24652, // A Less Yellow Stardew (#2415) - invalid manifest version, reported in mod comments
+		22971, // DC Burger Krobus for CP (#4608) - missing comma in manifest, reported in mod bugs
+		25449, // Miku companion for NPC Adventures (#5666) - missing quote in manifest, reported in mod bugs
+		22886, // Minecraft Mobs as Rarecrows (#5202) - missing quote in manifest, reported in mod bugs
+		24009, // Open Greenhouse (#5401) - missing quote in manifest, reported in mod bugs
+		20155, // Portraiture (#999) - zip file above mod folder
+		24942, // Zen Garden Desert Obelisk (#5558) - unescaped quote in manifest, reported in mod bugs
+
 		// source code
 		22505, // Breath of Fire 3 Fishing sounds (#5105)
+		25660, // Input Fix (#5693) - includes separate .exe
 		22503, // No More Accidental Exhaustion (#5113)
 		22518, // Tab Autoloot (#5115)
 		22519, // Instantly Eat Item (#5116)
@@ -278,7 +307,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		16660, // Stardew In-Game Daily Planner > Example Checklist
 		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
 		9495,  // Quieter Cat Dog and Keg (#2371), .wav files
-		
+
 		// just broken
 		19998 // Clint Removes Apron - Slightly Cuter Sprites (broken manifest)
 	}
@@ -308,7 +337,24 @@ async Task Main()
 	{
 		foreach (IModSiteClient modSite in this.ModSites)
 		{
-			int[] imported = await this.ImportMods(modSite, modIds: await this.FetchMods(modSite), rootPath: this.RootPath);
+			// get mod IDs
+			int[] modIds;
+			while (true)
+			{
+				try
+				{
+					modIds = await this.FetchMods(modSite);
+					break;
+				}
+				catch (RateLimitedException ex)
+				{
+					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
+					continue;
+				}
+			}
+
+			// fetch mods
+			int[] imported = await this.ImportMods(modSite, modIds, rootPath: this.RootPath);
 			foreach (int id in imported)
 				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString(CultureInfo.InvariantCulture)));
 		}
@@ -561,9 +607,7 @@ async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 				}
 				catch (RateLimitedException ex)
 				{
-					TimeSpan unblockTime = ex.TimeUntilRetry;
-					ConsoleHelper.Print($"Rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
-					Thread.Sleep(unblockTime);
+					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
 					continue;
 				}
 			}
@@ -578,9 +622,7 @@ async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 				}
 				catch (RateLimitedException ex)
 				{
-					TimeSpan unblockTime = ex.TimeUntilRetry;
-					ConsoleHelper.Print($"Rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
-					Thread.Sleep(unblockTime);
+					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
 					continue;
 				}
 			}
@@ -806,6 +848,9 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 			{
 				foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(unpackedFolder))
 				{
+					if (fileDir.Name == "_tmp")
+						continue;
+
 					progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name} > {fileDir.Name}...";
 
 					// get file data
@@ -891,6 +936,16 @@ private string GetFormattedTime(TimeSpan span)
 	int hours = (int)span.TotalHours;
 	int minutes = (int)span.TotalMinutes - (hours * 60);
 	return $"{hours:00}:{minutes:00}";
+}
+
+/// <summary>Log a human-readable summary for a rate limit exception, and pause the thread until the rate limit is refreshed.</summary>
+/// <param name="ex">The rate limit exception.</param>
+/// <param name="site">The mod site whose rate limit was exceeded.</param>
+private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
+{
+	TimeSpan unblockTime = ex.TimeUntilRetry;
+	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
+	Thread.Sleep(unblockTime);
 }
 
 /// <summary>Metadata for a mod from any mod site.</summary>
@@ -1184,17 +1239,17 @@ class CurseForgeApiClient : IModSiteClient
 	*********/
 	/// <summary>The CurseForge game ID for Stardew Valley.</summary>
 	private int GameId = 669;
-	
+
 	/// <summary>A regex pattern which matches a version number in a CurseForge mod file name.</summary>
 	private readonly Regex VersionInNamePattern = new Regex(@"^(?:.+? | *)v?(\d+\.\d+(?:\.\d+)?(?:-.+?)?) *(?:\.(?:zip|rar|7z))?$", RegexOptions.Compiled);
 
 	/// <summary>The mod data fetched as part of a previous call.</summary>
 	private IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
-	
+
 	/// <summary>The CurseForge API client.</summary>
 	private IClient CurseForge = new FluentClient("https://addons-ecs.forgesvc.net/api/v2");
 
-	
+
 	/*********
 	** Accessors
 	*********/
@@ -1219,7 +1274,7 @@ class CurseForgeApiClient : IModSiteClient
 	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
 	{
 		ISet<int> modIds = new HashSet<int>();
-		
+
 		const int pageSize = 100;
 		int page = 0;
 		while (true)
@@ -1235,7 +1290,7 @@ class CurseForgeApiClient : IModSiteClient
 					sort = 2 // Last Updated
 				})
 				.AsRawJsonArray();
-			
+
 			// handle results
 			bool reachedEnd = response.Count < pageSize;
 			foreach (JObject rawMod in response)
@@ -1259,7 +1314,7 @@ class CurseForgeApiClient : IModSiteClient
 				this.Cache[mod.ID] = mod;
 				modIds.Add(mod.ID);
 			}
-			
+
 			// handle pagination
 			if (reachedEnd)
 				break;
@@ -1307,7 +1362,7 @@ class CurseForgeApiClient : IModSiteClient
 	{
 		// get author names
 		string[] authorNames = rawMod["authors"].AsEnumerable().Select(p => p["name"].Value<string>()).ToArray();
-		
+
 		// get last updated
 		DateTimeOffset lastUpdated;
 		{
@@ -1323,14 +1378,14 @@ class CurseForgeApiClient : IModSiteClient
 
 			lastUpdated = new DateTimeOffset(latest, TimeSpan.Zero);
 		}
-		
+
 		// get files
 		List<GenericFile> files = new List<GenericFile>();
 		foreach (JObject rawFile in rawMod["latestFiles"].AsEnumerable())
 		{
 			string displayName = rawFile["displayName"].Value<string>();
 			string fileName = rawFile["fileName"].Value<string>();
-			
+
 			files.Add(new GenericFile(
 				id: rawFile["id"].Value<int>(),
 				type: rawFile["isAlternate"].Value<bool>() ? GenericFileType.Optional : GenericFileType.Main,
@@ -1340,7 +1395,7 @@ class CurseForgeApiClient : IModSiteClient
 				rawData: rawFile
 			));
 		}
-		
+
 		// get model
 		JObject rawModWithoutFiles = (JObject)rawMod.DeepClone();
 		rawModWithoutFiles.Property("latestFiles").Remove();
@@ -1516,7 +1571,7 @@ class ModDropApiClient : IModSiteClient
 	{
 		JObject rawMod = rawEntry["mod"].Value<JObject>();
 		JObject[] rawFiles = rawEntry["files"].Values<JObject>().ToArray();
-		
+
 		// get author names
 		string author = rawMod["userName"].Value<string>()?.Trim();
 		string authorLabel = rawMod["authorName"].Value<string>()?.Trim();
@@ -1539,13 +1594,13 @@ class ModDropApiClient : IModSiteClient
 			{
 				if (rawFile["isOld"].Value<bool>() || rawFile["isDeleted"].Value<bool>() || rawFile["isHidden"].Value<bool>())
 					continue;
-				
+
 				int id = rawFile["id"].Value<int>();
 				string title = rawFile["title"]?.Value<string>();
 				string version = rawFile["version"]?.Value<string>();
 				string fileName = rawFile["fileName"].Value<string>();
 				bool isMain = !rawFile["isPreRelease"].Value<bool>() && !rawFile["isAlternative"].Value<bool>();
-	
+
 				files.Add(new GenericFile(
 					id: id,
 					type: isMain ? GenericFileType.Main : GenericFileType.Optional,
@@ -1731,8 +1786,15 @@ class NexusApiClient : IModSiteClient
 	/// <param name="file">The file for which to get a download URL.</param>
 	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
-		ModFileDownloadLink[] downloadLinks = await this.Nexus.ModFiles.GetDownloadLinks(this.GameKey, mod.ID, file.ID);
-		return downloadLinks.Select(p => p.Uri).ToArray();
+		try
+		{
+			ModFileDownloadLink[] downloadLinks = await this.Nexus.ModFiles.GetDownloadLinks(this.GameKey, mod.ID, file.ID);
+			return downloadLinks.Select(p => p.Uri).ToArray();
+		}
+		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
+		{
+			throw await this.GetRateLimitExceptionAsync();
+		}
 	}
 
 

@@ -55,6 +55,7 @@ private readonly Regex[] IgnoreIncorrectNames =
 	// files
 	new Regex(@"\.csproj\.user$", RegexOptions.Compiled),
 	new Regex(@"\.DotSettings\.user$", RegexOptions.Compiled),
+	new Regex(@"\.psd$", RegexOptions.Compiled),
 	new Regex(@"\.userprefs$", RegexOptions.Compiled),
 	new Regex(@"\.zip$", RegexOptions.Compiled),
 	new Regex(@"_(?:BACKUP|BASE|LOCAL)_\d+\.[a-z]+", RegexOptions.Compiled) // merge backups
@@ -195,7 +196,12 @@ async Task Main()
 		{
 			try
 			{
-				await this.ExecuteShellAsync("git", $"clone -q {repo.GitUrl} \"{dir.Name}\"", workingDir: rootDir.FullName);
+				await this.ExecuteShellAsync(
+					filename: "git",
+					arguments: $"clone -q {repo.GitUrl} \"{dir.Name}\"", // only get the latest version
+					workingDir: rootDir.FullName,
+					ignoreErrorOut: errorOut => Regex.IsMatch(errorOut, "^Filtering content:.+/s, done.$") // git LFS logs progress output to stderr
+				);
 				cloned = true;
 				break;
 			}
@@ -254,7 +260,8 @@ private string GetPercentage(int amount, int total)
 /// <param name="filename">The command filename to execute.</param>
 /// <param name="arguments">The command arguments to execute.</summary>
 /// <param name="workingDir">The working directory in which to execute the command.</param>
-private async Task<string> ExecuteShellAsync(string filename, string arguments, string workingDir)
+/// <param name="ignoreErrorOut">Whether to ignore a given error output.</param>
+private async Task<string> ExecuteShellAsync(string filename, string arguments, string workingDir, Func<string, bool> ignoreErrorOut = null)
 {
 	string stdOut = null;
 	string errorOut = null;
@@ -279,7 +286,10 @@ private async Task<string> ExecuteShellAsync(string filename, string arguments, 
 			process.WaitForExit();
 
 			if (!string.IsNullOrWhiteSpace(errorOut))
-				throw new Exception($"The shell returned an error message.\nCommand: {filename} {arguments}\nError: {errorOut}");
+			{
+				if (ignoreErrorOut == null || !ignoreErrorOut(errorOut))
+					throw new Exception($"The shell returned an error message.\nCommand: {filename} {arguments}\nError: {errorOut}");
+			}
 			return stdOut;
 		}
 	}
