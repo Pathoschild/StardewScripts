@@ -57,6 +57,7 @@ private readonly Regex[] IgnoreIncorrectNames =
 	new Regex(@"\.DotSettings\.user$", RegexOptions.Compiled),
 	new Regex(@"\.psd$", RegexOptions.Compiled),
 	new Regex(@"\.userprefs$", RegexOptions.Compiled),
+	new Regex(@"\.xcf$", RegexOptions.Compiled),
 	new Regex(@"\.zip$", RegexOptions.Compiled),
 	new Regex(@"_(?:BACKUP|BASE|LOCAL)_\d+\.[a-z]+", RegexOptions.Compiled) // merge backups
 };

@@ -83,6 +83,9 @@ public bool ForBeta = true;
 /// <summary>Whether to normalize mod folders.</summary>
 public bool NormalizeFolders = true;
 
+/// <summary>Whether to allow normalizing a mod folder if it contains multiple mods. This is usually not intended (e.g. a download containing a SMAPI mod along with supporting content packs).</summary>
+public bool AllowNormalizingFoldersContainingMultipleMods = false;
+
 /// <summary>Whether to perform update checks for mods installed locally.</summary>
 public bool UpdateCheckLocal = true;
 
@@ -178,7 +181,7 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["TehPers.CoreMod"] = "@@Teh's Core Mod",
 
 	// fix invalid names
-	["jahangmar.CompostPestsCultivation"] = "Compost, Pets, and Cultivation", // commas stripped by wiki
+	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by wiki
 	["minervamaga.FeelingLucky"] = "Feeling Lucky", // ? replaced with _, just strip it instead
 
 	// fix duplicate IDs (Slime Minigame)
@@ -345,6 +348,31 @@ async Task Main()
 	if (this.NormalizeFolders)
 	{
 		Console.WriteLine("Normalising mod folders...");
+
+		// validate: don't allow normalizing multiple subfolders as separate mods (usually not intended)
+		if (!this.AllowNormalizingFoldersContainingMultipleMods)
+		{
+			var modsByTopFolder = new Dictionary<string, List<UserQuery.ModData>>();
+			foreach (ModData mod in mods)
+			{
+				string relativePath = PathUtilities.GetRelativePath(this.ModFolderPath, mod.Folder.Directory.FullName);
+				string mainFolderName = PathUtilities.GetSegments(relativePath, 2).First();
+
+				if (!modsByTopFolder.TryGetValue(mainFolderName, out List<UserQuery.ModData> modsInFolder))
+					modsByTopFolder[mainFolderName] = modsInFolder = new List<UserQuery.ModData>();
+
+				modsInFolder.Add(mod);
+			}
+			
+			string[] foldersWithMultipleMods = modsByTopFolder.Where(p => p.Value.Count > 1).Select(p => p.Key).ToArray();
+			if (foldersWithMultipleMods.Any())
+			{
+				foldersWithMultipleMods.Dump("Found folders containing multiple mods, which can't be normalized per current settings.");
+				return;
+			}
+		}
+
+		// normalize
 		foreach (ModData mod in mods)
 		{
 			// get mod info

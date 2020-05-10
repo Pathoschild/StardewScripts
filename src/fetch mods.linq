@@ -103,6 +103,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4429, // Separated layers for easy custom recoloring - For Gimp and Photoshop
 		2400, // SMAPI
 		2367, // SMAPI Templates [for Visual Studio]
+		5768, // SMUI - Stardew Mod Manager
 		782,  // Sound Modding Tools
 		1298, // Stardew Editor
 		3814, // Stardew Valley Hack Player for Name_Yusuf (???)
@@ -120,15 +121,19 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 
 		// mod translations
 		2825, // Auto-Grabber Mod (zh)
+		5879, // Child Age Up (zh)
 		4305, // Climates of Ferngill (pt)
+		4197, // Companion NPCs (pt)
 		5396, // Dwarvish (pt)
 		5428, // Dwarvish (zh)
+		5828, // Gift Taste Helper (tr)
 		3954, // Happy Birthday (pt)
-		4197, // Companion NPCs (pt)
 		4693, // Happy Birthday (pt)
 		4339, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
+		5871, // Mermaid Island (ko)
 		5328, // More Rings (pt)
+		5860, // More TV Channel (tr)
 		5329, // Prismatic Tools (pt)
 		5259, // Stardew Valley Expanded (de)
 		5788, // Stardew Valley Expanded (ja)
@@ -143,6 +148,10 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1128, // New Shirts and 2 new Skirts (includes Get Dressed)
 		3753, // Stardew Valley Expanded
 		2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
+
+		// replace files in other mods
+		5272, // Change Dialogues (Espanol) mas SVE
+		5846, // Fix bug for Looking for Love
 
 		// reposts
 		1765, // Console Commands
@@ -201,13 +210,18 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		17686, // BFAV Round Chickens mod (#3398) > Animals file to BFAV Json Update
 		16975, // BFAV Velociraptors (#4015) > Animals file to BFAV Json Update
 		9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
+		26637, // Hot Spring Farm Cave > Capitalist Dream Farm 2 compatible version
+		26638, // Hot Spring Farm Cave > Immersive Farm 2 Remastered (SVE) compatible version
+		26639, // Hot Spring Farm Cave > Rolling Hills Farm compatible version
 		13120, // Immersive Farm 2 (#1531)
 		13647, // Immersive Farm 2 (#1531)
-		25531, // Jen's Simple Greenhousr (#5344) > IF2 version
+		26065, // Jen's Simple Greenhouse (#5344) > IF2 version
+		26580, // Kzinti's Multi Room Green House (#5892) > optional map files
 		24554, // Project Moonlight Map Resources (#4699) - map files for other modders to use
 		12863, // Secret Gardens Greenhouse (#3067) > "" for Immersive Farm 2
 		24565, // Slime Pets for Adopt'n'Skin (#5497)
 		17756, // Stardew Valley Reimagined (#4119) > compatibility patches
+		26415, // Tiny Garden Farm (#4635) > no flower box
 		17692, // Trent's New Animals (#3634) > JSON Update
 
 		// legacy zipped Seasonal Immersion content packs
@@ -274,17 +288,18 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		10660, // katekatpixels Portrait Overhauls (#2602) > Content Patcher Version
 
 		// broken downloads
-		24652, // A Less Yellow Stardew (#2415) - invalid manifest version, reported in mod comments
+		19998, // Clint Removes Apron - Slightly Cuter Sprites (broken manifest)
 		22971, // DC Burger Krobus for CP (#4608) - missing comma in manifest, reported in mod bugs
-		25449, // Miku companion for NPC Adventures (#5666) - missing quote in manifest, reported in mod bugs
+		26428, // Lakoria's Vibrant Hair for Get Glam (#5906) - broken manifest, reported in mod bugs
 		22886, // Minecraft Mobs as Rarecrows (#5202) - missing quote in manifest, reported in mod bugs
 		24009, // Open Greenhouse (#5401) - missing quote in manifest, reported in mod bugs
 		20155, // Portraiture (#999) - zip file above mod folder
+		26283, // Void Pendant Replacer (#5881) - broken manifest, reported in mod bugs
 		24942, // Zen Garden Desert Obelisk (#5558) - unescaped quote in manifest, reported in mod bugs
 
 		// source code
 		22505, // Breath of Fire 3 Fishing sounds (#5105)
-		25660, // Input Fix (#5693) - includes separate .exe
+		26105, // Input Fix (#5693) - includes separate .exe
 		22503, // No More Accidental Exhaustion (#5113)
 		22518, // Tab Autoloot (#5115)
 		22519, // Instantly Eat Item (#5116)
@@ -292,6 +307,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		// other
 		10976, // Always On Server (#2677) > AutoHotKey Paste Every 2 Minutes
 		12257, // Always On Server (#2677) > Auto Restart SDV
+		26173, // Arknight Music (#5794) > Arknight Music Pack
 		13516, // Battle Royalley (#3199) > World File for Hosting
 		14839, // Battle Royalley (#3199), custom .bat/.command/.sh launch script
 		15901, // Better Crab Pots (#3159) > Config Updater
@@ -306,10 +322,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		16623, // Stardew In-Game Daily Planner > Example Plan
 		16660, // Stardew In-Game Daily Planner > Example Checklist
 		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
-		9495,  // Quieter Cat Dog and Keg (#2371), .wav files
-
-		// just broken
-		19998 // Clint Removes Apron - Slightly Cuter Sprites (broken manifest)
+		9495   // Quieter Cat Dog and Keg (#2371), .wav files
 	}
 };
 
@@ -475,7 +488,25 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 			)
 			.ToArray()
 		where invalid.Any()
-		select new { mod, invalid }
+		select new
+		{
+			mod.Name,
+			mod.Author,
+			mod.Version,
+			mod.Updated,
+			PageUrl = new Hyperlinq(mod.PageUrl),
+			Data = new Lazy<object>(() => mod),
+			InvalidFile = invalid.Select(p => new
+			{
+				p.ID,
+				p.Type,
+				p.DisplayName,
+				p.Version,
+				p.ModType,
+				p.ModError,
+				Data = new Lazy<object>(() => p)
+			})
+		}
 	)
 	.ToArray();
 }
