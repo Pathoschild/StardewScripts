@@ -321,8 +321,8 @@ async Task Main()
 		{
 			IncrementalProgressBar progress = new IncrementalProgressBar(fetchQueue.Count) { HideWhenCompleted = true }.Dump();
 
-			ISemanticVersion apiVersion = new SemanticVersion("3.0");
-			WebApiClient client = new WebApiClient("http://api.smapi.io/", apiVersion);
+			ISemanticVersion apiVersion = new SemanticVersion("3.5");
+			WebApiClient client = new WebApiClient("https://smapi.io/api/", apiVersion);
 			foreach (var pair in fetchQueue)
 			{
 				string id = pair.Key;
