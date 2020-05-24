@@ -126,6 +126,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4197, // Companion NPCs (pt)
 		5396, // Dwarvish (pt)
 		5428, // Dwarvish (zh)
+		6153, // Fighting with NPCs (tr)
 		5828, // Gift Taste Helper (tr)
 		3954, // Happy Birthday (pt)
 		4693, // Happy Birthday (pt)
@@ -135,6 +136,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5328, // More Rings (pt)
 		5860, // More TV Channel (tr)
 		5329, // Prismatic Tools (pt)
+		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		5259, // Stardew Valley Expanded (de)
 		5788, // Stardew Valley Expanded (ja)
 		5321, // Stardew Valley Expanded (ko)
@@ -158,6 +160,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1427, // Prairie King Made Easy
 		887,  // Reseed
 		1363, // Save Anywhere
+		6066, // Shop Anywhere
 		1077, // UI Mod Suite
 
 		// special cases
