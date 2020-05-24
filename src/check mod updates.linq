@@ -629,7 +629,7 @@ async Task Main()
 				issues.Add("unofficial version on wiki is older");
 			if (string.IsNullOrWhiteSpace(mod.UpdateKeys))
 				issues.Add("no valid update keys in manifest or wiki");
-			if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => new SemanticVersion(p.Key).CompareTo(new SemanticVersion(mod.Installed)) == 0))
+			if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => this.TryFormatVersion(p.Key) != this.TryFormatVersion(mod.Installed)))
 				issues.Add($"wiki maps local versions which don't match installed version.");
 			if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => new SemanticVersion(p.Key).IsOlderThan(mod.Latest)))
 				issues.Add($"wiki maps remote versions older than the latest available version.");
@@ -648,7 +648,7 @@ async Task Main()
 			else
 				versionHtml = $"<span style='{smallStyle} {fadedStyle}'>{mod.Latest}</span>";
 
-
+			// get report
 			return new
 			{
 				Name = Util.WithStyle(mod.Author != null ? $"{mod.Name}\n  by {mod.Author}" : mod.Name, smallStyle),
@@ -793,6 +793,15 @@ T CacheOrFetch<T>(string key, Func<T> fetch)
 		this.Cache.Add(key, json, this.CacheTime);
 		return data;
 	}
+}
+
+/// <summary>Get a normalized representation of a version if it's parseable.</summary>
+/// <param name="version">The raw version to parse.</param>
+private string TryFormatVersion(string version)
+{
+	return SemanticVersion.TryParse(version, allowNonStandard: true, out ISemanticVersion parsed)
+		? parsed.ToString()
+		: version?.Trim();
 }
 
 /// <summary>The aggregated data for a mod.</summary>
