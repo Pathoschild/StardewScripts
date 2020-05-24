@@ -631,7 +631,7 @@ async Task Main()
 				issues.Add("no valid update keys in manifest or wiki");
 			if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => this.TryFormatVersion(p.Key) != this.TryFormatVersion(mod.Installed)))
 				issues.Add($"wiki maps local versions which don't match installed version.");
-			if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => new SemanticVersion(p.Key).IsOlderThan(mod.Latest)))
+			if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => SemanticVersion.TryParse(p.Key, true, out _) && new SemanticVersion(p.Key, true).IsOlderThan(mod.Latest)))
 				issues.Add($"wiki maps remote versions older than the latest available version.");
 			issues.AddRange(majorUpdateCheckErrors);
 
