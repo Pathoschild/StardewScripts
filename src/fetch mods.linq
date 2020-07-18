@@ -69,23 +69,12 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.ModDrop] = new HashSet<int>
 	{
+		// mod translations
+		800761, // Change Dialogue (es)
+
 		// reposts
 		509776, // Object Progress Bars
 		509780, // Running Late
-
-		// reposts (spacechase0 mods accidentally posted twice)
-		771513,
-		771514,
-		771515,
-		771516,
-		771529,
-		771530,
-		771531,
-		771532,
-		771546,
-		771548,
-		771550,
-		771583,
 
 		// special cases
 		580803, // PPJA Home of Abandoned Mods - CFR Conversions
@@ -127,14 +116,18 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5396, // Dwarvish (pt)
 		5428, // Dwarvish (zh)
 		6153, // Fighting with NPCs (tr)
+		6142, // Garden Village Shops (tr)
 		5828, // Gift Taste Helper (tr)
 		3954, // Happy Birthday (pt)
 		4693, // Happy Birthday (pt)
+		6111, // Immersive Characters - Shane (es)
 		4339, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
 		5871, // Mermaid Island (ko)
 		5328, // More Rings (pt)
 		5860, // More TV Channel (tr)
+		6245, // Nice Messages (pt)
+		6295, // Nice Messages (ru)
 		5329, // Prismatic Tools (pt)
 		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		5259, // Stardew Valley Expanded (de)
@@ -142,7 +135,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5321, // Stardew Valley Expanded (ko)
 		4206, // Stardew Valley Expanded (pt)
 		4325, // Stardew Valley Expanded (zh)
+		6356, // Town School Functions (zh)
 		4370, // Trent's New Animals (pt)
+		6198, // Working Fireplace (tr)
 
 		// mods which include a copy of another mod for some reason
 		3496, // Farm Extended (content pack with a copy of Farm Type Manager)
@@ -240,7 +235,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		8871,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
 
 		// Better Farm Animal Variety pack (files to merge into BFAV's config file)
-		14395, // Gray Chicken (#3416)
 		14394, // Harvest Moon Cows (#3419)
 		14365, // Yoshis (#3420)
 		14366, // Zelda LTTP Lifestock Animals (#3421)
@@ -302,7 +296,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 
 		// source code
 		22505, // Breath of Fire 3 Fishing sounds (#5105)
-		26105, // Input Fix (#5693) - includes separate .exe
 		22503, // No More Accidental Exhaustion (#5113)
 		22518, // Tab Autoloot (#5115)
 		22519, // Instantly Eat Item (#5116)
@@ -320,6 +313,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		21237, // Decrafting Mod (#4158) > source code
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
+		29223, // Input Fix (#5693) - includes separate .exe
 		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
 		18065, // Spouse Rooms Redesigned (#828) > All Options
 		16623, // Stardew In-Game Daily Planner > Example Plan
