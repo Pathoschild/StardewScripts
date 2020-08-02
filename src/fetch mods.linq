@@ -83,6 +83,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	{
 		// non-mod tools
 		3431, // BFAV JSON Update [tool]
+		6243, // Content Patcher Language Adapter
 		4241, // Dreamy Valley Reshade
 		1080, // Easy XNB for Xnb Node
 		4701, // Miss Coriel's NPC Creator
@@ -108,6 +109,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1798, // Twelfth Night - Gameboy Pocket - ReShade
 		2152, // Updated XACT file for audio modding [.xap file],
 
+		// mod packs
+		6204, // (BFAV) All Compiled Files
+
 		// mod translations
 		2825, // Auto-Grabber Mod (zh)
 		5879, // Child Age Up (zh)
@@ -116,6 +120,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5396, // Dwarvish (pt)
 		5428, // Dwarvish (zh)
 		6153, // Fighting with NPCs (tr)
+		6157, // Garden Village Shops (ru)
+		6500, // Garden Village Shops (ru)
 		6142, // Garden Village Shops (tr)
 		5828, // Gift Taste Helper (tr)
 		3954, // Happy Birthday (pt)
@@ -197,6 +203,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		// replacement files (e.g. tbin to drop into downloaded mod)
 		12282, // Ace's Expanded Farms MTN (#2711) > MelodicLullaby Less Saturated Valley Compatibility
 		2051,  // Add a Room and Attic (#379)
+		29563, // Ayeisha - The Postal Worker (#6427) > Ayeisha Alternative Portrait
 		16992, // Bears in the Barn for BFAV (#4000) > BFAV JSON Update data file
 		17704, // Better Woods (#3995) > Selective compatibility Immersive Farm 2
 		17688, // BFAV Bulls (#4136) > BFAV JSON Update
@@ -287,10 +294,11 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		// broken downloads
 		19998, // Clint Removes Apron - Slightly Cuter Sprites (broken manifest)
 		22971, // DC Burger Krobus for CP (#4608) - missing comma in manifest, reported in mod bugs
-		26428, // Lakoria's Vibrant Hair for Get Glam (#5906) - broken manifest, reported in mod bugs
+		29513, // KL's Music Pack (#6517) - missing brackets in manifest, reported in mod comments + bugs
 		22886, // Minecraft Mobs as Rarecrows (#5202) - missing quote in manifest, reported in mod bugs
 		24009, // Open Greenhouse (#5401) - missing quote in manifest, reported in mod bugs
 		20155, // Portraiture (#999) - zip file above mod folder
+		28109, // Upgraded Seed Maker Fantasy Crops Addon (#6284) - broken manifest, reported in mod comments
 		26283, // Void Pendant Replacer (#5881) - broken manifest, reported in mod bugs
 		24942, // Zen Garden Desert Obelisk (#5558) - unescaped quote in manifest, reported in mod bugs
 
@@ -299,6 +307,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		22503, // No More Accidental Exhaustion (#5113)
 		22518, // Tab Autoloot (#5115)
 		22519, // Instantly Eat Item (#5116)
+
+		// non-ignored files in root of download
+		27391, // Floral Taxonomy ("names_chart")
 
 		// other
 		10976, // Always On Server (#2677) > AutoHotKey Paste Every 2 Minutes
@@ -311,6 +322,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
 		5721,  // Chao Replacement for Cat (#1524), .wav files
 		21237, // Decrafting Mod (#4158) > source code
+		29536, // Garden Village Shops (6113), has dot-ignored folders
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
 		29223, // Input Fix (#5693) - includes separate .exe
