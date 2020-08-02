@@ -408,13 +408,14 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 		where
 			folder.ModType == ModType.Smapi
 			&& !string.IsNullOrWhiteSpace(folder.ModID)
-			&& (
-				!manifestIDs.Contains(folder.ModID)
-				|| !siteIDs[mod.Site].Contains(mod.ID) // deliberately crash if the site isn't defined, so we can fix that
-			)
 			&& !this.ShouldIgnoreForValidation(mod.Site, mod.ID, folder.ID)
-		let manifest = folder.RawFolder.Value.Manifest
 
+		let wikiHasManifestId = manifestIDs.Contains(folder.ModID)
+		let wikiHasSiteId = siteIDs[mod.Site].Contains(mod.ID)
+
+		where (!wikiHasManifestId || !wikiHasSiteId)
+
+		let manifest = folder.RawFolder.Value.Manifest
 		let names =
 			(
 				from name in new[] { folder.ModDisplayName?.Trim(), mod.Name?.Trim() }
@@ -423,7 +424,6 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 				select name
 			)
 			.Distinct(StringComparer.InvariantCultureIgnoreCase).OrderBy(p => p)
-
 		let authorNames =
 			(
 				from name in
@@ -450,6 +450,11 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 			FileType = folder.ModType,
 			folder.ModID,
 			folder.ModVersion,
+			Missing = string.Join(", ",
+				from label in new[] { !wikiHasManifestId ? "manifest ID" : null, !wikiHasSiteId ? "site ID" : null }
+				where label != null
+				select label
+			),
 			UpdateKeys = new Lazy<string[]>(() => manifest.UpdateKeys),
 			Manifest = new Lazy<Manifest>(() => manifest),
 			Mod = new Lazy<ParsedMod>(() => mod),
