@@ -994,6 +994,23 @@ private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
 	Thread.Sleep(unblockTime);
 }
 
+/// <summary>Get a clone of the input as a raw data dictionary.</summary>
+/// <param name="data">The input data to clone.</param>
+public static Dictionary<string, object> CloneToDictionary(object data)
+{
+	switch (data)
+	{
+		case null:
+			return new Dictionary<string, object>();
+
+		case JObject obj:
+			return obj.DeepClone().ToObject<Dictionary<string, object>>();
+
+		default:
+			return JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(data));
+	}
+}
+
 /// <summary>Metadata for a mod from any mod site.</summary>
 class GenericMod
 {
@@ -1025,7 +1042,7 @@ class GenericMod
 	public DateTimeOffset Updated { get; set; }
 
 	/// <summary>The original data from the mod site.</summary>
-	public object RawData { get; set; }
+	public Dictionary<string, object> RawData { get; set; }
 
 	/// <summary>The available mod downloads.</summary>
 	public GenericFile[] Files { get; set; }
@@ -1058,7 +1075,7 @@ class GenericMod
 		this.PageUrl = pageUrl;
 		this.Version = version;
 		this.Updated = updated;
-		this.RawData = rawData;
+		this.RawData = UserQuery.CloneToDictionary(rawData);
 		this.Files = files;
 	}
 }
@@ -1133,7 +1150,7 @@ public class GenericFile
 	public string Version { get; set; }
 
 	/// <summary>The original file data from the mod site.</summary>
-	public object RawData { get; set; }
+	public Dictionary<string, object> RawData { get; set; }
 
 
 	/*********
@@ -1156,7 +1173,7 @@ public class GenericFile
 		this.DisplayName = displayName;
 		this.FileName = fileName;
 		this.Version = version;
-		this.RawData = rawData;
+		this.RawData = UserQuery.CloneToDictionary(rawData);
 	}
 }
 
@@ -1392,8 +1409,7 @@ class CurseForgeApiClient : IModSiteClient
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
 	public Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
-		JObject rawFile = (JObject)file.RawData;
-		string downloadUrl = rawFile["downloadUrl"].Value<string>();
+		string downloadUrl = (string)file.RawData["downloadUrl"];
 
 		return Task.FromResult(new[] { new Uri(downloadUrl) });
 	}
