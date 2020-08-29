@@ -1273,8 +1273,9 @@ interface IModSiteClient
 	*********/
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
+	/// <param name="endWith">The maximum mod ID to include.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<int[]> GetPossibleModIdsAsync(int? startFrom = null);
+	Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null);
 
 	/// <summary>Get all mod IDs updated since the given date.</summary>
 	/// <param name="startFrom">The minimum date from which to start fetching.</param>
@@ -1325,8 +1326,9 @@ class CurseForgeApiClient : IModSiteClient
 	*********/
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
+	/// <param name="endWith">The maximum mod ID to include.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null)
+	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null)
 	{
 		return this.GetModsUpdatedSinceAsync(DateTimeOffset.MinValue);
 	}
@@ -1519,8 +1521,9 @@ class ModDropApiClient : IModSiteClient
 	*********/
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
+	/// <param name="endWith">The maximum mod ID to include.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null)
+	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null)
 	{
 		return this.GetModsUpdatedSinceAsync(DateTimeOffset.MinValue);
 	}
@@ -1729,13 +1732,14 @@ class NexusApiClient : IModSiteClient
 
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
+	/// <param name="endWith">The maximum mod ID to include.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<int[]> GetPossibleModIdsAsync(int? startFrom = null)
+	public async Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null)
 	{
 		try
 		{
 			int minID = Math.Max(1, startFrom ?? 1);
-			int maxID = (await this.Nexus.Mods.GetLatestAdded(this.GameKey)).Max(p => p.ModID);
+			int maxID = endWith ?? (await this.Nexus.Mods.GetLatestAdded(this.GameKey)).Max(p => p.ModID);
 
 			if (minID > maxID)
 				return new int[0];
@@ -1807,7 +1811,7 @@ class NexusApiClient : IModSiteClient
 					{
 						FileCategory.Main => GenericFileType.Main,
 						FileCategory.Optional => GenericFileType.Optional,
-						_ => throw new InvalidOperationException($"Unknown file category from Nexus: {file.Category}")
+						_ => throw new InvalidOperationException($"Unknown file category from Nexus ({file.Category}) for mod id {id}")
 					};
 					return new GenericFile(id: file.FileID, type: type, displayName: file.Name, fileName: file.FileName, version: file.FileVersion, rawData: file);
 				})
