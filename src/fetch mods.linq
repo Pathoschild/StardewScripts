@@ -86,12 +86,14 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6243, // Content Patcher Language Adapter
 		4241, // Dreamy Valley Reshade
 		1080, // Easy XNB for Xnb Node
+		6614, // Map Predictor
 		4701, // Miss Coriel's NPC Creator
 		1213, // Natural Color - Reshade
 		21,   // SDVMM/Stardew Valley Mod Manager
 		1022, // SDV MultiTweak
 		4429, // Separated layers for easy custom recoloring - For Gimp and Photoshop
 		2400, // SMAPI
+		6726, // SMAPI Automatic Launcher
 		2367, // SMAPI Templates [for Visual Studio]
 		5768, // SMUI - Stardew Mod Manager
 		782,  // Sound Modding Tools
@@ -126,6 +128,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5828, // Gift Taste Helper (tr)
 		3954, // Happy Birthday (pt)
 		4693, // Happy Birthday (pt)
+		6693, // Happy Birthday (pt)
 		6111, // Immersive Characters - Shane (es)
 		4339, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
@@ -136,6 +139,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6295, // Nice Messages (ru)
 		5329, // Prismatic Tools (pt)
 		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
+		6424, // Shadow Cove (zh)
 		5259, // Stardew Valley Expanded (de)
 		5788, // Stardew Valley Expanded (ja)
 		5321, // Stardew Valley Expanded (ko)
@@ -143,6 +147,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4325, // Stardew Valley Expanded (zh)
 		6356, // Town School Functions (zh)
 		4370, // Trent's New Animals (pt)
+		6637, // Underground Secrets (ru)
 		6198, // Working Fireplace (tr)
 
 		// mods which include a copy of another mod for some reason
@@ -215,6 +220,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		17686, // BFAV Round Chickens mod (#3398) > Animals file to BFAV Json Update
 		16975, // BFAV Velociraptors (#4015) > Animals file to BFAV Json Update
 		9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
+		30078, // Furry Random Visitors (#6611), replacement files for Random Visitors
 		26637, // Hot Spring Farm Cave > Capitalist Dream Farm 2 compatible version
 		26638, // Hot Spring Farm Cave > Immersive Farm 2 Remastered (SVE) compatible version
 		26639, // Hot Spring Farm Cave > Rolling Hills Farm compatible version
@@ -325,13 +331,13 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		29536, // Garden Village Shops (6113), has dot-ignored folders
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
-		29223, // Input Fix (#5693) - includes separate .exe
 		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
 		18065, // Spouse Rooms Redesigned (#828) > All Options
 		16623, // Stardew In-Game Daily Planner > Example Plan
 		16660, // Stardew In-Game Daily Planner > Example Checklist
 		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
-		9495   // Quieter Cat Dog and Keg (#2371), .wav files
+		9495,  // Quieter Cat Dog and Keg (#2371), .wav files
+		30453  // Winter Crops (#5976) > Crop Info
 	}
 };
 

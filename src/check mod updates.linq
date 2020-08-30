@@ -167,6 +167,7 @@ public IDictionary<string, string> OverrideModPageUrls = new Dictionary<string, 
 public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
 {
 	// prefixes for testing convenience
+	["aedenthorn.MobilePhone"] = "@Mobile Phone",
 	["bcmpinc.StardewHack"] = "@@Stardew Hack",
 	["bwdyworks"] = "@Bwdyworks",
 	["cat.Pong"] = "(1) Pong",
@@ -175,6 +176,7 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["Entoarox.EntoaroxFramework"] = "@Entoarox Framework",
 	["Ilyaki.BattleRoyale"] = "(2) Battle Royalley",
 	["Platonymous.ArcadePong"] = "(1) Arcade Pong",
+	["Platonymous.PlatoTK"] = "@@PlatoTK",
 	["Platonymous.Toolkit"] = "@@PyTK",
 	["spacechase0.JsonAssets"] = "@@Json Assets",
 	["spacechase0.SpaceCore"] = "@@SpaceCore",
