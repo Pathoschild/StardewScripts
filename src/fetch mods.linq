@@ -69,6 +69,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.ModDrop] = new HashSet<int>
 	{
+		// non-mod tools
+		826725, // Stardew Valley Money Mod Tool
+	
 		// mod translations
 		800761, // Change Dialogue (es)
 
@@ -97,6 +100,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		2367, // SMAPI Templates [for Visual Studio]
 		5768, // SMUI - Stardew Mod Manager
 		782,  // Sound Modding Tools
+		6802, // Stardew Bundle Mod Maker
 		1298, // Stardew Editor
 		3814, // Stardew Valley Hack Player for Name_Yusuf (???)
 		4536, // Stardew Valley Mod Manager 2
@@ -104,6 +108,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		3916, // Stardew Valley Money Hack
 		3787, // Stardew Valley Planner
 		127,  // Stardew Valley Save Editor
+		6807, // Stardew Valley Simple Trainer
 		2451, // StardewZem - Very Easy XNB Merger
 		337,  // SVPM/Stardew Valley Package Manager
 		1832, // Twelfth Night - American Gothic - ReShade
@@ -122,6 +127,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5396, // Dwarvish (pt)
 		5428, // Dwarvish (zh)
 		6153, // Fighting with NPCs (tr)
+		6135, // Garden Village Shops (ko)
 		6157, // Garden Village Shops (ru)
 		6500, // Garden Village Shops (ru)
 		6142, // Garden Village Shops (tr)
@@ -158,6 +164,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
 
 		// replace files in other mods
+		6852, // A Better Backyard - for SVE Immersive Farm 2
 		5272, // Change Dialogues (Espanol) mas SVE
 		5846, // Fix bug for Looking for Love
 
@@ -328,7 +335,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
 		5721,  // Chao Replacement for Cat (#1524), .wav files
 		21237, // Decrafting Mod (#4158) > source code
-		29536, // Garden Village Shops (6113), has dot-ignored folders
+		31160, // Garden Village Shops (6113), has dot-ignored folders
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
 		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
