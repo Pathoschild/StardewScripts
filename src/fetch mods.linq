@@ -226,6 +226,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		17684, // BFAV More Blue Chickens (#3400) > file for BFAV Json Update
 		17686, // BFAV Round Chickens mod (#3398) > Animals file to BFAV Json Update
 		16975, // BFAV Velociraptors (#4015) > Animals file to BFAV Json Update
+		31538, // Blanche -The Librarian in Pelican Town (#6469) > Blanche Halloween Pack
 		9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
 		30078, // Furry Random Visitors (#6611), replacement files for Random Visitors
 		26637, // Hot Spring Farm Cave > Capitalist Dream Farm 2 compatible version
@@ -335,7 +336,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
 		5721,  // Chao Replacement for Cat (#1524), .wav files
 		21237, // Decrafting Mod (#4158) > source code
-		31160, // Garden Village Shops (6113), has dot-ignored folders
+		31588, // Garden Village Shops (6113), has dot-ignored folders
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
 		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
@@ -344,6 +345,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		16660, // Stardew In-Game Daily Planner > Example Checklist
 		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
 		9495,  // Quieter Cat Dog and Keg (#2371), .wav files
+		31621, // Warp Binder (#6892) > Demo Warps
 		30453  // Winter Crops (#5976) > Crop Info
 	}
 };
