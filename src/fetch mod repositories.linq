@@ -39,7 +39,10 @@ private readonly Regex[] IgnoreLegitNames =
 
 	// files
 	new Regex(@"^\.gitattributes$", RegexOptions.Compiled),
-	new Regex(@"^\.gitignore$", RegexOptions.Compiled)
+	new Regex(@"^\.gitignore$", RegexOptions.Compiled),
+	new Regex(@"\.psd$", RegexOptions.Compiled),
+	new Regex(@"\.wav$", RegexOptions.Compiled),
+	new Regex(@"\.xcf$", RegexOptions.Compiled)
 };
 
 /// <summary>Patterns matching valid file or folder names that shouldn't be in Git.</summary>
@@ -55,9 +58,7 @@ private readonly Regex[] IgnoreIncorrectNames =
 	// files
 	new Regex(@"\.csproj\.user$", RegexOptions.Compiled),
 	new Regex(@"\.DotSettings\.user$", RegexOptions.Compiled),
-	new Regex(@"\.psd$", RegexOptions.Compiled),
 	new Regex(@"\.userprefs$", RegexOptions.Compiled),
-	new Regex(@"\.xcf$", RegexOptions.Compiled),
 	new Regex(@"\.zip$", RegexOptions.Compiled),
 	new Regex(@"_(?:BACKUP|BASE|LOCAL)_\d+\.[a-z]+", RegexOptions.Compiled) // merge backups
 };
