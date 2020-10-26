@@ -19,27 +19,43 @@ To use this script:
 
 1. Open this file in LINQPad. (It's a small app: https://www.linqpad.net/.)
 2. Change the settings under 'configuration' below.
-3. Click 'run' to generate the translated event.
+3. Click the execute (▶) button to generate the translated event.
 
 
 Event file format
 -------------------------------------------------
-The script automatically recognizes the two common formats:
+The script automatically recognizes the three common formats:
 
-* Raw event files loaded using "Action": "Load":
+1. Raw event files loaded using "Action": "Load":
     {
-	   "event A": "script",
-	   "event B": "script",
-	   ...
+       "event A": "script",
+       "event B": "script",
+       ...
     }
 
-* Legacy files loaded using "Action": "EditData" with FromFile:
+2. A file loaded via "Action": "Include":
     {
-	   "Entries": {
-	      "event A": "script",
-	      "event B": "script",
-	      ...
-	   }
+        "Changes": [
+            {
+	        "Action": "EditData",
+	        "Target": "Data/Events/Town",
+		"Entries": {
+		    "event A": "script",
+		    "event B": "script",
+		    ...
+		}
+	    },
+	    ...
+        ]
+    }
+
+3. A Legacy file loaded using "Action": "EditData" with FromFile:
+    {
+       "Entries": {
+          "event A": "script",
+          "event B": "script",
+          ...
+       }
     }
 
 If you have events in a different format, you can copy & paste them into the raw event file format
@@ -53,7 +69,7 @@ to use this script.
 ** Common settings
 ***/
 /// <summary>The full path to the event script to parse.</summary>
-readonly string EventFile = @"C:\Users\patho\Downloads\example_event.json";
+readonly string EventFile = @"C:\Users\patho\Downloads\example_event.json"
 
 /// <summary>The internal name for the NPC, if this is a single-NPC content pack. This allows more readable translation keys like "4hearts" instead of using the event ID.</summary>
 readonly string ForNpc = null;
@@ -147,6 +163,16 @@ private bool TryTranslateCommand(string command, TranslationDictionary translati
 	string commandName = command.Split(' ').FirstOrDefault()?.ToLower();
 	switch (commandName)
 	{
+		case "end":
+			newCommand = Regex.Replace(
+				command,
+				@"^(end dialogue(?:WarpOut)? [a-z0-9]+) ""(.+)""",
+				match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
+				RegexOptions.IgnoreCase
+			);
+		
+			break;
+	
 		case "message":
 			newCommand = Regex.Replace(
 				command,
@@ -254,6 +280,22 @@ private IDictionary<string, string> ParseRawFile(string path, Encoding fileEncod
 	{
 		JProperty entries = json.Property("Entries");
 		return entries.Value.ToObject<Dictionary<string, string>>();
+	}
+	
+	// Include patch format
+	if (json.Count == 1 && json.Property("Changes")?.Value is JArray patches)
+	{
+		IDictionary<string, string> events = new Dictionary<string, string>();
+		foreach (JObject patch in patches.Values<JObject>())
+		{
+			var entries = patch.Property("Entries")?.Value.ToObject<Dictionary<string, string>>();
+			if (entries != null)
+			{
+				foreach (var entry in entries)
+					events[entry.Key] = entry.Value;
+			}
+		}
+		return events;
 	}
 
 	// Load format
