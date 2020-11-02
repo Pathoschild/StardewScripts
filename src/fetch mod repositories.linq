@@ -217,15 +217,8 @@ async Task Main()
 		}
 		if (!cloned)
 			continue;
-
-		// write latest commit
 		string lastCommit = await this.ExecuteShellAsync("git", "log -1", workingDir: dir.FullName);
-		File.WriteAllText(
-			Path.Combine(dir.FullName, "_metadata.txt"),
-			$"url:\n   {repo.GitUrl}\n\n"
-			+ $"mods:\n   {string.Join("\n   ", repo.Mods.Select(p => p.Name.FirstOrDefault()).OrderBy(p => p))}\n\n"
-			+ $"latest commit:\n   {string.Join("\n   ", lastCommit.Replace("\r", "").Split('\n'))}"
-		);
+		string repoUrl = repo.GetWebUrl();
 
 		// get patterns to ignore
 		IEnumerable<Regex> ignorePatterns = this.IgnoreLegitNames.Concat(this.IgnoreIncorrectNames);
@@ -241,6 +234,22 @@ async Task Main()
 			.ToArray();
 		if (logDeletedEntries.Any())
 			Helper.Print($"      deleted: {string.Join(", ", logDeletedEntries.Select(p => p.FullName.Substring(dir.FullName.Length + 1)))}.", Severity.Warning);
+
+		// add file headers to avoid confusion
+		foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
+		{
+			string header = this.GetFileHeader(file.Extension?.ToLower(), repoUrl);
+			if (header != null)
+				File.WriteAllText(file.FullName, string.Concat(header, "\n\n", File.ReadAllText(file.FullName)));
+		}
+
+		// write metadata file
+		File.WriteAllText(
+			Path.Combine(dir.FullName, "_metadata.txt"),
+			$"url:\n   {repo.GitUrl}\n\n"
+			+ $"mods:\n   {string.Join("\n   ", repo.Mods.Select(p => p.Name.FirstOrDefault()).OrderBy(p => p))}\n\n"
+			+ $"latest commit:\n   {string.Join("\n   ", lastCommit.Replace("\r", "").Split('\n'))}"
+		);
 	}
 	Console.WriteLine();
 
@@ -250,6 +259,60 @@ async Task Main()
 /*********
 ** Private methods
 *********/
+/// <summary>Get the file header to prepend to a file, if any.</summary>
+/// <param name="extension">The file extension for which to get a header.</param>
+/// <param name="repoUrl">The git repository URL.</param>
+private string GetFileHeader(string extension, string repoUrl)
+{
+	switch (extension)
+	{
+		case ".cs":
+		case ".js":
+		case ".json":
+		case ".txt":
+		case ".xml":
+			return string.Join("\n",
+				$"/*************************************************",
+				$"**",
+				$"** You're viewing a file in the SMAPI mod dump, which contains a copy of every open-source SMAPI mod",
+				$"** for queries and analysis.",
+				$"**",
+				$"** This is *not* the original file, and not necessarily the latest version.",
+				$"** Source repository: {repoUrl}",
+				$"**",
+				$"*************************************************/"
+			);
+
+		case ".md":
+			return string.Join("\n",
+				$"**You're viewing a file in the SMAPI mod dump, which contains a copy of every open-source SMAPI mod",
+				$"for queries and analysis.**",
+				$"",
+				$"**This is _not_ the original file, and not necessarily the latest version.**  ",
+				$"**Source repository: {repoUrl}**",
+				$"",
+				$"----"
+			);
+
+		case ".yaml":
+		case ".yml":
+			return string.Join("\n",
+				$"##################################################",
+				$"##",
+				$"## You're viewing a file in the SMAPI mod dump, which contains a copy of every open-source SMAPI mod",
+				$"## for queries and analysis.",
+				$"##",
+				$"## This is *not* the original file, and not necessarily the latest version.",
+				$"## Source repository: {repoUrl}",
+				$"##",
+				$"##################################################"
+			);
+
+		default:
+			return null;
+	}
+}
+
 /// <summary>Get a percentage string for display.</summary>
 /// <param name="amount">The actual amount.</param>
 /// <param name="total">The total possible amount.</param>
@@ -411,6 +474,15 @@ class ModRepository
 			name = name.Replace(invalidCh, '_');
 
 		return name;
+	}
+	
+	/// <summary>Get the repository's web URL.</summary>
+	public string GetWebUrl()
+	{
+		string url = this.GitUrl;
+		if (url.EndsWith(".git"))
+			url = url.Substring(0, url.Length - 4);
+		return url;
 	}
 
 
