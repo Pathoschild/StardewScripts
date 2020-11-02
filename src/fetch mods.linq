@@ -137,6 +137,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6693, // Happy Birthday (pt)
 		6111, // Immersive Characters - Shane (es)
 		4339, // Lunar Disturbances (pt)
+		7082, // Lunar Disturbances (pt)
 		4265, // Magic (pt)
 		5871, // Mermaid Island (ko)
 		5328, // More Rings (pt)
