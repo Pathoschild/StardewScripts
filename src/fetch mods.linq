@@ -1936,12 +1936,14 @@ class NexusApiClient : IModSiteClient
 		// calculate update period
 		string updatePeriod = null;
 		{
-			TimeSpan duration = DateTimeOffset.UtcNow - startFrom;
+			DateTimeOffset now = DateTimeOffset.UtcNow;
+			TimeSpan duration = now - startFrom;
+
 			if (duration.TotalDays <= 1)
 				updatePeriod = "1d";
 			else if (duration.TotalDays <= 7)
 				updatePeriod = "1w";
-			else if (duration.TotalDays <= 28)
+			else if (startFrom >= now.AddMonths(-1))
 				updatePeriod = "1m";
 			else
 				throw new NotSupportedException($"The given date ({startFrom}) can't be used with {this.GetType().Name} because it exceeds the maximum update period of 28 days for the Nexus API.");
