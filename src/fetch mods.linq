@@ -60,7 +60,8 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	//null;
-	site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(7));
+	site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2020, 12, 18), TimeSpan.Zero)); // last run
+	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
 /// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
@@ -84,6 +85,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 
 		// special cases
 		580803, // PPJA Home of Abandoned Mods - CFR Conversions
+		624116  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
@@ -138,6 +140,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		3954, // Happy Birthday (pt)
 		4693, // Happy Birthday (pt)
 		6693, // Happy Birthday (pt)
+		7233, // Happy Birthday (tr)
 		6111, // Immersive Characters - Shane (es)
 		4339, // Lunar Disturbances (pt)
 		7082, // Lunar Disturbances (pt)
@@ -154,6 +157,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5788, // Stardew Valley Expanded (ja)
 		5321, // Stardew Valley Expanded (ko)
 		4206, // Stardew Valley Expanded (pt)
+		6332, // Stardew Valley Expanded (tr)
 		4325, // Stardew Valley Expanded (zh)
 		6356, // Town School Functions (zh)
 		4370, // Trent's New Animals (pt)
@@ -183,7 +187,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		// special cases
 		4707, // Cooler Abigail Character Mod (XNB mod with a .mdp file)
 		4181, // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
-		4109 // PPJA Home of Abandoned Mods - CFR Conversions
+		4109, // PPJA Home of Abandoned Mods - CFR Conversions
+		7244, // Mobile Phone content pack: Ringtone and Wallpaper for Putin
+		3294  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	}
 };
 
@@ -340,7 +346,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
 		5721,  // Chao Replacement for Cat (#1524), .wav files
 		21237, // Decrafting Mod (#4158) > source code
-		31588, // Garden Village Shops (6113), has dot-ignored folders
+		32369, // Garden Village Shops (6113), has dot-ignored folders
 		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
 		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
 		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
