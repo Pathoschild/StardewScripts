@@ -43,7 +43,10 @@
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
 {
 	new CurseForgeApiClient(),
-	new ModDropApiClient(),
+	new ModDropApiClient(
+		username: null,
+		password: null
+	),
 	new NexusApiClient(
 		apiKey: "",
 		appName: "Pathoschild",
@@ -368,6 +371,10 @@ readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
 async Task Main()
 {
 	Directory.CreateDirectory(this.RootPath);
+
+	// init clients
+	foreach (var site in this.ModSites)
+		await site.AuthenticateAsync();
 
 	// fetch mods
 	HashSet<string> unpackMods = new HashSet<string>();
@@ -1287,6 +1294,9 @@ interface IModSiteClient
 	/*********
 	** Methods
 	*********/
+	/// <summary>Authenticate with the mod site if needed.</summary>
+	Task AuthenticateAsync();
+	
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
 	/// <param name="endWith">The maximum mod ID to include.</param>
@@ -1340,6 +1350,12 @@ class CurseForgeApiClient : IModSiteClient
 	/*********
 	** Public methods
 	*********/
+	/// <summary>Authenticate with the mod site if needed.</summary>
+	public Task AuthenticateAsync()
+	{
+		return Task.CompletedTask;
+	}
+
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
 	/// <param name="endWith">The maximum mod ID to include.</param>
@@ -1523,6 +1539,12 @@ class ModDropApiClient : IModSiteClient
 
 	/// <summary>The ModDrop API client.</summary>
 	private IClient ModDrop = new FluentClient("https://www.moddrop.com/api");
+	
+	/// <summary>The username with which to log in, if any.</summary>
+	private readonly string Username;
+
+	/// <summary>The password with which to log in, if any.</summary>
+	private readonly string Password;
 
 
 	/*********
@@ -1535,6 +1557,33 @@ class ModDropApiClient : IModSiteClient
 	/*********
 	** Public methods
 	*********/
+	/// <summary>Construct an instance.</summary>
+	/// <param name="username">The username with which to log in, if any.</param>
+	/// <param name="password">The password with which to log in, if any.</param>
+	public ModDropApiClient(string username, string password)
+	{
+		this.Username = username;
+		this.Password = password;
+	}
+
+	/// <summary>Authenticate with the mod site if needed.</summary>
+	public async Task AuthenticateAsync()
+	{
+		if (this.Username == null || this.Password == null)
+			return;
+
+		var response = await this.ModDrop
+			.PostAsync("v1/auth/login")
+			.WithBasicAuthentication(this.Username, this.Password)
+			.AsRawJsonObject();
+
+		string apiToken = response["apiToken"].Value<string>();
+		if (string.IsNullOrEmpty(apiToken))
+			throw new InvalidOperationException($"Authentication with the ModDrop API failed:\n{response.ToString()}");
+
+		this.ModDrop.AddDefault(p => p.WithHeader("Authorization", apiToken));
+	}
+
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
 	/// <param name="endWith">The maximum mod ID to include.</param>
@@ -1744,6 +1793,12 @@ class NexusApiClient : IModSiteClient
 	public NexusApiClient(string apiKey, string appName, string appVersion)
 	{
 		this.Nexus = new NexusClient(apiKey, appName, appVersion);
+	}
+
+	/// <summary>Authenticate with the mod site if needed.</summary>
+	public Task AuthenticateAsync()
+	{
+		return Task.CompletedTask;
 	}
 
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
