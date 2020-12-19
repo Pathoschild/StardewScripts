@@ -613,33 +613,40 @@ async Task Main()
 
 			const string smallStyle = "font-size: 0.8em;";
 			const string errorStyle = "color: red; font-weight: bold;";
+			const string warnStyle = "color: yellow; font-weight: bold;";
 			const string fadedStyle = "color: gray;";
 
 			// get mod info
 			bool highlightStatus = mod.WikiStatus != null && this.HighlightStatuses.Contains(mod.WikiStatus.Value);
-			string[] majorUpdateCheckErrors = mod.UpdateCheckErrors.Where(p => !p.Contains("matches a mod with invalid semantic version")).ToArray();
-			string[] minorUpdateCheckErrors = mod.UpdateCheckErrors.Except(majorUpdateCheckErrors).ToArray();
 			var apiMetadata = mod.ModData.ApiRecord?.Metadata;
 
 			// issues to highlight
-			List<string> issues = new List<string>();
+			List<string> errors = new List<string>();
+			List<string> warnings = new List<string>();
+			List<string> minorIssues = new List<string>();
 			if (mod.WikiStatus == null)
-				issues.Add("not on wiki");
+				errors.Add("not on wiki");
 			if (mod.Installed != null && mod.Latest != null && new SemanticVersion(mod.Latest).IsOlderThan(mod.Installed))
-				issues.Add("official version is older");
+				warnings.Add("official version is older");
 			if (mod.Installed != null && mod.WikiUnofficialVersion != null && mod.WikiUnofficialVersion.IsOlderThan(mod.Installed))
-				issues.Add("unofficial version on wiki is older");
+				warnings.Add("unofficial version on wiki is older");
 			if (string.IsNullOrWhiteSpace(mod.UpdateKeys))
-				issues.Add("no valid update keys in manifest or wiki");
+				warnings.Add("no valid update keys in manifest or wiki");
 			if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => this.TryFormatVersion(p.Key) != this.TryFormatVersion(mod.Installed)))
-				issues.Add($"wiki maps local versions which don't match installed version.");
+				warnings.Add($"wiki maps local versions which don't match installed version.");
 			if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => SemanticVersion.TryParse(p.Key, true, out _) && new SemanticVersion(p.Key, true).IsOlderThan(mod.Latest)))
-				issues.Add($"wiki maps remote versions older than the latest available version.");
-			issues.AddRange(majorUpdateCheckErrors);
+				warnings.Add($"wiki maps remote versions older than the latest available version.");
 
-			// warnings
-			List<string> minorWarnings = new List<string>();
-			minorWarnings.AddRange(minorUpdateCheckErrors);
+			// update check errors
+			foreach (string message in mod.UpdateCheckErrors)
+			{
+				if (message.Contains("Exception") || (message.StartsWith("Found no") && !message.StartsWith("Found no GitHub")))
+					errors.Add(message);
+				else if (message.Contains("has no valid versions"))
+					warnings.Add(message);
+				else
+					minorIssues.Add(message);
+			}
 
 			// format version
 			string versionHtml;
@@ -650,6 +657,15 @@ async Task Main()
 			else
 				versionHtml = $"<span style='{smallStyle} {fadedStyle}'>{mod.Latest}</span>";
 
+			// build issues
+			XElement issues = new XElement("div");
+			foreach (var error in errors)
+				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {errorStyle}"), $"⚠ {error}"));
+			foreach (var warning in warnings)
+				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {warnStyle}"), $"⚠ {warning}"));
+			foreach (var issue in minorIssues)
+				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {fadedStyle}"), $"⚠ {issue}"));
+
 			// get report
 			return new
 			{
@@ -658,14 +674,7 @@ async Task Main()
 				Latest = Util.RawHtml(versionHtml),
 				Status = Util.WithStyle(mod.WikiStatus, $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
 				Summary = Util.WithStyle($"{mod.WikiSummary} {(!string.IsNullOrWhiteSpace(mod.WikiBrokeIn) ? $"[broke in {mod.WikiBrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
-				Issues = (issues.Any()
-					? Util.WithStyle("⚠ " + string.Join("\n⚠ ", issues), $"{smallStyle} {errorStyle}")
-					: ""
-				),
-				MinorWarnings = (minorWarnings.Any()
-					? Util.WithStyle("⚠ " + string.Join("\n⚠ ", minorWarnings), $"{smallStyle} {fadedStyle}")
-					: ""
-				),
+				Issues = Util.RawHtml(issues),
 				UpdateKeys = new Lazy<string>(() => mod.UpdateKeys),
 				ManifestUpdateKeys = new Lazy<object>(() => mod.ManifestUpdateKeys != null ? mod.ManifestUpdateKeys : Util.WithStyle("none", errorStyle)),
 				NormalizedFolder = new Lazy<string>(() => mod.NormalizedFolder),
