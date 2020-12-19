@@ -415,6 +415,7 @@ async Task Main()
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreModsForValidation)} values which don't match any local mod");
 	this.GetInvalidIgnoreFileEntries(mods).Dump($"{nameof(IgnoreFilesForValidation)} values which don't match any local mod file");
+	this.GetModTypes(mods).Dump("mod types");
 }
 
 
@@ -602,6 +603,110 @@ IEnumerable<dynamic> GetInvalidIgnoreFileEntries(IEnumerable<ParsedMod> mods)
 		.ThenBy(p => p.ID);
 }
 
+/// <summary>Get the number of mods by type.</summary>
+/// <param name="mods">The mods to check.</param>
+IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
+{
+	const int minPerGroup = 25;
+
+	// get mod id => name lookup
+	IDictionary<string, string> namesById = mods
+		.SelectMany(p => p.ModFolders)
+		.Select(p => new { Id = p.ModID?.Trim(), Name = p.ModDisplayName })
+		.Where(p => !string.IsNullOrWhiteSpace(p.Id) && !string.IsNullOrWhiteSpace(p.Name))
+		.GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
+		.ToDictionary(p => p.Key, p => p.First().Name, StringComparer.OrdinalIgnoreCase);
+
+	// get type priority
+	static int GetPriority(string type)
+	{
+		if (string.IsNullOrWhiteSpace(type))
+			return int.MaxValue;
+
+		return type switch
+		{
+			"SMAPI" => 5,
+			"content pack (Content Patcher)" => 4,
+			"XNB" => 2,
+			"other" => 1,
+			_ => type.StartsWith("content pack") ? 3 : -1
+		};
+	}
+
+	// get count by type key
+	var typesByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	foreach (ParsedMod mod in mods)
+	{
+		var typesForCurPage = new HashSet<ModType>(mod.ModFolders.Select(p => p.ModType));
+		
+		foreach (ParsedFile folder in mod.ModFolders)
+		{
+			IManifest manifest = folder.RawFolder.Value.Manifest;
+			
+			// get type name
+			string contentPackFor = manifest?.ContentPackFor?.UniqueID;
+			string type = folder.ModType switch
+			{
+				ModType.Smapi => "SMAPI",
+				ModType.ContentPack => !string.IsNullOrWhiteSpace(contentPackFor) && namesById.TryGetValue(contentPackFor.Trim(), out string name)
+					? $"content pack ({name})"
+					: $"content pack ({contentPackFor?.Trim()})",
+				ModType.Xnb => "XNB",
+				ModType.Ignored => null,
+				ModType.Invalid => null,
+				_ => "other"
+			};
+			if (type == null)
+				continue;
+
+			// get ID for tracking
+			string key = null;
+			if (!string.IsNullOrWhiteSpace(manifest?.UniqueID))
+				key = manifest.UniqueID.Trim();
+			else if (folder.ModType == ModType.Xnb)
+				key = $"XNB:{mod.Site}:{mod.ID}";
+			else
+				key = $"legacy:{mod.Site}:{mod.ID}";
+
+			// skip XNB mods if the same page has a non-XNB version
+			if (type == "XNB mod" && (typesForCurPage.Contains(ModType.Smapi) || typesForCurPage.Contains(ModType.ContentPack)))
+				continue;
+
+			// skip if higher priority mod type already set
+			if (typesByKey.TryGetValue(key, out string prevType) && GetPriority(type) < GetPriority(prevType))
+				continue;
+
+			// set type
+			typesByKey[key] = type;
+		}
+	}
+	
+	// get counts
+	var counts = typesByKey
+		.GroupBy(p => p.Value)
+		.OrderByDescending(p => p.Count())
+		.ToDictionary(p => p.Key, p => p.Count());
+
+	// merge content packs with < 10 usages
+	{
+		int mergedSum = 0;
+
+		foreach (var pair in counts.Where(p => p.Value < minPerGroup).ToArray())
+		{
+			if (pair.Key.StartsWith("content pack ("))
+			{
+				mergedSum += pair.Value;
+				counts.Remove(pair.Key);
+			}
+		}
+
+		if (mergedSum > 0)
+			counts[$"content pack (<{minPerGroup} usages)"] = mergedSum;
+	}
+
+	return counts;
+}
+
 /// <summary>Get all mods which depend on the given mod.</summary>
 /// <param name="parsedMods">The mods to check.</param>
 /// <param name="modID">The dependency mod ID.</param>
@@ -619,6 +724,7 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 		}
 	}
 }
+
 
 /*********
 ** Implementation
