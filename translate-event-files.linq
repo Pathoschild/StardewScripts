@@ -69,7 +69,7 @@ to use this script.
 ** Common settings
 ***/
 /// <summary>The full path to the event script to parse.</summary>
-readonly string EventFile = @"C:\Users\patho\Downloads\example_event.json"
+readonly string EventFile = @"C:\Users\patho\Downloads\example_event.json";
 
 /// <summary>The internal name for the NPC, if this is a single-NPC content pack. This allows more readable translation keys like "4hearts" instead of using the event ID.</summary>
 readonly string ForNpc = null;
