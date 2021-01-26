@@ -73,13 +73,11 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.ModDrop] = new HashSet<int>
 	{
-		// non-mod tools
-		826725, // Stardew Valley Money Mod Tool
-	
 		// mod translations
 		800761, // Change Dialogue (es)
 
 		// reposts
+		861626, // NPC Map Locations
 		509776, // Object Progress Bars
 		509780, // Running Late
 
@@ -89,42 +87,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
-		// non-mod tools
-		3431, // BFAV JSON Update [tool]
-		6243, // Content Patcher Language Adapter
-		4241, // Dreamy Valley Reshade
-		1080, // Easy XNB for Xnb Node
-		6614, // Map Predictor
-		4701, // Miss Coriel's NPC Creator
-		1213, // Natural Color - Reshade
-		21,   // SDVMM/Stardew Valley Mod Manager
-		1022, // SDV MultiTweak
-		4429, // Separated layers for easy custom recoloring - For Gimp and Photoshop
-		2400, // SMAPI
-		6726, // SMAPI Automatic Launcher
-		2367, // SMAPI Templates [for Visual Studio]
-		5768, // SMUI - Stardew Mod Manager
-		782,  // Sound Modding Tools
-		6802, // Stardew Bundle Mod Maker
-		1298, // Stardew Editor
-		3814, // Stardew Valley Hack Player for Name_Yusuf (???)
-		4536, // Stardew Valley Mod Manager 2
-		4567, // Stardew Valley MOD Manager - Integrated Package
-		3916, // Stardew Valley Money Hack
-		3787, // Stardew Valley Planner
-		127,  // Stardew Valley Save Editor
-		6807, // Stardew Valley Simple Trainer
-		2451, // StardewZem - Very Easy XNB Merger
-		337,  // SVPM/Stardew Valley Package Manager
-		1832, // Twelfth Night - American Gothic - ReShade
-		1770, // Twelfth Night - Depixelate - ReShade
-		1798, // Twelfth Night - Gameboy Pocket - ReShade
-		2152, // Updated XACT file for audio modding [.xap file],
-
-		// mod packs
-		6204, // (BFAV) All Compiled Files
-
 		// mod translations
+		7562, // Animals Need Water (tr)
 		2825, // Auto-Grabber Mod (zh)
 		5879, // Child Age Up (zh)
 		4305, // Climates of Ferngill (pt)
@@ -154,6 +118,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		6424, // Shadow Cove (zh)
 		5259, // Stardew Valley Expanded (de)
+		5272, // Stardew Valley Expanded (es)
+		5901, // Stardew Valley Expanded (fr)
 		5788, // Stardew Valley Expanded (ja)
 		5321, // Stardew Valley Expanded (ko)
 		4206, // Stardew Valley Expanded (pt)
@@ -161,6 +127,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4325, // Stardew Valley Expanded (zh)
 		6356, // Town School Functions (zh)
 		4370, // Trent's New Animals (pt)
+		7556, // UI Info Suite (fr)
 		6637, // Underground Secrets (ru)
 		6198, // Working Fireplace (tr)
 
@@ -171,11 +138,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		3753, // Stardew Valley Expanded
 		2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
 
-		// replace files in other mods
-		6852, // A Better Backyard - for SVE Immersive Farm 2
-		5272, // Change Dialogues (Espanol) mas SVE
-		5846, // Fix bug for Looking for Love
-
 		// reposts
 		1765, // Console Commands
 		1427, // Prairie King Made Easy
@@ -184,11 +146,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6066, // Shop Anywhere
 		1077, // UI Mod Suite
 
-		// special cases
-		4707, // Cooler Abigail Character Mod (XNB mod with a .mdp file)
-		4181, // Hilltop Immersive Farm (replaces a file in Immersive Farm 2)
-		4109, // PPJA Home of Abandoned Mods - CFR Conversions
-		7244, // Mobile Phone content pack: Ringtone and Wallpaper for Putin
+		// other
 		3294  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	}
 };
@@ -196,167 +154,39 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 /// <summary>Mod file IDs to ignore when validating or cross-referencing mods.</summary>
 readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
 {
-	[ModSite.CurseForge] = new HashSet<int>
-	{
-		// broken downloads
-		2880005, // Portraiture (#308062 / portaiture) - extra zip above mod folder
-	},
+	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.ModDrop] = new HashSet<int>
 	{
-		// broken downloads
-		455872, // Teh's Fishing Overhaul (#123679) - extra DLL above mod folder
-
-		// XNB mods
-		119589, // Hope's Secret Spring Cave (#129237)
-		711129 // Tieba Chinese Revision (#2936), has junk files to show instructions in filenames
+		// broken manifest
+		711129 // A Toned Down Stardew Valley (#580762), missing comma
 	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
-		// pre-manifest SMAPI mods
-		239,   // Rise and Shine (#3)
-		294,   // Sprint (#2)
-		456,   // Taxes Mod (#38)
-
-		// SMAPI mods with outdated manifest formats (e.g. old version format)
-		929,   // No Soil Decay (#283)
-		2949,  // Siv's Marriage Mod (#366)
-		3757,  // SmartMod (#1048)
-
-		// replacement files (e.g. tbin to drop into downloaded mod)
-		12282, // Ace's Expanded Farms MTN (#2711) > MelodicLullaby Less Saturated Valley Compatibility
-		2051,  // Add a Room and Attic (#379)
-		29563, // Ayeisha - The Postal Worker (#6427) > Ayeisha Alternative Portrait
-		16992, // Bears in the Barn for BFAV (#4000) > BFAV JSON Update data file
-		17704, // Better Woods (#3995) > Selective compatibility Immersive Farm 2
-		17688, // BFAV Bulls (#4136) > BFAV JSON Update
-		17685, // BFAV Cel's sheep (#3399) > Animals file to BFAV Json Update
-		16979, // BFAV Cutter Animals (#4016) > Animals file to BFAV Json Update
-		17296, // BFAV Dragons (#3991) > BFAV JSON Update
-		17687, // BFAV Pokemons (#3396) > Animals file to BFAV Json Update
-		17684, // BFAV More Blue Chickens (#3400) > file for BFAV Json Update
-		17686, // BFAV Round Chickens mod (#3398) > Animals file to BFAV Json Update
-		16975, // BFAV Velociraptors (#4015) > Animals file to BFAV Json Update
-		31538, // Blanche -The Librarian in Pelican Town (#6469) > Blanche Halloween Pack
-		9873,  // Even More Secret Woods (#2364), replacement file for Immersive Farm 2
-		30078, // Furry Random Visitors (#6611), replacement files for Random Visitors
-		26637, // Hot Spring Farm Cave > Capitalist Dream Farm 2 compatible version
-		26638, // Hot Spring Farm Cave > Immersive Farm 2 Remastered (SVE) compatible version
-		26639, // Hot Spring Farm Cave > Rolling Hills Farm compatible version
-		13120, // Immersive Farm 2 (#1531)
-		13647, // Immersive Farm 2 (#1531)
-		26065, // Jen's Simple Greenhouse (#5344) > IF2 version
-		26580, // Kzinti's Multi Room Green House (#5892) > optional map files
-		24554, // Project Moonlight Map Resources (#4699) - map files for other modders to use
-		12863, // Secret Gardens Greenhouse (#3067) > "" for Immersive Farm 2
-		24565, // Slime Pets for Adopt'n'Skin (#5497)
-		17756, // Stardew Valley Reimagined (#4119) > compatibility patches
-		26415, // Tiny Garden Farm (#4635) > no flower box
-		17692, // Trent's New Animals (#3634) > JSON Update
-
-		// legacy zipped Seasonal Immersion content packs
-		5438,  // Seasonal Custom Farm Buildings (#1451)
-		5439,  // Seasonal Custom Farm Buildings (#1451)
-		3164,  // Seasonal Victorian Buildings and Flowers (#891)
-
-		// legacy CustomNPC pack (files to drop into Mods/CustomNPC/Npcs)
-		8179,  // Costum Npc Base (#1964)
-		8203,  // Costum Npc Base (#1964)
-		6423,  // NPC Alec (#1692)
-		8870,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
-		8871,  // Steins Gate Kurisu Maho and Leskinen mod (#2249)
-
-		// Better Farm Animal Variety pack (files to merge into BFAV's config file)
-		14394, // Harvest Moon Cows (#3419)
-		14365, // Yoshis (#3420)
-		14366, // Zelda LTTP Lifestock Animals (#3421)
-
-		// collections of zipped content packs
-		9295,  // Clint Narrative Overhaul (#1067)
-		9297,  // Demetrius Narrative Overhaul (#1120)
-		9303,  // Dwarf Narrative Overhaul (#1250)
-		9299,  // Gus Narrative Overhaul (#1144)
-		9307,  // Linus Narrative Overhaul (#1488)
-		9301,  // Marnie Narrative Overhaul (#1192)
-		9309,  // Pam Narrative Overhaul (#1978)
-		9293,  // Willy Narrative Overhaul (#1047)
-		9305,  // Wizard Narrative Overhaul (#1309)
-
-		// XNB mods with non-standard files
-		24058, // African American George (#5410) - includes .zip file
-		9634,  // Ali's Foraging Map With a Few Changes (#2381)- includes redundant .zip files
-		445,   // Better Pigs and Recolours (#10) - collection of zipped XNB mods
-		2008,  // Chickens to Cardinal or Toucan (#578) - XNB mod with misnamed `White Chickenxnb`
-		10040, // Hero Academia Shota Mod (#2490) - includes .zip file
-		4462,  // Hope's Secret Cave (#1155) - includes unpacked files
-		535,   // New Rabbit Sprites and Recolours (#535) - collection of zipped XNB mods
-		2118,  // Semi-Realistic Animal Replacer (#597) - collection of zipped XNB mods
-		1680,  // Simple Building Cleaner (#493) - has a `ModInfo.ini` file for some reason
-		2224,  // Toddlers Take After Parents (#626) - files misnamed with `.zip_`
+		// broken manifests
+		10352, // Birthstone Plants (#1632), missing comma
+		19998, // Clint Removes Apron - Slightly Cuter Sprites, missing quote and comma
+		22971, // DC Burger Krobus for CP (#4608), missing comma
+		29513, // KL's Music Pack (#6517), missing brackets
+		22886, // Minecraft Mobs as Rarecrows (#5202), missing quote
+		929,   // No Soil Decay (#283), invalid version "0.0.0"
+		24009, // Open Greenhouse (#5401), missing quote
+		33160, // Penny as Penny Polendina from RWBY (#7093), corrupted characters
+		36539, // Pink Tools Recolor (#7600), missing quotes in update keys
+		9967,  // Sam to Samantha (#2472), missing quotes in update keys
+		2949,  // Siv's Marriage Mod (#366), invalid version "0.0.0"
+		3757,  // SmartMod (#1048), invalid version "0.0.0"
+		28109, // Upgraded Seed Maker Fantasy Crops Addon (#6284), missing comma
+		26283, // Void Pendant Replacer (#5881), UpdateKeys has {} instead of []
+		24942, // Zen Garden Desert Obelisk (#5558), unescaped quote in string
 
 		// utility mods that are part of a larger mod
 		14752, // Always On Server for Multiplayer (#2677) > Server Connection Reset
 		9477,  // Even More Secret Woods (#2364) > Bush Reset
 		3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
-		21863, // Shipment Tracker (#321) > Stat Viewer
 		14167, // Village Map Mod (#3355) > Village Console Commands
 
-		// legacy/broken content packs
-		7425,  // Earth and Water Obelisks (#1980) > Fahnestock - Seasonal Immersion
-		7426,  // Earth and Water Obelisks (#1980) > Garrison - Seasonal Immersion
-		7427,  // Earth and Water Obelisks (#1980) > Nantucket - Seasonal Immersion
-		7428,  // Earth and Water Obelisks (#1980) > Rhinebeck - Seasonal Immersion
-		7429,  // Earth and Water Obelisks (#1980) > Stonybrook - Seasonal Immersion
-		7430,  // Earth and Water Obelisks (#1980) > Saratoga - Seasonal Immersion
-		5534,  // Hudson Valley Buildings (#1478) > Fahnestock
-		5531,  // Hudson Valley Buildings (#1478) > Garrison
-		5532,  // Hudson Valley Buildings (#1478) > Nantucket
-		5533,  // Hudson Valley Buildings (#1478) > Rhinebeck
-		5530,  // Hudson Valley Buildings (#1478) > Saratoga
-		5529,  // Hudson Valley Buildings (#1478) > Stonybrook
-		10660, // katekatpixels Portrait Overhauls (#2602) > Content Patcher Version
-
-		// broken downloads
-		19998, // Clint Removes Apron - Slightly Cuter Sprites (broken manifest)
-		22971, // DC Burger Krobus for CP (#4608) - missing comma in manifest, reported in mod bugs
-		29513, // KL's Music Pack (#6517) - missing brackets in manifest, reported in mod comments + bugs
-		22886, // Minecraft Mobs as Rarecrows (#5202) - missing quote in manifest, reported in mod bugs
-		24009, // Open Greenhouse (#5401) - missing quote in manifest, reported in mod bugs
-		20155, // Portraiture (#999) - zip file above mod folder
-		28109, // Upgraded Seed Maker Fantasy Crops Addon (#6284) - broken manifest, reported in mod comments
-		26283, // Void Pendant Replacer (#5881) - broken manifest, reported in mod bugs
-		24942, // Zen Garden Desert Obelisk (#5558) - unescaped quote in manifest, reported in mod bugs
-
-		// source code
-		22505, // Breath of Fire 3 Fishing sounds (#5105)
-		22503, // No More Accidental Exhaustion (#5113)
-		22518, // Tab Autoloot (#5115)
-		22519, // Instantly Eat Item (#5116)
-
-		// non-ignored files in root of download
-		27391, // Floral Taxonomy ("names_chart")
-
 		// other
-		10976, // Always On Server (#2677) > AutoHotKey Paste Every 2 Minutes
-		12257, // Always On Server (#2677) > Auto Restart SDV
-		26173, // Arknight Music (#5794) > Arknight Music Pack
-		13516, // Battle Royalley (#3199) > World File for Hosting
-		14839, // Battle Royalley (#3199), custom .bat/.command/.sh launch script
-		15901, // Better Crab Pots (#3159) > Config Updater
-		19950, // Better Mixed Seeds (#3012) > Config Updater
-		10352, // Birthstone Plants (#1632), JA pack with broken manifest JSON
-		5721,  // Chao Replacement for Cat (#1524), .wav files
-		21237, // Decrafting Mod (#4158) > source code
 		32369, // Garden Village Shops (6113), has dot-ignored folders
-		15399, // Hidden Forest Farm (#3583) > XNB version, includes .tbin file
-		14664, // Husky New NPC (#14664), has .xslx file in root with multiple content pack folders
-		9967,  // Sam to Samantha (#2472), CP pack with invalid update keys
-		18065, // Spouse Rooms Redesigned (#828) > All Options
-		16623, // Stardew In-Game Daily Planner > Example Plan
-		16660, // Stardew In-Game Daily Planner > Example Checklist
-		11717, // Pencilstab's Portraits (#2351), content pack with separate previews folder including .zip
-		9495,  // Quieter Cat Dog and Keg (#2371), .wav files
-		31621, // Warp Binder (#6892) > Demo Warps
-		30453  // Winter Crops (#5976) > Crop Info
 	}
 };
 
@@ -532,6 +362,7 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 		let invalid = mod.ModFolders
 			.Where(folder =>
 				(folder.ModType == ModType.Invalid || folder.ModType == ModType.Ignored)
+				&& folder.ModError != ModParseError.ManifestMissing // ignore non-mod files
 				&& folder.ModError != ModParseError.EmptyFolder // contains only non-mod files (e.g. replacement PNG assets)
 				&& !this.ShouldIgnoreForValidation(mod.Site, mod.ID, folder.ID)
 			)
