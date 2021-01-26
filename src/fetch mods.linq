@@ -545,15 +545,16 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 			mod.Updated,
 			PageUrl = new Hyperlinq(mod.PageUrl),
 			Data = new Lazy<object>(() => mod),
-			InvalidFile = invalid.Select(p => new
+			InvalidFile = invalid.Select(parsedFile => new
 			{
-				p.ID,
-				p.Type,
-				p.DisplayName,
-				p.Version,
-				p.ModType,
-				p.ModError,
-				Data = new Lazy<object>(() => p)
+				parsedFile.ID,
+				parsedFile.Type,
+				parsedFile.DisplayName,
+				parsedFile.Version,
+				parsedFile.ModType,
+				parsedFile.ModError,
+				Data = new Lazy<object>(() => parsedFile),
+				FileList = new Lazy<string>(() => this.BuildFileList(parsedFile.RawFolder.Value.Directory))
 			})
 		}
 	)
@@ -1095,6 +1096,30 @@ void ExtractFile(FileInfo file, DirectoryInfo extractTo)
 	{
 		throw outerEx.InnerException;
 	}
+}
+
+/// <summary>Build a human-readable file list for a directory path.</summary>
+/// <param name="root">The directory for which to build a file list.</param>
+public string BuildFileList(DirectoryInfo root)
+{
+	static IEnumerable<string> BuildEntries(FileSystemInfo entry, string indent = "")
+	{
+		// yield current
+		string icon = entry is DirectoryInfo ? "📁" : "🗎";
+		yield return $"{indent}{icon} {entry.Name}";
+
+		// yield children
+		if (entry is DirectoryInfo dir)
+		{
+			foreach (FileSystemInfo child in dir.EnumerateFileSystemInfos().OrderByDescending(p => p is FileInfo))
+			{
+				foreach (var subEntry in BuildEntries(child, $"{indent}    "))
+					yield return subEntry;
+			}
+		}
+	}
+
+	return string.Join("\n", BuildEntries(root));
 }
 
 /// <summary>Get whether a given mod and file ID should be ignored when validating mods.</summary>
