@@ -417,7 +417,11 @@ async Task Main()
 
 	// run analysis
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
-	await this.GetModsNotOnWikiAsync(mods).Dump("SMAPI mods not on the wiki");
+	{
+		var result = await this.GetModsNotOnWikiAsync(mods).Dump("SMAPI mods not on the wiki");
+		new Lazy<dynamic>(() => string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value))).Dump("SMAPI mods not on the wiki (wiki format)");
+	}
+	
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreModsForValidation)} values which don't match any local mod");
 	this.GetInvalidIgnoreFileEntries(mods).Dump($"{nameof(IgnoreFilesForValidation)} values which don't match any local mod file");
@@ -613,7 +617,7 @@ IEnumerable<dynamic> GetInvalidIgnoreFileEntries(IEnumerable<ParsedMod> mods)
 /// <param name="mods">The mods to check.</param>
 IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 {
-	const int minPerGroup = 25;
+	const int minPerGroup = 100;
 
 	// get mod id => name lookup
 	IDictionary<string, string> namesById = mods
@@ -860,7 +864,7 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string 
 			{
 				if (!sources.Any())
 				{
-					ConsoleHelper.Print($"Skipped file {file.ID} > {file.ID}: no download sources available for this file.", Severity.Error);
+					ConsoleHelper.Print($"Skipped file {mod.ID} > {file.ID}: no download sources available for this file.", Severity.Error);
 					break;
 				}
 
@@ -1125,7 +1129,7 @@ private string GetFormattedTime(TimeSpan span)
 private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
 {
 	TimeSpan unblockTime = ex.TimeUntilRetry;
-	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({DateTime.Now + unblockTime} local time).");
+	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({this.GetFormattedTime((DateTime.Now + unblockTime).TimeOfDay)} local time).");
 	Thread.Sleep(unblockTime);
 }
 
