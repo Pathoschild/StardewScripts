@@ -385,6 +385,14 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 				parsedFile.ModType,
 				parsedFile.ModError,
 				Data = new Lazy<object>(() => parsedFile),
+				Manifest = new Lazy<string>(() =>
+				{
+					FileInfo file = new FileInfo(Path.Combine(parsedFile.RawFolder.Value.Directory.FullName, "manifest.json"));
+					return file.Exists
+						? File.ReadAllText(file.FullName)
+						: "<file not found>";
+				}),
+				ManifestError = new Lazy<string>(() => $"{parsedFile.RawFolder.Value.ManifestParseError}\n{parsedFile.RawFolder.Value.ManifestParseErrorText}"),
 				FileList = new Lazy<string>(() => this.BuildFileList(parsedFile.RawFolder.Value.Directory))
 			})
 		}
