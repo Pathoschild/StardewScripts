@@ -71,7 +71,6 @@ private readonly HashSet<WikiCompatibilityStatus> HighlightStatuses = new HashSe
 		WikiCompatibilityStatus.Broken, WikiCompatibilityStatus.Workaround, // broken
 		WikiCompatibilityStatus.Abandoned, WikiCompatibilityStatus.Obsolete // abandoned
 	}
-
 	//.Except(new[] { WikiCompatibilityStatus.Abandoned, WikiCompatibilityStatus.Obsolete }) // if abandoned
 	//.Except(new[] { WikiCompatibilityStatus.Broken, WikiCompatibilityStatus.Workaround }) // if broken
 	.Except(new[] { WikiCompatibilityStatus.Ok, WikiCompatibilityStatus.Optional, WikiCompatibilityStatus.Unofficial }) // if OK
@@ -171,6 +170,7 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["bcmpinc.StardewHack"] = "@@Stardew Hack",
 	["bwdyworks"] = "@Bwdyworks",
 	["cat.Pong"] = "(1) Pong",
+	["Cherry.ExpandedPreconditionsUtility"] = "@Expanded Preconditions Utility",
 	["DIGUS.MailFrameworkMod"] = "@@Mail Framework Mod",
 	["Entoarox.AdvancedLocationLoader"] = "@Advanced Location Loader",
 	["Entoarox.EntoaroxFramework"] = "@Entoarox Framework",
@@ -191,9 +191,6 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["Tofu.SlimeQOL"] = "Slime Mods - SlimeQoL Alt",
 
 	// fix ambiguous names
-	["stellarashes.Autowatering"] = "Auto Watering (stellarashes)",
-	["AutoWater"] = "Auto Watering (Roy Li)",
-	
 	["Vrakyas.CurrentLocation"] = "Current Location (Vrakyas)",
 	["CurrentLocation102120161203"] = "Current Location (Omegasis)",
 

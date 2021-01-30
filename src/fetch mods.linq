@@ -114,6 +114,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		5860, // More TV Channel (tr)
 		6245, // Nice Messages (pt)
 		6295, // Nice Messages (ru)
+		5551, // NPC Adventures (ru)
 		5329, // Prismatic Tools (pt)
 		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		6424, // Shadow Cove (zh)
@@ -147,6 +148,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1077, // UI Mod Suite
 
 		// other
+		4109, // PPJA Home of Abandoned Mods - CFR Conversions
 		3294  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	}
 };
@@ -154,11 +156,19 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 /// <summary>Mod file IDs to ignore when validating or cross-referencing mods.</summary>
 readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
 {
-	[ModSite.CurseForge] = new HashSet<int>(),
+	[ModSite.CurseForge] = new HashSet<int>
+	{
+		// other
+		3174801, // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
+		3174928, // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
+	},
 	[ModSite.ModDrop] = new HashSet<int>
 	{
 		// broken manifest
-		711129 // A Toned Down Stardew Valley (#580762), missing comma
+		711129, // A Toned Down Stardew Valley (#580762), missing comma
+		
+		// legacy pre-standardization content packs (SI = Seasonal Immersion)
+		820685, // Dutch Farm Buildings (#811243) for SI
 	},
 	[ModSite.Nexus] = new HashSet<int>
 	{
@@ -166,6 +176,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		10352, // Birthstone Plants (#1632), missing comma
 		19998, // Clint Removes Apron - Slightly Cuter Sprites, missing quote and comma
 		22971, // DC Burger Krobus for CP (#4608), missing comma
+		10660, // katkatpixels Portrait Overhauls (#2602), missing UniqueID field in ContentPackFor
 		29513, // KL's Music Pack (#6517), missing brackets
 		22886, // Minecraft Mobs as Rarecrows (#5202), missing quote
 		929,   // No Soil Decay (#283), invalid version "0.0.0"
@@ -185,8 +196,46 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
 		14167, // Village Map Mod (#3355) > Village Console Commands
 
+		// legacy pre-standardization content packs (ALL = Advanced Location Loader, SI = Seasonal Immersion)
+		15421, // BathHouse Apartment (#3713) for ALL
+		15423, // BathHouse Apartment (#3713) for ALL
+		5771,  // Bus Interior Restored (#1032) for ALL
+		5997,  // Cleanup Crew (#762) for ALL
+		6274,  // Dutch Farm Buildings (#1487) for SI
+		7425,  // Earth and Water Obelisks (#1980) for SI
+		7426,  // Earth and Water Obelisks (#1980) for SI
+		7427,  // Earth and Water Obelisks (#1980) for SI
+		7428,  // Earth and Water Obelisks (#1980) for SI
+		7429,  // Earth and Water Obelisks (#1980) for SI
+		7430,  // Earth and Water Obelisks (#1980) for SI
+		5996,  // Expanded Crevices (#806) for ALL
+		3033,  // Extended Cellar (#588) for ALL
+		3083,  // Extended Cellar (#588) for ALL
+		7706,  // Flower Valley (#2030) for SI
+		5656,  // F-SV Stable (#1467) for SI
+		3089,  // JAC'd Greenhouse Extended (#739) for ALL
+		3650,  // Jungle Temple (#1014) for ALL
+		5529,  // Hudson Valley Buildings (#1478) for SI
+		5530,  // Hudson Valley Buildings (#1478) for SI
+		5531,  // Hudson Valley Buildings (#1478) for SI
+		5532,  // Hudson Valley Buildings (#1478) for SI
+		5533,  // Hudson Valley Buildings (#1478) for SI
+		5534,  // Hudson Valley Buildings (#1478) for SI
+		3149,  // Orbitz (#864) for ALL
+		3208,  // Organized Corrosion Detection (#904) for ALL
+		4752,  // Seasonal Vanilla Buildings (#928) for SI
+		3697,  // Spouses Move Out (#800) for ALL
+		5995,  // Tree Life (#784) for ALL
+		3030,  // VIP Visual Improvement Program (#835) for ALL
+		3207,  // VIP Visual Improvement Program (#835) for ALL
+		3208,  // VIP Visual Improvement Program (#835) for ALL
+		5994,  // VIP Visual Improvement Program (#835) for ALL
+		5998,  // Wax Key (#1593) for ALL
+
 		// other
-		32369, // Garden Village Shops (6113), has dot-ignored folders
+		279,   // Enemy Health Bars (#30), Storm mod
+		36876, // Garden Village Shops (#6113), has dot-ignored folders
+		29417, // NPC Adventures (#4582), "localization package"
 	}
 };
 
