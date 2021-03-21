@@ -196,11 +196,12 @@ async Task Main()
 		bool cloned = false;
 		while (true)
 		{
+			string gitUrl = repo.GitUrl;
 			try
 			{
 				await this.ExecuteShellAsync(
 					filename: "git",
-					arguments: $"clone -q {repo.GitUrl} \"{dir.Name}\"", // only get the latest version
+					arguments: $"clone -q {gitUrl} \"{dir.Name}\"", // only get the latest version
 					workingDir: rootDir.FullName,
 					ignoreErrorOut: errorOut => Regex.IsMatch(errorOut, "^Filtering content:.+/s, done.$") // git LFS logs progress output to stderr
 				);
@@ -210,9 +211,11 @@ async Task Main()
 			catch (Exception ex)
 			{
 				ex.Dump();
-				string choice = Helper.GetChoice("Cloning the Git repository failed! [r]etry [s]kip?", "r", "s");
+				string choice = Helper.GetChoice("Cloning the Git repository failed! [r]etry, [s]kip, or [c]hange repo URL?", "r", "s", "c");
 				if (choice == "s")
 					break;
+				if (choice == "c")
+					gitUrl = Util.ReadLine("Enter new GitHub URL:", gitUrl).Trim();
 			}
 		}
 		if (!cloned)
