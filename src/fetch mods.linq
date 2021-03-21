@@ -73,11 +73,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	[ModSite.CurseForge] = new HashSet<int>(),
 	[ModSite.ModDrop] = new HashSet<int>
 	{
-		// mod translations
-		800761, // Change Dialogue (es)
-
 		// reposts
-		861626, // NPC Map Locations
 		509776, // Object Progress Bars
 		509780, // Running Late
 
@@ -88,11 +84,13 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	[ModSite.Nexus] = new HashSet<int>
 	{
 		// mod translations
+		7932, // Animals Need Water (fr)
 		7562, // Animals Need Water (tr)
 		2825, // Auto-Grabber Mod (zh)
 		5879, // Child Age Up (zh)
 		4305, // Climates of Ferngill (pt)
 		4197, // Companion NPCs (pt)
+		5811, // Custom NPC - Riley (de)
 		5396, // Dwarvish (pt)
 		5428, // Dwarvish (zh)
 		6153, // Fighting with NPCs (tr)
@@ -101,8 +99,8 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6500, // Garden Village Shops (ru)
 		6142, // Garden Village Shops (tr)
 		5828, // Gift Taste Helper (tr)
+		7571, // Green House Sprinklers (tr)
 		3954, // Happy Birthday (pt)
-		4693, // Happy Birthday (pt)
 		6693, // Happy Birthday (pt)
 		7233, // Happy Birthday (tr)
 		6111, // Immersive Characters - Shane (es)
@@ -126,6 +124,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		4206, // Stardew Valley Expanded (pt)
 		6332, // Stardew Valley Expanded (tr)
 		4325, // Stardew Valley Expanded (zh)
+		8143, // Stardew Valley Expanded (zh)
 		6356, // Town School Functions (zh)
 		4370, // Trent's New Animals (pt)
 		7556, // UI Info Suite (fr)
@@ -174,8 +173,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 	{
 		// broken manifests
 		10352, // Birthstone Plants (#1632), missing comma
-		19998, // Clint Removes Apron - Slightly Cuter Sprites, missing quote and comma
-		22971, // DC Burger Krobus for CP (#4608), missing comma
 		10660, // katkatpixels Portrait Overhauls (#2602), missing UniqueID field in ContentPackFor
 		29513, // KL's Music Pack (#6517), missing brackets
 		22886, // Minecraft Mobs as Rarecrows (#5202), missing quote
@@ -201,7 +198,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		15423, // BathHouse Apartment (#3713) for ALL
 		5771,  // Bus Interior Restored (#1032) for ALL
 		5997,  // Cleanup Crew (#762) for ALL
-		6274,  // Dutch Farm Buildings (#1487) for SI
 		7425,  // Earth and Water Obelisks (#1980) for SI
 		7426,  // Earth and Water Obelisks (#1980) for SI
 		7427,  // Earth and Water Obelisks (#1980) for SI
@@ -233,9 +229,11 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		5998,  // Wax Key (#1593) for ALL
 
 		// other
+		38160, // Cotton the Sweetest Shopkeeper (#8097), unofficial update of Better Farm Animal Variety
 		279,   // Enemy Health Bars (#30), Storm mod
 		36876, // Garden Village Shops (#6113), has dot-ignored folders
-		29417, // NPC Adventures (#4582), "localization package"
+		38919, // Hardew Valley (#6029), includes a copy of Leveling Adjustment (#4689)
+		38706  // Riley_Deutsch (#817), includes a translated version of Mobile Phone
 	}
 };
 
