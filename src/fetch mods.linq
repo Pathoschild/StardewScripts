@@ -383,7 +383,7 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 			Mod = new Lazy<ParsedMod>(() => mod),
 			Folder = new Lazy<ParsedFile>(() => folder),
 			WikiEntry = new Lazy<string>(() =>
-				"{{/entry\n"
+				"{{#invoke:SMAPI compatibility|entry\n"
 				+ $"  |name     = {string.Join(", ", names)}\n"
 				+ $"  |author   = {string.Join(", ", authorNames)}\n"
 				+ $"  |id       = {manifest?.UniqueID}\n"
