@@ -60,7 +60,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	//null;
-	site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2020, 12, 18), TimeSpan.Zero)); // last run
+	site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 03, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -70,7 +70,11 @@ readonly bool ResetUnpacked = false;
 /// <summary>Mod site mod IDs to ignore when validating or cross-referencing mods.</summary>
 readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionary<ModSite, ISet<int>>
 {
-	[ModSite.CurseForge] = new HashSet<int>(),
+	[ModSite.CurseForge] = new HashSet<int>
+	{
+		// mod packs
+		460523
+	},
 	[ModSite.ModDrop] = new HashSet<int>
 	{
 		// reposts
@@ -125,6 +129,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6332, // Stardew Valley Expanded (tr)
 		4325, // Stardew Valley Expanded (zh)
 		8143, // Stardew Valley Expanded (zh)
+		8312, // Town School Functions (tr)
 		6356, // Town School Functions (zh)
 		4370, // Trent's New Animals (pt)
 		7556, // UI Info Suite (fr)
@@ -211,12 +216,6 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		5656,  // F-SV Stable (#1467) for SI
 		3089,  // JAC'd Greenhouse Extended (#739) for ALL
 		3650,  // Jungle Temple (#1014) for ALL
-		5529,  // Hudson Valley Buildings (#1478) for SI
-		5530,  // Hudson Valley Buildings (#1478) for SI
-		5531,  // Hudson Valley Buildings (#1478) for SI
-		5532,  // Hudson Valley Buildings (#1478) for SI
-		5533,  // Hudson Valley Buildings (#1478) for SI
-		5534,  // Hudson Valley Buildings (#1478) for SI
 		3149,  // Orbitz (#864) for ALL
 		3208,  // Organized Corrosion Detection (#904) for ALL
 		4752,  // Seasonal Vanilla Buildings (#928) for SI
@@ -232,8 +231,9 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		38160, // Cotton the Sweetest Shopkeeper (#8097), unofficial update of Better Farm Animal Variety
 		279,   // Enemy Health Bars (#30), Storm mod
 		36876, // Garden Village Shops (#6113), has dot-ignored folders
-		38919, // Hardew Valley (#6029), includes a copy of Leveling Adjustment (#4689)
-		38706  // Riley_Deutsch (#817), includes a translated version of Mobile Phone
+		39450, // Hardew Valley (#6029), includes a copy of Leveling Adjustment (#4689)
+		38706, // Riley_Deutsch (#817), includes a translated version of Mobile Phone
+		38072 // Rose Cows (#8084), has a '.vs' folder
 	}
 };
 
