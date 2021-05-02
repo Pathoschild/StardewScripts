@@ -441,7 +441,7 @@ async Task Main()
 						FileUtilities.ForceDelete(newDir);
 					}
 					actualDir.MoveTo(newDir.FullName);
-					if (Directory.Exists(searchDir.FullName) && !searchDir.EnumerateFileSystemInfos().Any())
+					if (Directory.Exists(searchDir.FullName) && !searchDir.EnumerateFiles("*.*", SearchOption.AllDirectories).Any())
 						FileUtilities.ForceDelete(searchDir);
 				}
 			}
