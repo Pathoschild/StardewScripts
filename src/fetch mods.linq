@@ -614,9 +614,9 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 	
 	// get counts
 	var counts = typesByKey
-		.GroupBy(p => p.Value)
+		.GroupBy(p => p.Value, StringComparer.OrdinalIgnoreCase)
 		.OrderByDescending(p => p.Count())
-		.ToDictionary(p => p.Key, p => p.Count());
+		.ToDictionary(p => p.Key, p => p.Count(), StringComparer.OrdinalIgnoreCase);
 
 	// merge content packs with < 10 usages
 	{
