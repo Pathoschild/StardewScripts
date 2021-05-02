@@ -180,12 +180,13 @@ async Task Main()
 	** Clone repos
 	****/
 	Helper.Print("Fetching Git repositories...");
+	int reposLeft = repoFolders.Count;
 	foreach (var entry in repoFolders.OrderBy(p => p.Key))
 	{
 		// collect info
 		DirectoryInfo dir = new DirectoryInfo(Path.Combine(this.RootPath, entry.Key));
 		ModRepository repo = entry.Value;
-		Helper.Print($"   {dir.Name} → {repo.GitUrl}...");
+		Helper.Print($"   [{reposLeft--}] {dir.Name} → {repo.GitUrl}...");
 
 		// validate
 		if (dir.Exists)
@@ -196,9 +197,9 @@ async Task Main()
 
 		// clone repo
 		bool cloned = false;
+		string gitUrl = repo.GitUrl;
 		while (true)
 		{
-			string gitUrl = repo.GitUrl;
 			try
 			{
 				await this.ExecuteShellAsync(
