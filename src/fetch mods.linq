@@ -59,8 +59,8 @@ readonly string RootPath = @"D:\dev\mod-dump";
 
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
-	//null;
-	site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 03, 30), TimeSpan.Zero)); // since last run
+	null;
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 05, 01), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -73,7 +73,30 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 	[ModSite.CurseForge] = new HashSet<int>
 	{
 		// mod packs
-		460523
+		460523,
+
+		// mods marked abandoned
+		308054, // Arcade 2048
+		308055, // Arcade Snake
+		308504, // ATM
+		306698, // Better Mixed Seeds
+		308067, // Custom Furniture
+		307367, // Custom Music
+		307569, // Custom Walls and Floors
+		393984, // Easy Prairie King
+		308257, // JojaBan - Arcade Sokoban
+		307727, // No Soil Decay Redux
+		307729, // Notes
+		309743, // Pelican TTS
+		308058, // Plan Importer
+		308062, // Portraiture
+		306738, // PyTK
+		310789, // Scale Up
+		307726, // Seed Bag
+		310737, // Ship From Inventory
+		307654, // The Harp of Yoba
+		306750, // TMXL Map Toolkit
+		307573  // Visualize
 	},
 	[ModSite.ModDrop] = new HashSet<int>
 	{
@@ -118,11 +141,14 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		6295, // Nice Messages (ru)
 		5551, // NPC Adventures (ru)
 		5329, // Prismatic Tools (pt)
+		8468, // Prismatic Tools (tr)
+		8030, // Ridgeside Village (es)
 		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		6424, // Shadow Cove (zh)
 		5259, // Stardew Valley Expanded (de)
 		5272, // Stardew Valley Expanded (es)
 		5901, // Stardew Valley Expanded (fr)
+		8411, // Stardew Valley Expanded (fr)
 		5788, // Stardew Valley Expanded (ja)
 		5321, // Stardew Valley Expanded (ko)
 		4206, // Stardew Valley Expanded (pt)
@@ -148,6 +174,7 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionar
 		1427, // Prairie King Made Easy
 		887,  // Reseed
 		1363, // Save Anywhere
+		8386, // Save Anywhere
 		6066, // Shop Anywhere
 		1077, // UI Mod Suite
 
@@ -227,11 +254,18 @@ readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictiona
 		5994,  // VIP Visual Improvement Program (#835) for ALL
 		5998,  // Wax Key (#1593) for ALL
 
+		// mods which include a copy of another mod
+		40616, // Harvest Valley Farm (#8563), includes Custom NPC Fixes
+		40617, // Harvest Valley Farm (#8563), includes Custom NPC Fixes
+		40805, // Personal Effects Redux (#8616), unofficial update for bwdyworks
+
 		// other
+		40376, // Carrot SummerCrop (#8446), has dot-ignored folders
 		38160, // Cotton the Sweetest Shopkeeper (#8097), unofficial update of Better Farm Animal Variety
 		279,   // Enemy Health Bars (#30), Storm mod
 		36876, // Garden Village Shops (#6113), has dot-ignored folders
-		39450, // Hardew Valley (#6029), includes a copy of Leveling Adjustment (#4689)
+		40569, // Hardew Valley (#6029), is a dot-ignored folder
+		40590, // Hardew Valley (#6029), is a dot-ignored folder
 		38706, // Riley_Deutsch (#817), includes a translated version of Mobile Phone
 		38072 // Rose Cows (#8084), has a '.vs' folder
 	}

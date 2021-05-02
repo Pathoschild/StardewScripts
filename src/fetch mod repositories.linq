@@ -84,6 +84,8 @@ private readonly HashSet<string> IgnoreSourceUrls = new HashSet<string>(StringCo
 /// <summary>Maps GitHub URLs to the folder name to use, overriding the generated name.</summary>
 public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
 {
+	["https://github.com/Floogen/GreenhouseGatherers.git"] = "GreenhouseGatherers", // Greenhouse Gatherers + Greenhouse Gatherers Automate = ~Floogen
+	["https://github.com/Floogen/IslandGatherers.git"] = "IslandGatherers",         // Island Gatherers + Island Gatherers Automate = ~Floogen
 	["https://github.com/TheThor59/StardewMods.git"] = "Mods.TheThor59"
 };
 

@@ -191,6 +191,8 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["Tofu.SlimeQOL"] = "Slime Mods - SlimeQoL Alt",
 
 	// fix ambiguous names
+	["ceruleandeep.bwdyworks"] = "Bwdyworks (ceruleandeep)",
+
 	["Vrakyas.CurrentLocation"] = "Current Location (Vrakyas)",
 	["CurrentLocation102120161203"] = "Current Location (Omegasis)",
 
