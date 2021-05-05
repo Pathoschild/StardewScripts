@@ -289,6 +289,9 @@ async Task Main()
 	foreach (var site in this.ModSites)
 		await site.AuthenticateAsync();
 
+	// fetch compatibility list
+	WikiModList compatList = await new ModToolkit().GetWikiCompatibilityListAsync();
+
 	// fetch mods
 	HashSet<string> unpackMods = new HashSet<string>();
 	if (this.FetchMods != null)
@@ -325,7 +328,7 @@ async Task Main()
 	// run analysis
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
 	{
-		var result = await this.GetModsNotOnWikiAsync(mods).Dump("SMAPI mods not on the wiki");
+		var result = this.GetModsNotOnWiki(mods, compatList).ToArray().Dump("SMAPI mods not on the wiki");
 		new Lazy<dynamic>(() => string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value))).Dump("SMAPI mods not on the wiki (wiki format)");
 	}
 
@@ -340,11 +343,10 @@ async Task Main()
 *********/
 /// <summary>Get SMAPI mods which aren't listed on the wiki compatibility list.</summary>
 /// <param name="mods">The mods to check.</param>
-async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
+/// <param name="compatList">The mod data from the wiki compatibility list.</param>
+IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList compatList)
 {
 	// fetch mods on the wiki
-	ModToolkit toolkit = new ModToolkit();
-	WikiModList compatList = await toolkit.GetWikiCompatibilityListAsync();
 	ISet<string> manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
 	IDictionary<ModSite, ISet<int>> siteIDs = new Dictionary<ModSite, ISet<int>>
 	{
