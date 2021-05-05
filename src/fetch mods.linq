@@ -67,209 +67,200 @@ readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 /// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
 readonly bool ResetUnpacked = false;
 
-/// <summary>Mod site mod IDs to ignore when validating or cross-referencing mods.</summary>
-readonly IDictionary<ModSite, ISet<int>> IgnoreModsForValidation = new Dictionary<ModSite, ISet<int>>
+/// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
+readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 {
-	[ModSite.CurseForge] = new HashSet<int>
-	{
-		// mod packs
-		460523,
+	/*********
+	** CurseForge mods
+	*********/
+	// mod packs
+	new(ModSite.CurseForge, 460523),
 
-		// mods marked abandoned
-		308054, // Arcade 2048
-		308055, // Arcade Snake
-		308504, // ATM
-		306698, // Better Mixed Seeds
-		308067, // Custom Furniture
-		307367, // Custom Music
-		307569, // Custom Walls and Floors
-		393984, // Easy Prairie King
-		308257, // JojaBan - Arcade Sokoban
-		307727, // No Soil Decay Redux
-		307729, // Notes
-		309743, // Pelican TTS
-		308058, // Plan Importer
-		308062, // Portraiture
-		306738, // PyTK
-		310789, // Scale Up
-		307726, // Seed Bag
-		310737, // Ship From Inventory
-		307654, // The Harp of Yoba
-		306750, // TMXL Map Toolkit
-		307573  // Visualize
-	},
-	[ModSite.ModDrop] = new HashSet<int>
-	{
-		// reposts
-		509776, // Object Progress Bars
-		509780, // Running Late
+	// mods marked abandoned
+	new(ModSite.CurseForge, 308054), // Arcade 2048
+	new(ModSite.CurseForge, 308055), // Arcade Snake
+	new(ModSite.CurseForge, 308504), // ATM
+	new(ModSite.CurseForge, 306698), // Better Mixed Seeds
+	new(ModSite.CurseForge, 308067), // Custom Furniture
+	new(ModSite.CurseForge, 307367), // Custom Music
+	new(ModSite.CurseForge, 307569), // Custom Walls and Floors
+	new(ModSite.CurseForge, 393984), // Easy Prairie King
+	new(ModSite.CurseForge, 308257), // JojaBan - Arcade Sokoban
+	new(ModSite.CurseForge, 307727), // No Soil Decay Redux
+	new(ModSite.CurseForge, 307729), // Notes
+	new(ModSite.CurseForge, 309743), // Pelican TTS
+	new(ModSite.CurseForge, 308058), // Plan Importer
+	new(ModSite.CurseForge, 308062), // Portraiture
+	new(ModSite.CurseForge, 306738), // PyTK
+	new(ModSite.CurseForge, 310789), // Scale Up
+	new(ModSite.CurseForge, 307726), // Seed Bag
+	new(ModSite.CurseForge, 310737), // Ship From Inventory
+	new(ModSite.CurseForge, 307654), // The Harp of Yoba
+	new(ModSite.CurseForge, 306750), // TMXL Map Toolkit
+	new(ModSite.CurseForge, 307573), // Visualize
 
-		// special cases
-		580803, // PPJA Home of Abandoned Mods - CFR Conversions
-		624116  // Sprint Sprint Sprint, replaced by Sprint Sprint
-	},
-	[ModSite.Nexus] = new HashSet<int>
-	{
-		// mod translations
-		7932, // Animals Need Water (fr)
-		7562, // Animals Need Water (tr)
-		2825, // Auto-Grabber Mod (zh)
-		5879, // Child Age Up (zh)
-		4305, // Climates of Ferngill (pt)
-		4197, // Companion NPCs (pt)
-		5811, // Custom NPC - Riley (de)
-		5396, // Dwarvish (pt)
-		5428, // Dwarvish (zh)
-		6153, // Fighting with NPCs (tr)
-		6135, // Garden Village Shops (ko)
-		6157, // Garden Village Shops (ru)
-		6500, // Garden Village Shops (ru)
-		6142, // Garden Village Shops (tr)
-		5828, // Gift Taste Helper (tr)
-		7571, // Green House Sprinklers (tr)
-		3954, // Happy Birthday (pt)
-		6693, // Happy Birthday (pt)
-		7233, // Happy Birthday (tr)
-		6111, // Immersive Characters - Shane (es)
-		4339, // Lunar Disturbances (pt)
-		7082, // Lunar Disturbances (pt)
-		4265, // Magic (pt)
-		5871, // Mermaid Island (ko)
-		5328, // More Rings (pt)
-		5860, // More TV Channel (tr)
-		6245, // Nice Messages (pt)
-		6295, // Nice Messages (ru)
-		5551, // NPC Adventures (ru)
-		5329, // Prismatic Tools (pt)
-		8468, // Prismatic Tools (tr)
-		8030, // Ridgeside Village (es)
-		6096, // Sailor Moon Hairstyles Clothing and Kimono (zh)
-		6424, // Shadow Cove (zh)
-		5259, // Stardew Valley Expanded (de)
-		5272, // Stardew Valley Expanded (es)
-		5901, // Stardew Valley Expanded (fr)
-		8411, // Stardew Valley Expanded (fr)
-		5788, // Stardew Valley Expanded (ja)
-		5321, // Stardew Valley Expanded (ko)
-		4206, // Stardew Valley Expanded (pt)
-		6332, // Stardew Valley Expanded (tr)
-		4325, // Stardew Valley Expanded (zh)
-		8143, // Stardew Valley Expanded (zh)
-		8312, // Town School Functions (tr)
-		6356, // Town School Functions (zh)
-		4370, // Trent's New Animals (pt)
-		7556, // UI Info Suite (fr)
-		6637, // Underground Secrets (ru)
-		6198, // Working Fireplace (tr)
 
-		// mods which include a copy of another mod for some reason
-		3496, // Farm Extended (content pack with a copy of Farm Type Manager)
-		1692, // New NPC Alec (content pack with a copy of Custom Element Handler, Custom Farming, Custom Furniture, and Custom NPC)
-		1128, // New Shirts and 2 new Skirts (includes Get Dressed)
-		3753, // Stardew Valley Expanded
-		2426, // Unofficial Balance Patch (includes Artifact System Fixed, Better Quarry, Mining at the Farm, and Profession Adjustments)
+	/*********
+	** CurseForge files
+	*********/
+	// other
+	new(ModSite.CurseForge, 438111, 3174801), // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
+	new(ModSite.CurseForge, 438111, 3174928), // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
 
-		// reposts
-		1765, // Console Commands
-		1427, // Prairie King Made Easy
-		887,  // Reseed
-		1363, // Save Anywhere
-		8386, // Save Anywhere
-		6066, // Shop Anywhere
-		1077, // UI Mod Suite
 
-		// other
-		4109, // PPJA Home of Abandoned Mods - CFR Conversions
-		3294  // Sprint Sprint Sprint, replaced by Sprint Sprint
-	}
+	/*********
+	** ModDrop mods
+	*********/
+	// reposts
+	new(ModSite.ModDrop, 509776), // Object Progress Bars
+	new(ModSite.ModDrop, 509780), // Running Late
+
+	// special cases
+	new(ModSite.ModDrop, 580803), // PPJA Home of Abandoned Mods - CFR Conversions
+	new(ModSite.ModDrop, 624116), // Sprint Sprint Sprint, replaced by Sprint Sprint
+
+
+	/*********
+	** ModDrop files
+	*********/
+	// broken manifest
+	new(ModSite.ModDrop, 580762, 711129), // A Toned Down Stardew Valley, missing comma
+
+	// legacy pre-standardization content packs (SI = Seasonal Immersion)
+	new(ModSite.ModDrop, 811243, 820685), // Dutch Farm Buildings, for SI
+
+
+	/*********
+	** Nexus mods
+	*********/
+	// mod translations
+	new(ModSite.Nexus, 7932), // Animals Need Water (fr)
+	new(ModSite.Nexus, 7562), // Animals Need Water (tr)
+	new(ModSite.Nexus, 5879), // Child Age Up (zh)
+	new(ModSite.Nexus, 4305), // Climates of Ferngill (pt)
+	new(ModSite.Nexus, 4197), // Companion NPCs (pt)
+	new(ModSite.Nexus, 5811), // Custom NPC - Riley (de)
+	new(ModSite.Nexus, 5396), // Dwarvish (pt)
+	new(ModSite.Nexus, 5428), // Dwarvish (zh)
+	new(ModSite.Nexus, 6157), // Garden Village Shops (ru)
+	new(ModSite.Nexus, 6500), // Garden Village Shops (ru)
+	new(ModSite.Nexus, 5828), // Gift Taste Helper (tr)
+	new(ModSite.Nexus, 7571), // Green House Sprinklers (tr)
+	new(ModSite.Nexus, 3954), // Happy Birthday (pt)
+	new(ModSite.Nexus, 6693), // Happy Birthday (pt)
+	new(ModSite.Nexus, 6111), // Immersive Characters - Shane (es)
+	new(ModSite.Nexus, 4339), // Lunar Disturbances (pt)
+	new(ModSite.Nexus, 7082), // Lunar Disturbances (pt)
+	new(ModSite.Nexus, 4265), // Magic (pt)
+	new(ModSite.Nexus, 5871), // Mermaid Island (ko)
+	new(ModSite.Nexus, 6295), // Nice Messages (ru)
+	new(ModSite.Nexus, 5551), // NPC Adventures (ru)
+	new(ModSite.Nexus, 5329), // Prismatic Tools (pt)
+	new(ModSite.Nexus, 8468), // Prismatic Tools (tr)
+	new(ModSite.Nexus, 8030), // Ridgeside Village (es)
+	new(ModSite.Nexus, 8170), // Riley (de)
+	new(ModSite.Nexus, 6096), // Sailor Moon Hairstyles Clothing and Kimono (zh)
+	new(ModSite.Nexus, 6424), // Shadow Cove (zh)
+	new(ModSite.Nexus, 5259), // Stardew Valley Expanded (de)
+	new(ModSite.Nexus, 5272), // Stardew Valley Expanded (es)
+	new(ModSite.Nexus, 5901), // Stardew Valley Expanded (fr)
+	new(ModSite.Nexus, 8411), // Stardew Valley Expanded (fr)
+	new(ModSite.Nexus, 5788), // Stardew Valley Expanded (ja)
+	new(ModSite.Nexus, 5321), // Stardew Valley Expanded (ko)
+	new(ModSite.Nexus, 8650), // Stardew Valley Expanded (po)
+	new(ModSite.Nexus, 4206), // Stardew Valley Expanded (pt)
+	new(ModSite.Nexus, 6332), // Stardew Valley Expanded (tr)
+	new(ModSite.Nexus, 4325), // Stardew Valley Expanded (zh)
+	new(ModSite.Nexus, 8143), // Stardew Valley Expanded (zh)
+	new(ModSite.Nexus, 8312), // Town School Functions (tr)
+	new(ModSite.Nexus, 6356), // Town School Functions (zh)
+	new(ModSite.Nexus, 7556), // UI Info Suite (fr)
+	new(ModSite.Nexus, 6637), // Underground Secrets (ru)
+
+	// reposts
+	new(ModSite.Nexus, 1427), // Prairie King Made Easy
+	new(ModSite.Nexus, 887),  // Reseed
+	new(ModSite.Nexus, 1363), // Save Anywhere
+	new(ModSite.Nexus, 8386), // Save Anywhere
+	new(ModSite.Nexus, 1077), // UI Mod Suite
+
+	// other
+	new(ModSite.Nexus, 4109), // PPJA Home of Abandoned Mods - CFR Conversions
+	new(ModSite.Nexus, 3294), // Sprint Sprint Sprint, replaced by Sprint Sprint
+
+
+	/*********
+	** Nexus files
+	*********/
+	// broken manifests
+	new(ModSite.Nexus, 1632, 10352), // Birthstone Plants, missing comma
+	new(ModSite.Nexus, 30, 279),     // Enemy Health Bars, Storm mod
+	new(ModSite.Nexus, 2602, 10660), // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
+	new(ModSite.Nexus, 6517, 29513), // KL's Music Pack, missing brackets
+	new(ModSite.Nexus, 5202, 22886), // Minecraft Mobs as Rarecrows, missing quote
+	new(ModSite.Nexus, 237, 929),    // No Soil Decay, invalid version "0.0.0"
+	new(ModSite.Nexus, 5401, 24009), // Open Greenhouse, missing quote
+	new(ModSite.Nexus, 7093, 33160), // Penny as Penny Polendina from RWBY, corrupted characters
+	new(ModSite.Nexus, 7600, 36539), // Pink Tools Recolor, missing quotes in update keys
+	new(ModSite.Nexus, 2472, 9967),  // Sam to Samantha, missing quotes in update keys
+	new(ModSite.Nexus, 366, 2949),   // Siv's Marriage Mod, invalid version "0.0.0"
+	new(ModSite.Nexus, 1048, 3757),  // SmartMod, invalid version "0.0.0"
+	new(ModSite.Nexus, 6284, 28109), // Upgraded Seed Maker Fantasy Crops Addon, missing comma
+	new(ModSite.Nexus, 5881, 26283), // Void Pendant Replacer, UpdateKeys has {} instead of []
+	new(ModSite.Nexus, 5558, 24942), // Zen Garden Desert Obelisk, unescaped quote in string
+
+	// utility mods that are part of a larger mod
+	new(ModSite.Nexus, 2677, 14752), // Always On Server for Multiplayer > Server Connection Reset
+	new(ModSite.Nexus, 2364, 9477),  // Even More Secret Woods > Bush Reset
+	new(ModSite.Nexus, 1008, 3858),  // Hope's Farmer Customization Mods > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
+	new(ModSite.Nexus, 3355, 14167), // Village Map Mod > Village Console Commands
+
+	// legacy pre-standardization content packs (ALL = Advanced Location Loader, SI = Seasonal Immersion)
+	new(ModSite.Nexus, 3713, 15421), // BathHouse Apartment for ALL
+	new(ModSite.Nexus, 3713, 15423), // BathHouse Apartment for ALL
+	new(ModSite.Nexus, 1032, 5771),  // Bus Interior Restored for ALL
+	new(ModSite.Nexus, 762, 5997),   // Cleanup Crew for ALL
+	new(ModSite.Nexus, 1980, 7425),  // Earth and Water Obelisks for SI
+	new(ModSite.Nexus, 1980, 7426),  // Earth and Water Obelisks for SI
+	new(ModSite.Nexus, 1980, 7427),  // Earth and Water Obelisks for SI
+	new(ModSite.Nexus, 1980, 7428),  // Earth and Water Obelisks for SI
+	new(ModSite.Nexus, 1980, 7429),  // Earth and Water Obelisks for SI
+	new(ModSite.Nexus, 1980, 7430),  // Earth and Water Obelisks for SI
+	new(ModSite.Nexus, 806, 5996),   // Expanded Crevices for ALL
+	new(ModSite.Nexus, 588, 3033),   // Extended Cellar for ALL
+	new(ModSite.Nexus, 588, 3083),   // Extended Cellar for ALL
+	new(ModSite.Nexus, 2030, 7706),  // Flower Valley for SI
+	new(ModSite.Nexus, 1467, 5656),  // F-SV Stable for SI
+	new(ModSite.Nexus, 739, 3089),   // JAC'd Greenhouse Extended for ALL
+	new(ModSite.Nexus, 1014, 3650),  // Jungle Temple for ALL
+	new(ModSite.Nexus, 864, 3149),   // Orbitz for ALL
+	new(ModSite.Nexus, 904, 3208),   // Organized Corrosion Detection for ALL
+	new(ModSite.Nexus, 928, 4752),   // Seasonal Vanilla Buildings for SI
+	new(ModSite.Nexus, 800, 3697),   // Spouses Move Out for ALL
+	new(ModSite.Nexus, 784, 5995),   // Tree Life for ALL
+	new(ModSite.Nexus, 835, 3030),   // VIP Visual Improvement Program for ALL
+	new(ModSite.Nexus, 835, 3207),   // VIP Visual Improvement Program for ALL
+	new(ModSite.Nexus, 835, 5994),   // VIP Visual Improvement Program for ALL
+	new(ModSite.Nexus, 1593, 5998),  // Wax Key for ALL
+
+	// mods which include a copy of another mod for some reason
+	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
+	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
+	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
+	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
+	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
+	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
+	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
+	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomNPC"),              // New NPC Alec
+	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
+	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
+	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
+	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
+	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments")  // Unofficial Balance Patch
 };
 
-/// <summary>Mod file IDs to ignore when validating or cross-referencing mods.</summary>
-readonly IDictionary<ModSite, ISet<int>> IgnoreFilesForValidation = new Dictionary<ModSite, ISet<int>>
-{
-	[ModSite.CurseForge] = new HashSet<int>
-	{
-		// other
-		3174801, // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
-		3174928, // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
-	},
-	[ModSite.ModDrop] = new HashSet<int>
-	{
-		// broken manifest
-		711129, // A Toned Down Stardew Valley (#580762), missing comma
-		
-		// legacy pre-standardization content packs (SI = Seasonal Immersion)
-		820685, // Dutch Farm Buildings (#811243) for SI
-	},
-	[ModSite.Nexus] = new HashSet<int>
-	{
-		// broken manifests
-		10352, // Birthstone Plants (#1632), missing comma
-		10660, // katkatpixels Portrait Overhauls (#2602), missing UniqueID field in ContentPackFor
-		29513, // KL's Music Pack (#6517), missing brackets
-		22886, // Minecraft Mobs as Rarecrows (#5202), missing quote
-		929,   // No Soil Decay (#283), invalid version "0.0.0"
-		24009, // Open Greenhouse (#5401), missing quote
-		33160, // Penny as Penny Polendina from RWBY (#7093), corrupted characters
-		36539, // Pink Tools Recolor (#7600), missing quotes in update keys
-		9967,  // Sam to Samantha (#2472), missing quotes in update keys
-		2949,  // Siv's Marriage Mod (#366), invalid version "0.0.0"
-		3757,  // SmartMod (#1048), invalid version "0.0.0"
-		28109, // Upgraded Seed Maker Fantasy Crops Addon (#6284), missing comma
-		26283, // Void Pendant Replacer (#5881), UpdateKeys has {} instead of []
-		24942, // Zen Garden Desert Obelisk (#5558), unescaped quote in string
-
-		// utility mods that are part of a larger mod
-		14752, // Always On Server for Multiplayer (#2677) > Server Connection Reset
-		9477,  // Even More Secret Woods (#2364) > Bush Reset
-		3858,  // Hope's Farmer Customization Mods (#1008) > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
-		14167, // Village Map Mod (#3355) > Village Console Commands
-
-		// legacy pre-standardization content packs (ALL = Advanced Location Loader, SI = Seasonal Immersion)
-		15421, // BathHouse Apartment (#3713) for ALL
-		15423, // BathHouse Apartment (#3713) for ALL
-		5771,  // Bus Interior Restored (#1032) for ALL
-		5997,  // Cleanup Crew (#762) for ALL
-		7425,  // Earth and Water Obelisks (#1980) for SI
-		7426,  // Earth and Water Obelisks (#1980) for SI
-		7427,  // Earth and Water Obelisks (#1980) for SI
-		7428,  // Earth and Water Obelisks (#1980) for SI
-		7429,  // Earth and Water Obelisks (#1980) for SI
-		7430,  // Earth and Water Obelisks (#1980) for SI
-		5996,  // Expanded Crevices (#806) for ALL
-		3033,  // Extended Cellar (#588) for ALL
-		3083,  // Extended Cellar (#588) for ALL
-		7706,  // Flower Valley (#2030) for SI
-		5656,  // F-SV Stable (#1467) for SI
-		3089,  // JAC'd Greenhouse Extended (#739) for ALL
-		3650,  // Jungle Temple (#1014) for ALL
-		3149,  // Orbitz (#864) for ALL
-		3208,  // Organized Corrosion Detection (#904) for ALL
-		4752,  // Seasonal Vanilla Buildings (#928) for SI
-		3697,  // Spouses Move Out (#800) for ALL
-		5995,  // Tree Life (#784) for ALL
-		3030,  // VIP Visual Improvement Program (#835) for ALL
-		3207,  // VIP Visual Improvement Program (#835) for ALL
-		3208,  // VIP Visual Improvement Program (#835) for ALL
-		5994,  // VIP Visual Improvement Program (#835) for ALL
-		5998,  // Wax Key (#1593) for ALL
-
-		// mods which include a copy of another mod
-		40616, // Harvest Valley Farm (#8563), includes Custom NPC Fixes
-		40617, // Harvest Valley Farm (#8563), includes Custom NPC Fixes
-		40805, // Personal Effects Redux (#8616), unofficial update for bwdyworks
-
-		// other
-		40376, // Carrot SummerCrop (#8446), has dot-ignored folders
-		38160, // Cotton the Sweetest Shopkeeper (#8097), unofficial update of Better Farm Animal Variety
-		279,   // Enemy Health Bars (#30), Storm mod
-		36876, // Garden Village Shops (#6113), has dot-ignored folders
-		40569, // Hardew Valley (#6029), is a dot-ignored folder
-		40590, // Hardew Valley (#6029), is a dot-ignored folder
-		38706, // Riley_Deutsch (#817), includes a translated version of Mobile Phone
-		38072 // Rose Cows (#8084), has a '.vs' folder
-	}
-};
+/// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
+private IDictionary<string, ModSearch[]> IgnoreForAnalysisBySiteId;
 
 /// <summary>The settings to use when writing JSON files.</summary>
 readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
@@ -288,6 +279,11 @@ readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
 async Task Main()
 {
 	Directory.CreateDirectory(this.RootPath);
+
+	// build optimized mod search lookup
+	this.IgnoreForAnalysisBySiteId = this.IgnoreForAnalysis
+		.GroupBy(p => new { p.Site, p.SiteId })
+		.ToDictionary(p => $"{p.Key.Site}:{p.Key.SiteId}", p => p.ToArray());
 
 	// init clients
 	foreach (var site in this.ModSites)
@@ -332,10 +328,9 @@ async Task Main()
 		var result = await this.GetModsNotOnWikiAsync(mods).Dump("SMAPI mods not on the wiki");
 		new Lazy<dynamic>(() => string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value))).Dump("SMAPI mods not on the wiki (wiki format)");
 	}
-	
+
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
-	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreModsForValidation)} values which don't match any local mod");
-	this.GetInvalidIgnoreFileEntries(mods).Dump($"{nameof(IgnoreFilesForValidation)} values which don't match any local mod file");
+	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
 	this.GetModTypes(mods).Dump("mod types");
 }
 
@@ -365,7 +360,7 @@ async Task<dynamic[]> GetModsNotOnWikiAsync(IEnumerable<ParsedMod> mods)
 		where
 			folder.ModType == ModType.Smapi
 			&& !string.IsNullOrWhiteSpace(folder.ModID)
-			&& !this.ShouldIgnoreForValidation(mod.Site, mod.ID, folder.ID)
+			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
 
 		let wikiHasManifestId = manifestIDs.Contains(folder.ModID)
 		let wikiHasSiteId = siteIDs[mod.Site].Contains(mod.ID)
@@ -440,14 +435,16 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 {
 	return (
 		from mod in mods
+
 		let invalid = mod.ModFolders
 			.Where(folder =>
-				(folder.ModType == ModType.Invalid || folder.ModType == ModType.Ignored)
+				folder.ModType == ModType.Invalid
 				&& folder.ModError != ModParseError.ManifestMissing // ignore non-mod files
 				&& folder.ModError != ModParseError.EmptyFolder // contains only non-mod files (e.g. replacement PNG assets)
-				&& !this.ShouldIgnoreForValidation(mod.Site, mod.ID, folder.ID)
+				&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
 			)
 			.ToArray()
+
 		where invalid.Any()
 		select new
 		{
@@ -486,52 +483,38 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 {
 	// index known mods
-	ISet<string> index = new HashSet<string>(mods.Select(mod =>$"{mod.Site}:{mod.ID}"), StringComparer.InvariantCultureIgnoreCase);
+	IDictionary<string, ParsedMod> modsByKey = mods.ToDictionary(mod =>$"{mod.Site}:{mod.ID}", StringComparer.OrdinalIgnoreCase);
 
 	// show unknown entries
-	List<dynamic> entries = new List<dynamic>();
-	foreach (ModSite site in this.IgnoreModsForValidation.Keys)
+	var invalid = new List<(ModSearch Entry, string Reason, ParsedMod Mod)>();
+	foreach (var pair in this.IgnoreForAnalysisBySiteId)
 	{
-		foreach (int modId in this.IgnoreModsForValidation[site])
+		(string key, ModSearch[] entries) = pair;
+
+		// fetch mod
+		if (!modsByKey.TryGetValue(key, out ParsedMod mod))
 		{
-			if (!index.Contains($"{site}:{modId}"))
-				entries.Add(new { Site = site, ID = modId });
+			foreach (var entry in entries)
+				invalid.Add((entry, "Site ID not found", mod));
+			continue;
+		}
+
+		// match against mod folders
+		HashSet<int> fileIds = new(mod.Files.Select(p => p.ID));
+		foreach (var entry in entries)
+		{
+			if (entry.FileId.HasValue && !fileIds.Contains(entry.FileId.Value))
+				invalid.Add((entry, "File ID not found", mod));
+			else if (!mod.ModFolders.Any(folder => entry.Matches(site: mod.Site, siteId: mod.ID, fileId: folder.ID, manifestId: folder.ModID)))
+				invalid.Add((entry, "Mod folder data not matched", mod));
 		}
 	}
 
-	return entries
+	return invalid
+		.Select(p => new { p.Entry.Site, p.Entry.SiteId, p.Entry.FileId, p.Entry.ManifestId, Reason = p.Reason, Mod = new Lazy<ParsedMod>(() => p.Mod), Entry = new Lazy<ModSearch>(() => p.Entry) })
 		.OrderBy(p => p.Site)
-		.ThenBy(p => p.ID);
-}
-
-/// <summary>Get entries in <see cref="IgnoreFilesForValidation" /> which don't match any of the given mods' files.</summary>
-/// <param name="mods">The mods to check.</param>
-IEnumerable<dynamic> GetInvalidIgnoreFileEntries(IEnumerable<ParsedMod> mods)
-{
-	// index known files
-	ISet<string> index = new HashSet<string>(
-		(
-			from mod in mods
-			from file in mod.Files
-			select $"{mod.Site}:{file.ID}"
-		),
-		StringComparer.InvariantCultureIgnoreCase
-	);
-
-	// show unknown entries
-	List<dynamic> entries = new List<dynamic>();
-	foreach (ModSite site in this.IgnoreFilesForValidation.Keys)
-	{
-		foreach (int fileId in this.IgnoreFilesForValidation[site])
-		{
-			if (!index.Contains($"{site}:{fileId}"))
-				entries.Add(new { Site = site, ID = fileId });
-		}
-	}
-
-	return entries
-		.OrderBy(p => p.Site)
-		.ThenBy(p => p.ID);
+		.ThenBy(p => p.SiteId)
+		.ThenBy(p => p.FileId);
 }
 
 /// <summary>Get the number of mods by type.</summary>
@@ -569,11 +552,11 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 	foreach (ParsedMod mod in mods)
 	{
 		var typesForCurPage = new HashSet<ModType>(mod.ModFolders.Select(p => p.ModType));
-		
+
 		foreach (ParsedFile folder in mod.ModFolders)
 		{
 			IManifest manifest = folder.RawFolder.Value.Manifest;
-			
+
 			// get type name
 			string contentPackFor = manifest?.ContentPackFor?.UniqueID;
 			string type = folder.ModType switch
@@ -611,7 +594,7 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 			typesByKey[key] = type;
 		}
 	}
-	
+
 	// get counts
 	var counts = typesByKey
 		.GroupBy(p => p.Value, StringComparer.OrdinalIgnoreCase)
@@ -1044,19 +1027,14 @@ public string BuildFileList(DirectoryInfo root)
 
 /// <summary>Get whether a given mod and file ID should be ignored when validating mods.</summary>
 /// <param name="site">The mod site.</param>
-/// <param name="modID">The mod ID on the mod site.</param>
-/// <param name="fileID">The file ID on the mod site.</param>
-private bool ShouldIgnoreForValidation(ModSite site, int modID, int fileID)
+/// <param name="siteId">The mod ID on the mod site.</param>
+/// <param name="fileId">The file ID on the mod site.</param>
+/// <param name="manifestId">The mod's manifest ID, if available.</param>
+private bool ShouldIgnoreForAnalysis(ModSite site, int siteId, int fileId, string manifestId)
 {
-	// ignored mod
-	if (this.IgnoreModsForValidation.TryGetValue(site, out ISet<int> ignoreMods) && ignoreMods.Contains(modID))
-		return true;
-
-	// ignored file
-	if (this.IgnoreFilesForValidation.TryGetValue(site, out ISet<int> ignoreFiles) && ignoreFiles.Contains(fileID))
-		return true;
-
-	return false;
+	return
+		this.IgnoreForAnalysisBySiteId.TryGetValue($"{site}:{siteId}", out ModSearch[] entries)
+		&& entries.Any(search => search.Matches(site: site, siteId: siteId, fileId: fileId, manifestId: manifestId));
 }
 
 /// <summary>Get a human-readable formatted time span.</summary>
@@ -1305,6 +1283,49 @@ class ParsedFile : GenericFile
 	}
 }
 
+/// <summary>Matches a mod which should be ignored when validating mod data or compiling statistics.</summary>
+class ModSearch
+{
+	/// <summary>The site which hosts the mod.</summary>
+	public ModSite Site { get; }
+
+	/// <summary>The mod's page ID in the site.</summary>
+	public int SiteId { get; }
+
+	/// <summary>The uploaded file ID, or <c>null</c> for any value.</summary>
+	public int? FileId { get; }
+
+	/// <summary>The mod's manifest ID, or <c>null</c> for any value.</summary>
+	public string ManifestId { get; }
+
+	/// <summary>Construct an instance.</summary>
+	/// <param name="site">The site which hosts the mod.</param>
+	/// <param name="siteId">The mod's page ID in the site.</param>
+	/// <param name="fileId">The uploaded file ID, or <c>null</c> for any value.</param>
+	/// <param name="manifestId">The mod's manifest ID, or <c>null</c> for any value.</param>
+	public ModSearch(ModSite site, int siteId, int? fileId = null, string manifestId = null)
+	{
+		this.Site = site;
+		this.SiteId = siteId;
+		this.FileId = fileId;
+		this.ManifestId = manifestId;
+	}
+
+	/// <summary>Get whether a given mod and file ID should be ignored when validating mods.</summary>
+	/// <param name="site">The mod site.</param>
+	/// <param name="siteId">The mod ID on the mod site.</param>
+	/// <param name="fileId">The file ID on the mod site.</param>
+	/// <param name="manifestId">The mod's manifest ID, if available.</param>
+	public bool Matches(ModSite site, int siteId, int fileId, string manifestId)
+	{
+		return
+			this.Site == site
+			&& this.SiteId == siteId
+			&& (this.FileId == null || this.FileId == fileId)
+			&& (this.ManifestId == null || this.ManifestId == manifestId);
+	}
+}
+
 /// <summary>An exception raised when API client exceeds the rate limits for an API.</summary>
 class RateLimitedException : Exception
 {
@@ -1357,7 +1378,7 @@ interface IModSiteClient
 	*********/
 	/// <summary>Authenticate with the mod site if needed.</summary>
 	Task AuthenticateAsync();
-	
+
 	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
 	/// <param name="startFrom">The minimum mod ID to include.</param>
 	/// <param name="endWith">The maximum mod ID to include.</param>
@@ -1600,7 +1621,7 @@ class ModDropApiClient : IModSiteClient
 
 	/// <summary>The ModDrop API client.</summary>
 	private IClient ModDrop = new FluentClient("https://www.moddrop.com/api");
-	
+
 	/// <summary>The username with which to log in, if any.</summary>
 	private readonly string Username;
 
