@@ -21,31 +21,32 @@
 
   This script...
      1. fetches the list of SMAPI mods from the wiki;
-     2. downloads every Git repository for those mods to a local folder.
+     2. downloads every source repository for those mods to a local folder.
 
+  Prerequisites:
+     1. Install Git (https://git-scm.com) and Mercurial (https://www.mercurial-scm.org).
 */
 
 /*********
 ** Configuration
 *********/
-/// <summary>The absolute path to the folder which contains the Git repositories.</summary>
+/// <summary>The absolute path to the folder which contains the source repositories.</summary>
 private readonly string RootPath = @"C:\source\_Stardew\_smapi-mod-dump\source";
 
-/// <summary>Patterns matching valid file or folder names that are legitimately part of the Git repository, but should be removed from the cloned repositories.</summary>
+/// <summary>Patterns matching valid file or folder names that are legitimately part of the source repository, but should be removed from the cloned repositories.</summary>
 private readonly Regex[] IgnoreLegitNames =
 {
-	// folders
-	new Regex(@"^\.git$", RegexOptions.Compiled),
+	// Git/Mercurial metadata
+	new Regex(@"^\.git(?:attributes|ignore)?$", RegexOptions.Compiled),
+	new Regex(@"^\.hg(?:ignore|sub|substate|tags)?$", RegexOptions.Compiled),
 
-	// files
-	new Regex(@"^\.gitattributes$", RegexOptions.Compiled),
-	new Regex(@"^\.gitignore$", RegexOptions.Compiled),
+	// large non-code files
 	new Regex(@"\.psd$", RegexOptions.Compiled),
 	new Regex(@"\.wav$", RegexOptions.Compiled),
 	new Regex(@"\.xcf$", RegexOptions.Compiled)
 };
 
-/// <summary>Patterns matching valid file or folder names that shouldn't be in Git.</summary>
+/// <summary>Patterns matching valid file or folder names that shouldn't be in source control.</summary>
 private readonly Regex[] IgnoreIncorrectNames =
 {
 	// folders
@@ -63,7 +64,7 @@ private readonly Regex[] IgnoreIncorrectNames =
 	new Regex(@"_(?:BACKUP|BASE|LOCAL)_\d+\.[a-z]+", RegexOptions.Compiled) // merge backups
 };
 
-/// <summary>Patterns matching valid file or folder names that shouldn't be in Git for a specific repo folder.</summary>
+/// <summary>Patterns matching valid file or folder names that shouldn't be in source control for a specific repo folder.</summary>
 private readonly IDictionary<string, Regex> IgnoreFilesByRepo = new Dictionary<string, Regex>
 {
 	["~JessebotX"] = new Regex(@"^oldversions$", RegexOptions.Compiled),
@@ -75,14 +76,14 @@ private readonly IDictionary<string, Regex> IgnoreFilesByRepo = new Dictionary<s
 };
 
 /// <summary>The source URLs to skip when cloning repositories. This should match the GitHub repository name or custom URL specified on the wiki.</summary>
-private readonly HashSet<string> IgnoreSourceUrls = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+private readonly HashSet<string> IgnoreSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 {
 	// SMAPI
 	"Pathoschild/SMAPI"
 };
 
-/// <summary>Maps GitHub URLs to the folder name to use, overriding the generated name.</summary>
-public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+/// <summary>Maps source URLs to the folder name to use, overriding the generated name.</summary>
+public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 {
 	["https://github.com/Floogen/GreenhouseGatherers.git"] = "GreenhouseGatherers", // Greenhouse Gatherers + Greenhouse Gatherers Automate = ~Floogen
 	["https://github.com/Floogen/IslandGatherers.git"] = "IslandGatherers",         // Island Gatherers + Island Gatherers Automate = ~Floogen
@@ -104,10 +105,10 @@ async Task Main()
 
 
 	/****
-	** Fetch Git URLs
+	** Fetch repo URLs
 	****/
 	List<ModRepository> repos = new List<ModRepository>();
-	Helper.Print("Fetching Git repository URLs...");
+	Helper.Print("Fetching repository URLs...");
 	{
 		// fetch mods
 		WikiModEntry[] mods = (await toolkit.GetWikiCompatibilityListAsync()).Mods.Where(p => p.ContentPackFor == null).ToArray();
@@ -119,19 +120,22 @@ async Task Main()
 		// fetch repositories
 		repos.AddRange(
 			mods
-				.Select(mod => new { mod, gitUrl = ModRepository.GetGitUrl(mod) })
-				.Where(p => p.gitUrl != null)
-				.GroupBy(p => p.gitUrl, p => p.mod, StringComparer.InvariantCultureIgnoreCase)
-				.Select(group => new ModRepository(group.Key, group))
+				.Select(mod => new ModWithSource(mod))
+				.Where(p => p.HasSource)
+				.GroupBy(p => p.SourceUrl, p => p, StringComparer.OrdinalIgnoreCase)
+				.Select(group => new ModRepository(group))
 		);
 
 		// find invalid custom source URLs
-		string[] invalidUrls = mods
-			.Except(repos.SelectMany(p => p.Mods))
-			.Where(mod => !string.IsNullOrWhiteSpace(mod.CustomSourceUrl))
-			.Select(mod => mod.CustomSourceUrl)
-			.Distinct(StringComparer.InvariantCultureIgnoreCase)
-			.ToArray();
+		string[] invalidUrls;
+		{
+			var validUrls = new HashSet<string>(repos.SelectMany(repo => repo.CustomSourceUrls), StringComparer.OrdinalIgnoreCase);
+			invalidUrls = mods
+				.Select(mod => mod.CustomSourceUrl)
+				.Where(url => !string.IsNullOrWhiteSpace(url) && !validUrls.Contains(url))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToArray();
+		}
 
 		// print stats
 		int uniqueRepos = repos.Count;
@@ -139,7 +143,7 @@ async Task Main()
 		int haveSharedRepo = haveCode - uniqueRepos;
 
 		Helper.Print($"   {totalMods} mods in the SMAPI compatibility list.");
-		Helper.Print($"   {haveCode} mods ({this.GetPercentage(haveCode, totalMods)}) have a Git repository.");
+		Helper.Print($"   {haveCode} mods ({this.GetPercentage(haveCode, totalMods)}) have a source repository.");
 		Helper.Print($"   {haveSharedRepo} repositories ({this.GetPercentage(haveSharedRepo, haveCode)}) contain multiple mods.");
 		if (invalidUrls.Any())
 		{
@@ -156,11 +160,11 @@ async Task Main()
 	IDictionary<string, ModRepository> repoFolders = new Dictionary<string, ModRepository>();
 	foreach (ModRepository repo in repos)
 	{
-		if (!this.OverrideFolderNames.TryGetValue(repo.GitUrl, out string folderName))
+		if (!this.OverrideFolderNames.TryGetValue(repo.SourceUrl, out string folderName))
 			folderName = repo.GetRecommendedFolderName();
 
 		if (repoFolders.ContainsKey(folderName))
-			throw new InvalidOperationException($"Folder name conflict: can't add {folderName}, it matches both [{repo.GitUrl}] and [{repoFolders[folderName].GitUrl}].");
+			throw new InvalidOperationException($"Folder name conflict: can't add {folderName}, it matches both [{repo.SourceUrl}] and [{repoFolders[folderName].SourceUrl}].");
 
 		repoFolders[folderName] = repo;
 	}
@@ -170,7 +174,7 @@ async Task Main()
 	****/
 	if (rootDir.EnumerateFileSystemInfos().Any())
 	{
-		Helper.Print($"Deleting old Git repositories...");
+		Helper.Print($"Deleting old source repositories...");
 		foreach (FileSystemInfo entry in rootDir.EnumerateFileSystemInfos())
 			this.Delete(entry);
 		Console.WriteLine();
@@ -179,14 +183,14 @@ async Task Main()
 	/****
 	** Clone repos
 	****/
-	Helper.Print("Fetching Git repositories...");
+	Helper.Print("Fetching source repositories...");
 	int reposLeft = repoFolders.Count;
 	foreach (var entry in repoFolders.OrderBy(p => p.Key))
 	{
 		// collect info
 		DirectoryInfo dir = new DirectoryInfo(Path.Combine(this.RootPath, entry.Key));
 		ModRepository repo = entry.Value;
-		Helper.Print($"   [{reposLeft--}] {dir.Name} → {repo.GitUrl}...");
+		Helper.Print($"   [{reposLeft--}] {dir.Name} → {repo.SourceUrl}...");
 
 		// validate
 		if (dir.Exists)
@@ -197,34 +201,93 @@ async Task Main()
 
 		// clone repo
 		bool cloned = false;
-		string gitUrl = repo.GitUrl;
+		string sourceUrl = repo.SourceUrl;
 		while (true)
 		{
 			try
 			{
-				await this.ExecuteShellAsync(
-					filename: "git",
-					arguments: $"clone -q {gitUrl} \"{dir.Name}\"", // only get the latest version
-					workingDir: rootDir.FullName,
-					ignoreErrorOut: errorOut => Regex.IsMatch(errorOut, "^Filtering content:.+/s, done.$") // git LFS logs progress output to stderr
-				);
-				cloned = true;
-				break;
+				switch (repo.SourceType)
+				{
+					case SourceType.Git:
+						await this.ExecuteShellAsync(
+							filename: "git",
+							arguments: $"clone -q {sourceUrl} \"{dir.Name}\"", // only get the latest version
+							workingDir: rootDir.FullName,
+							ignoreErrorOut: errorOut => Regex.IsMatch(errorOut, "^Filtering content:.+/s, done.$") // git LFS logs progress output to stderr
+						);
+						cloned = true;
+						break;
+
+					case SourceType.Mercurial:
+						await this.ExecuteShellAsync(
+							filename: "hg",
+							arguments: $"clone {sourceUrl} \"{dir.Name}\"",
+							workingDir: rootDir.FullName
+						);
+						cloned = true;
+						break;
+
+					default:
+						throw new NotSupportedException($"Invalid source type '{repo.SourceType}'.");
+				}
+
+				if (cloned)
+					break;
 			}
 			catch (Exception ex)
 			{
 				ex.Dump();
-				string choice = Helper.GetChoice("Cloning the Git repository failed! [r]etry, [s]kip, or [c]hange repo URL?", "r", "s", "c");
+				string choice = Helper.GetChoice($"Cloning the {repo.SourceType} repository failed! [r]etry, [s]kip as failed, [c]ontinue as cloned, or change repo [U]RL?", "r", "s", "c", "u");
+				if (choice == "c")
+				{
+					cloned = true;
+					break;
+				}
 				if (choice == "s")
 					break;
-				if (choice == "c")
-					gitUrl = Util.ReadLine("Enter new GitHub URL:", gitUrl).Trim();
+				if (choice == "u")
+					sourceUrl = Util.ReadLine("Enter new source URL:", sourceUrl).Trim();
 			}
 		}
 		if (!cloned)
 			continue;
-		string lastCommit = await this.ExecuteShellAsync("git", "log -1", workingDir: dir.FullName);
-		string repoUrl = repo.GetWebUrl();
+
+		// get last commit info
+		string lastCommit = null;
+		while (true)
+		{
+			try
+			{
+				bool succeeded = false;
+				switch (repo.SourceType)
+				{
+					case SourceType.Git:
+						lastCommit = await this.ExecuteShellAsync("git", "log -1", workingDir: dir.FullName);
+						succeeded = true;
+						break;
+
+					case SourceType.Mercurial:
+						lastCommit = await this.ExecuteShellAsync("hg", "log --limit 1", workingDir: dir.FullName);
+						succeeded = true;
+						break;
+
+					default:
+						throw new NotSupportedException($"Invalid source type '{repo.SourceType}'.");
+				}
+
+				if (succeeded)
+					break;
+			}
+			catch (Exception ex)
+			{
+				ex.Dump();
+				string choice = Helper.GetChoice($"Reading the latest commit for the {repo.SourceType} repository failed! [r]etry or or [c]ontinue without commit info?", "r", "c");
+				if (choice == "c")
+					break;
+			}
+		}
+		if (!cloned)
+			continue;
 
 		// get patterns to ignore
 		IEnumerable<Regex> ignorePatterns = this.IgnoreLegitNames.Concat(this.IgnoreIncorrectNames);
@@ -244,7 +307,7 @@ async Task Main()
 		// add file headers to avoid confusion
 		foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
 		{
-			string header = this.GetFileHeader(file.Extension?.ToLower(), repoUrl);
+			string header = this.GetFileHeader(file.Extension?.ToLower(), repo);
 			if (header != null)
 				File.WriteAllText(file.FullName, string.Concat(header, "\n\n", File.ReadAllText(file.FullName)));
 		}
@@ -252,8 +315,8 @@ async Task Main()
 		// write metadata file
 		File.WriteAllText(
 			Path.Combine(dir.FullName, "_metadata.txt"),
-			$"url:\n   {repo.GitUrl}\n\n"
-			+ $"mods:\n   {string.Join("\n   ", repo.Mods.Select(p => p.Name.FirstOrDefault()).OrderBy(p => p))}\n\n"
+			$"urls:\n   web: {repo.WebUrl}\n   {repo.SourceType}: {repo.SourceUrl}\n\n"
+			+ $"mods:\n   {string.Join("\n   ", repo.Mods.Select(p => p.Mod.Name.FirstOrDefault()).OrderBy(p => p))}\n\n"
 			+ $"latest commit:\n   {string.Join("\n   ", lastCommit.Replace("\r", "").Split('\n'))}"
 		);
 	}
@@ -267,8 +330,8 @@ async Task Main()
 *********/
 /// <summary>Get the file header to prepend to a file, if any.</summary>
 /// <param name="extension">The file extension for which to get a header.</param>
-/// <param name="repoUrl">The git repository URL.</param>
-private string GetFileHeader(string extension, string repoUrl)
+/// <param name="repo">The source repository.</param>
+private string GetFileHeader(string extension, ModRepository repo)
 {
 	switch (extension)
 	{
@@ -284,7 +347,7 @@ private string GetFileHeader(string extension, string repoUrl)
 				$"** for queries and analysis.",
 				$"**",
 				$"** This is *not* the original file, and not necessarily the latest version.",
-				$"** Source repository: {repoUrl}",
+				$"** Source repository: {repo.WebUrl}",
 				$"**",
 				$"*************************************************/"
 			);
@@ -295,7 +358,7 @@ private string GetFileHeader(string extension, string repoUrl)
 				$"for queries and analysis.**",
 				$"",
 				$"**This is _not_ the original file, and not necessarily the latest version.**  ",
-				$"**Source repository: {repoUrl}**",
+				$"**Source repository: {repo.WebUrl}**",
 				$"",
 				$"----"
 			);
@@ -309,7 +372,7 @@ private string GetFileHeader(string extension, string repoUrl)
 				$"## for queries and analysis.",
 				$"##",
 				$"## This is *not* the original file, and not necessarily the latest version.",
-				$"## Source repository: {repoUrl}",
+				$"## Source repository: {repo.WebUrl}",
 				$"##",
 				$"##################################################"
 			);
@@ -428,87 +491,222 @@ public void Delete(FileSystemInfo entry)
 	}
 }
 
-/// <summary>Metadata about a mod repository.</summary>
-class ModRepository
+/// <summary>A wiki mod entry with source info.</summary>
+class ModWithSource
 {
 	/*********
 	** Accessors
 	*********/
-	/// <summary>The repository's Git URL.</summary>
-	public string GitUrl { get; }
+	/// <summary>The wiki mod entry.</summary>
+	public WikiModEntry Mod { get; }
 
-	/// <summary>The mod's wiki metadata.</summary>
-	public WikiModEntry[] Mods { get; }
+	/// <summary>The repository's web URL.</summary>
+	public string WebUrl { get; }
 
-	/// <summary>The mods' custom source URLs, if specified.</summary>
-	public string[] CustomSourceUrls { get; }
+	/// <summary>The repository's Git or Mercurial URL.</summary>
+	public string SourceUrl { get; }
 
-	/// <summary>The repository owner name.</summary>
-	public string RepositoryOwner { get; }
+	/// <summary>The name of the user who owns the repo, if available in the URL.</summary>
+	public string OwnerName { get; }
 
-	/// <summary>The repository name.</summary>
-	public string RepositoryName { get; }
+	/// <summary>The name of the repository project.</summary>
+	public string RepoName { get; }
+
+	/// <summary>The source control system for this mod.</summary>
+	public SourceType SourceType { get; }
+
+	/// <summary>Whether the mod has a source repo URL.</summary>
+	public bool HasSource => this.SourceUrl != null;
 
 
 	/*********
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
-	/// <param name="gitUrl">The git URL.</param>
-	/// <param name="mods">The mods in the repository.</param>
-	public ModRepository(string gitUrl, IEnumerable<WikiModEntry> mods)
+	/// <param name="mod">The wiki mod entry.</param>
+	public ModWithSource(WikiModEntry mod)
 	{
-		this.GitUrl = gitUrl;
-		this.Mods = mods.ToArray();
-		this.CustomSourceUrls = (from mod in mods where !string.IsNullOrWhiteSpace(mod.CustomSourceUrl) select mod.CustomSourceUrl).ToArray();
+		this.Mod = mod;
 
-		if (this.TryParseRepositoryUrl(gitUrl, out string owner, out string name))
+		if (ModRepository.TryGetSourceInfo(mod, out string webUrl, out string sourceUrl, out string ownerName, out string RepoName, out SourceType type))
 		{
-			this.RepositoryOwner = owner;
-			this.RepositoryName = name;
+			this.WebUrl = webUrl;
+			this.SourceUrl = sourceUrl;
+			this.SourceType = type;
+			this.OwnerName = ownerName;
+			this.RepoName = RepoName;
 		}
+	}
+}
+
+/// <summary>Metadata about a mod repository.</summary>
+class ModRepository
+{
+	/*********
+	** Accessors
+	*********/
+	/// <summary>The repository's web URL.</summary>
+	public string WebUrl { get; }
+
+	/// <summary>The repository's Git or Mercurial URL.</summary>
+	public string SourceUrl { get; }
+
+	/// <summary>The name of the user who owns the repo, if available in the URL.</summary>
+	public string OwnerName { get; }
+
+	/// <summary>The name of the repository project.</summary>
+	public string RepoName { get; }
+
+	/// <summary></summary>
+	public SourceType SourceType { get; }
+
+	/// <summary>The mods in this repo.</summary>
+	public ModWithSource[] Mods { get; }
+
+	/// <summary>The mods' custom source URLs, if specified.</summary>
+	public string[] CustomSourceUrls { get; }
+
+
+	/*********
+	** Public methods
+	*********/
+	/// <summary>Construct an instance.</summary>
+	/// <param name="mods">The mods in the repository.</param>
+	public ModRepository(IEnumerable<ModWithSource> mods)
+	{
+		// save base values
+		this.Mods = mods.ToArray();
+		this.CustomSourceUrls = (from mod in mods where !string.IsNullOrWhiteSpace(mod.Mod.CustomSourceUrl) select mod.Mod.CustomSourceUrl).ToArray();
+		if (!this.Mods.Any())
+			throw new ArgumentException("Can't create a mod repository with zero mods.");
+
+		// extract source details
+		HashSet<string> webUrls = new(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> sourceUrls = new(StringComparer.OrdinalIgnoreCase);
+		HashSet<SourceType> sourceTypes = new();
+		HashSet<string> repoOwners = new(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> repoNames = new(StringComparer.OrdinalIgnoreCase);
+		foreach (var mod in this.Mods)
+		{
+			webUrls.Add(mod.WebUrl);
+			sourceUrls.Add(mod.SourceUrl);
+			sourceTypes.Add(mod.SourceType);
+			repoOwners.Add(mod.OwnerName);
+			repoNames.Add(mod.RepoName);
+		}
+
+		// save single source details
+		if (webUrls.Count > 1 || sourceUrls.Count > 1 || sourceTypes.Count > 1 || repoOwners.Count > 1 || repoNames.Count > 1)
+			throw new ArgumentException($"Can't create a mod repository with inconsistent mod repo info. Found conflicting info for one or more fields:\n   web URLs: '{string.Join("', '", webUrls)}'\n   source URLs: '{string.Join("', '", sourceUrls)}'\n   repo types: '{string.Join("', '", sourceTypes)}'\n   repo owners: '{string.Join("', '", repoOwners)}'\n   repo names: '{string.Join("', '", repoNames)}'");
+		this.WebUrl = webUrls.FirstOrDefault();
+		this.SourceUrl = sourceUrls.FirstOrDefault();
+		this.SourceType = sourceTypes.FirstOrDefault();
+		this.OwnerName = repoOwners.FirstOrDefault();
+		this.RepoName = repoNames.FirstOrDefault();
 	}
 
 	/// <summary>Get the recommended folder name for the repository.</summary>
 	public string GetRecommendedFolderName()
 	{
-		string name = this.Mods.Length == 1
-			? this.Mods.Single().Name.FirstOrDefault()
-			: $"~{this.RepositoryOwner}";
+		string name = this.GetRawRecommendedFolderName();
 
 		foreach (char invalidCh in Path.GetInvalidFileNameChars())
 			name = name.Replace(invalidCh, '_');
 
 		return name;
 	}
-	
-	/// <summary>Get the repository's web URL.</summary>
-	public string GetWebUrl()
+
+	/// <summary>Extract the source control info for a mod entry, if valid.</summary>
+	/// <param name="mod">The mod's wiki metadata.</param>
+	/// <param name="webUrl">The repo's web URL.</param>
+	/// <param name="sourceUrl">The repo's Git or Mercurial URL.</param>
+	/// <param name="ownerName">The name of the user who owns the repo, if available in the URL.</param>
+	/// <param name="repoName">The name of the repository project.</param>
+	/// <param name="type">The repo's source control type.</param>
+	public static bool TryGetSourceInfo(WikiModEntry mod, out string webUrl, out string sourceUrl, out string ownerName, out string repoName, out SourceType type)
 	{
-		string url = this.GitUrl;
-		if (url.EndsWith(".git"))
-			url = url.Substring(0, url.Length - 4);
-		return url;
+		// GitHub
+		if (!string.IsNullOrWhiteSpace(mod.GitHubRepo))
+		{
+			webUrl = $"https://github.com/{mod.GitHubRepo.Trim('/')}";
+			sourceUrl = $"{webUrl}.git";
+			type = SourceType.Git;
+
+			string[] parts = mod.GitHubRepo.Split('/', 2);
+			if (parts.Length == 2)
+			{
+				ownerName = parts[0];
+				repoName = parts[1];
+			}
+			else
+			{
+				// GitHub repo is invalid, but that will be validated elsewhere
+				ownerName = null;
+				repoName = parts[0];
+			}
+			return true;
+		}
+
+		// GitLab
+		if (mod.CustomSourceUrl?.Contains("gitlab.com") == true)
+		{
+			webUrl = mod.CustomSourceUrl;
+			sourceUrl = $"{mod.CustomSourceUrl}.git";
+			type = SourceType.Git;
+
+			var match = Regex.Match(mod.CustomSourceUrl, "gitlab.com/([^/]+)/([^/]+)");
+			if (match.Success)
+			{
+				ownerName = match.Groups[1].Value;
+				repoName = match.Groups[2].Value;
+			}
+			else
+			{
+				ownerName = null;
+				repoName = null;
+			}
+			return true;
+		}
+
+		// SourceForge
+		// web URL format: https://sourceforge.net/p/PROJECT_ID/
+		// Mercurial URL format: http://hg.code.sf.net/p/PROJECT_ID/code
+		if (mod.CustomSourceUrl?.Contains("sourceforge.net") == true)
+		{
+			var match = Regex.Match(mod.CustomSourceUrl, "sourceforge.net/p(?:rojects)?/([^/]+)", RegexOptions.IgnoreCase);
+			if (match.Success)
+			{
+				ownerName = null;
+				repoName = match.Groups[1].Value;
+
+				webUrl = mod.CustomSourceUrl;
+				sourceUrl = $"http://hg.code.sf.net/p/{repoName}/code";
+				type = SourceType.Mercurial;
+				return true;
+			}
+		}
+
+		ownerName = null;
+		repoName = null;
+		webUrl = default;
+		sourceUrl = default;
+		type = default;
+		return false;
 	}
 
 
 	/*********
 	** Private methods
 	*********/
-	/// <summary>Get the Git URL for a mod entry, if any.</summary>
-	/// <param name="mod">The mod's wiki metadata.</param>
-	public static string GetGitUrl(WikiModEntry mod)
+	/// <summary>Get the raw recommended folder name for the repository, without sanitization.</summary>
+	private string GetRawRecommendedFolderName()
 	{
-		if (!string.IsNullOrWhiteSpace(mod.GitHubRepo))
-			return $"https://github.com/{mod.GitHubRepo.Trim('/')}.git";
+		if (this.Mods.Length == 1)
+			return this.Mods.SingleOrDefault()?.Mod.Name.FirstOrDefault() ?? $"{this.OwnerName}_{this.RepoName}";
 
-		if (mod.CustomSourceUrl != null)
-		{
-			if (mod.CustomSourceUrl.Contains("gitlab.com"))
-				return $"{mod.CustomSourceUrl}.git";
-		}
-
-		return null;
+		return this.OwnerName != null
+			? $"~{this.OwnerName}"
+			: this.RepoName;
 	}
 
 	/// <summary>Parse a Git URL.</param>
@@ -533,4 +731,14 @@ class ModRepository
 		name = null;
 		return false;
 	}
+}
+
+/// <summary>A source control type.</summary>
+public enum SourceType
+{
+	/// <summary>The Git source control system.</summary>
+	Git,
+
+	/// <summary>The Mercurial source control system.</summary>
+	Mercurial
 }
