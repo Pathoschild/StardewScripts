@@ -41,6 +41,7 @@ private readonly Regex[] IgnoreLegitNames =
 	new Regex(@"^\.hg(?:ignore|sub|substate|tags)?$", RegexOptions.Compiled),
 
 	// large non-code files
+	new Regex(@"\.gif$", RegexOptions.Compiled),
 	new Regex(@"\.psd$", RegexOptions.Compiled),
 	new Regex(@"\.wav$", RegexOptions.Compiled),
 	new Regex(@"\.xcf$", RegexOptions.Compiled)
