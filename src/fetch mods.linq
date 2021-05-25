@@ -60,7 +60,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 05, 01), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 05, 25), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -136,12 +136,15 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// mod translations
 	new(ModSite.Nexus, 7932), // Animals Need Water (fr)
 	new(ModSite.Nexus, 7562), // Animals Need Water (tr)
+	new(ModSite.Nexus, 8679), // Animals Need Water (tr)
 	new(ModSite.Nexus, 5879), // Child Age Up (zh)
 	new(ModSite.Nexus, 4305), // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197), // Companion NPCs (pt)
 	new(ModSite.Nexus, 5811), // Custom NPC - Riley (de)
 	new(ModSite.Nexus, 5396), // Dwarvish (pt)
 	new(ModSite.Nexus, 5428), // Dwarvish (zh)
+	new(ModSite.Nexus, 8784), // East Scarpe (pt)
+	new(ModSite.Nexus, 8675), // East Scarpe (tr)
 	new(ModSite.Nexus, 6157), // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500), // Garden Village Shops (ru)
 	new(ModSite.Nexus, 5828), // Gift Taste Helper (tr)
@@ -155,6 +158,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5871), // Mermaid Island (ko)
 	new(ModSite.Nexus, 6295), // Nice Messages (ru)
 	new(ModSite.Nexus, 5551), // NPC Adventures (ru)
+	new(ModSite.Nexus, 8767), // NPC Adventures (tr)
+	new(ModSite.Nexus, 8696), // Personal Effects Redux (pt)
 	new(ModSite.Nexus, 5329), // Prismatic Tools (pt)
 	new(ModSite.Nexus, 8468), // Prismatic Tools (tr)
 	new(ModSite.Nexus, 8030), // Ridgeside Village (es)
@@ -178,6 +183,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6637), // Underground Secrets (ru)
 
 	// reposts
+	new(ModSite.Nexus, 8792), // Animal Sitter
+	new(ModSite.Nexus, 8670), // CFAutomate
 	new(ModSite.Nexus, 1427), // Prairie King Made Easy
 	new(ModSite.Nexus, 887),  // Reseed
 	new(ModSite.Nexus, 1363), // Save Anywhere
@@ -245,7 +252,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
+	new(ModSite.Nexus, 8712, manifestId: "spacechase0.JsonAssets"),             // Custom Ore Procession
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
+	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
