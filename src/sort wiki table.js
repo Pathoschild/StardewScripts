@@ -1,11 +1,8 @@
 /*
 
 When run on https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3, this
-script logs two plaintext lists: the mod names in their current order, and the mod names when
-sorted alphabetically ignoring case and non-alphanumeric characters.
-
-The two lists can be compared using a tool like https://www.diffchecker.com/diff to find mods which
-aren't sorted correctly.
+script lists the mods which aren't sorted in the expected order (i.e. alphabetical ignoring case
+and non-alphanumeric characters).
 
 */
 (function() {
@@ -46,10 +43,24 @@ aren't sorted correctly.
         return 0;
     }
 
+    // get mod names
     const modNames = $("#mod-list").find("tr.mod").get().map(row => $(row).attr("data-name"));
 
+    // get sorted list
     const sortedNames = [...modNames];
     sortedNames.sort(compareModNames);
 
-    console.log({ current: modNames.join("\n"), sorted: sortedNames.join("\n") });
+    // list incorrectly sorted values
+    let unsorted = [];
+    for (let i = 0; i < modNames.length; i++)
+    {
+        if (modNames[i] != sortedNames[i])
+            unsorted.push({ position: i + 1, current: modNames[i], sorted: sortedNames[i] });
+    }
+
+    // log summary
+    if (!unsorted.length)
+        console.log("List is correctly sorted!");
+    else
+        console.warn("Found unsorted values:", unsorted);
 })();
