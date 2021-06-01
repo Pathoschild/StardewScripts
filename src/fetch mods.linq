@@ -60,7 +60,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 05, 25), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 06, 01), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -238,17 +238,17 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 588, 3083),   // Extended Cellar for ALL
 	new(ModSite.Nexus, 2030, 7706),  // Flower Valley for SI
 	new(ModSite.Nexus, 1467, 5656),  // F-SV Stable for SI
-	new(ModSite.Nexus, 739, 3089),   // JAC'd Greenhouse Extended for ALL
 	new(ModSite.Nexus, 1014, 3650),  // Jungle Temple for ALL
 	new(ModSite.Nexus, 864, 3149),   // Orbitz for ALL
 	new(ModSite.Nexus, 904, 3208),   // Organized Corrosion Detection for ALL
 	new(ModSite.Nexus, 928, 4752),   // Seasonal Vanilla Buildings for SI
-	new(ModSite.Nexus, 800, 3697),   // Spouses Move Out for ALL
-	new(ModSite.Nexus, 784, 5995),   // Tree Life for ALL
 	new(ModSite.Nexus, 835, 3030),   // VIP Visual Improvement Program for ALL
 	new(ModSite.Nexus, 835, 3207),   // VIP Visual Improvement Program for ALL
 	new(ModSite.Nexus, 835, 5994),   // VIP Visual Improvement Program for ALL
 	new(ModSite.Nexus, 1593, 5998),  // Wax Key for ALL
+
+	// non-mod files
+	new (ModSite.Nexus, 4582, 29417), // NPC Adventures > localization package
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
