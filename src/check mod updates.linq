@@ -603,7 +603,16 @@ async Task Main()
 	****/
 	this
 		.GetReport(mods.Where(p => p.IsInstalled), this.ForBeta)
-		.OrderByDescending(mod => mod.HasUpdate) // show mods with updated versions first
+		.OrderBy(mod =>
+		{
+			if (mod.HasUpdate)
+				return 1;
+			if (mod.Errors.Any())
+				return 2;
+			if (mod.Warnings.Any())
+				return 3;
+			return 4;
+		})
 		.ThenBy(mod => mod.Name)
 		.Select(mod =>
 		{
@@ -619,34 +628,6 @@ async Task Main()
 			bool highlightStatus = mod.WikiStatus != null && this.HighlightStatuses.Contains(mod.WikiStatus.Value);
 			var apiMetadata = mod.ModData.ApiRecord?.Metadata;
 
-			// issues to highlight
-			List<string> errors = new List<string>();
-			List<string> warnings = new List<string>();
-			List<string> minorIssues = new List<string>();
-			if (mod.WikiStatus == null)
-				errors.Add("not on wiki");
-			if (mod.Installed != null && mod.Latest != null && new SemanticVersion(mod.Latest).IsOlderThan(mod.Installed))
-				warnings.Add("official version is older");
-			if (mod.Installed != null && mod.WikiUnofficialVersion != null && mod.WikiUnofficialVersion.IsOlderThan(mod.Installed))
-				warnings.Add("unofficial version on wiki is older");
-			if (string.IsNullOrWhiteSpace(mod.UpdateKeys))
-				warnings.Add("no valid update keys in manifest or wiki");
-			if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => this.TryFormatVersion(p.Key) != this.TryFormatVersion(mod.Installed)))
-				warnings.Add($"wiki maps local versions which don't match installed version.");
-			if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => SemanticVersion.TryParse(p.Key, true, out _) && new SemanticVersion(p.Key, true).IsOlderThan(mod.Latest)))
-				warnings.Add($"wiki maps remote versions older than the latest available version.");
-
-			// update check errors
-			foreach (string message in mod.UpdateCheckErrors)
-			{
-				if (message.Contains("Exception") || (message.StartsWith("Found no") && !message.StartsWith("Found no GitHub")))
-					errors.Add(message);
-				else if (message.Contains("has no valid versions"))
-					warnings.Add(message);
-				else
-					minorIssues.Add(message);
-			}
-
 			// format version
 			string versionHtml;
 			if (mod.Latest == null)
@@ -658,11 +639,11 @@ async Task Main()
 
 			// build issues
 			XElement issues = new XElement("div");
-			foreach (var error in errors)
+			foreach (var error in mod.Errors)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {errorStyle}"), $"⚠ {error}"));
-			foreach (var warning in warnings)
+			foreach (var warning in mod.Warnings)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {warnStyle}"), $"⚠ {warning}"));
-			foreach (var issue in minorIssues)
+			foreach (var issue in mod.MinorIssues)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {fadedStyle}"), $"⚠ {issue}"));
 
 			// get report
@@ -780,7 +761,7 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 			}
 
 			// build model
-			yield return new ReportEntry(mod, latestVersion, downloadUrl, forBeta, ignoreUpdate, this.GetReportLinks(mod.ApiRecord));
+			yield return new ReportEntry(mod, latestVersion, downloadUrl, forBeta, ignoreUpdate, this.GetReportLinks(mod.ApiRecord), (Func<string, string>)(p => this.TryFormatVersion(p)));
 		}
 	}
 }
@@ -1090,11 +1071,21 @@ class ReportEntry
 	/// <summary>An exportable list of links.</summary>
 	public dynamic Links { get; }
 
+	/// <summary>The critical mod issues.</summary>
+	public IList<string> Errors { get; } = new List<string>();
+	
+	/// <summary>The non-critical mod issues.</summary>
+	public IList<string> Warnings { get; } = new List<string>();
+
+	/// <summary>The minor issues.</summary>
+	public IList<string> MinorIssues { get; } = new List<string>();
+
 
 	/********
 	** Public methods
 	********/
-	public ReportEntry(ModData mod, ISemanticVersion latestVersion, string downloadUrl, bool forBeta, bool ignoreUpdate, dynamic links)
+	/// <summary>Construct an instance.</summary>
+	public ReportEntry(ModData mod, ISemanticVersion latestVersion, string downloadUrl, bool forBeta, bool ignoreUpdate, dynamic links, Func<string, string> tryFormatVersion)
 	{
 		var manifest = mod.Folder.Manifest;
 		var apiMetadata = mod.ApiRecord?.Metadata;
@@ -1126,6 +1117,48 @@ class ReportEntry
 			this.WikiStatus = apiMetadata?.CompatibilityStatus;
 			this.WikiSummary = apiMetadata?.CompatibilitySummary;
 			this.WikiBrokeIn = apiMetadata?.BrokeIn;
+		}
+		
+		this.PopulateModIssues(tryFormatVersion);
+	}
+
+
+	/********
+	** Private methods
+	********/
+	/// <summary>Populate the issue fields.</summary>
+	/// <param name="tryFormatVersion">Get a normalized representation of a version if it's parseable.</param>
+	private void PopulateModIssues(Func<string, string> tryFormatVersion)
+	{
+		if (!this.IsValid)
+			return;
+
+		// get mod info
+		var apiMetadata = this.ModData.ApiRecord?.Metadata;
+
+		// issues to highlight
+		if (this.WikiStatus == null)
+			this.Errors.Add("not on wiki");
+		if (this.Installed != null && this.Latest != null && new SemanticVersion(this.Latest).IsOlderThan(this.Installed))
+			this.Warnings.Add("official version is older");
+		if (this.Installed != null && this.WikiUnofficialVersion != null && this.WikiUnofficialVersion.IsOlderThan(this.Installed))
+			this.Warnings.Add("unofficial version on wiki is older");
+		if (string.IsNullOrWhiteSpace(this.UpdateKeys))
+			this.Warnings.Add("no valid update keys in manifest or wiki");
+		if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => tryFormatVersion(p.Key) != tryFormatVersion(this.Installed)))
+			this.Warnings.Add($"wiki maps local versions which don't match installed version.");
+		if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => SemanticVersion.TryParse(p.Key, true, out _) && new SemanticVersion(p.Key, true).IsOlderThan(this.Latest)))
+			this.Warnings.Add($"wiki maps remote versions older than the latest available version.");
+
+		// update check errors
+		foreach (string message in this.UpdateCheckErrors)
+		{
+			if (message.Contains("Exception") || (message.StartsWith("Found no") && !message.StartsWith("Found no GitHub")))
+				this.Errors.Add(message);
+			else if (message.Contains("has no valid versions"))
+				this.Warnings.Add(message);
+			else
+				this.MinorIssues.Add(message);
 		}
 	}
 }
