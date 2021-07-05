@@ -60,7 +60,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 06, 01), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 06, 23), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -152,11 +152,13 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 3954), // Happy Birthday (pt)
 	new(ModSite.Nexus, 6693), // Happy Birthday (pt)
 	new(ModSite.Nexus, 6111), // Immersive Characters - Shane (es)
+	new(ModSite.Nexus, 8946), // Junimo Dialog (pt)
 	new(ModSite.Nexus, 4339), // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 7082), // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265), // Magic (pt)
 	new(ModSite.Nexus, 5871), // Mermaid Island (ko)
 	new(ModSite.Nexus, 6295), // Nice Messages (ru)
+	new(ModSite.Nexus, 8928), // Multiple Spouse Dialogs (tr)
 	new(ModSite.Nexus, 5551), // NPC Adventures (ru)
 	new(ModSite.Nexus, 8767), // NPC Adventures (tr)
 	new(ModSite.Nexus, 8696), // Personal Effects Redux (pt)
@@ -203,7 +205,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1632, 10352), // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 30, 279),     // Enemy Health Bars, Storm mod
 	new(ModSite.Nexus, 2602, 10660), // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
-	new(ModSite.Nexus, 6517, 29513), // KL's Music Pack, missing brackets
 	new(ModSite.Nexus, 5202, 22886), // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),    // No Soil Decay, invalid version "0.0.0"
 	new(ModSite.Nexus, 5401, 24009), // Open Greenhouse, missing quote
@@ -226,7 +227,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 3713, 15421), // BathHouse Apartment for ALL
 	new(ModSite.Nexus, 3713, 15423), // BathHouse Apartment for ALL
 	new(ModSite.Nexus, 1032, 5771),  // Bus Interior Restored for ALL
-	new(ModSite.Nexus, 762, 5997),   // Cleanup Crew for ALL
 	new(ModSite.Nexus, 1980, 7425),  // Earth and Water Obelisks for SI
 	new(ModSite.Nexus, 1980, 7426),  // Earth and Water Obelisks for SI
 	new(ModSite.Nexus, 1980, 7427),  // Earth and Water Obelisks for SI
