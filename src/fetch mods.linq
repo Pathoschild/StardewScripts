@@ -1517,7 +1517,7 @@ class CurseForgeApiClient : IModSiteClient
 	{
 		ISet<int> modIds = new HashSet<int>();
 
-		const int pageSize = 100;
+		const int pageSize = 50; // max page size allowed by CurseForge
 		int page = 0;
 		while (true)
 		{
