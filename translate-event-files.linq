@@ -1,3 +1,9 @@
+<Query Kind="Program">
+  <NuGetReference>Newtonsoft.Json</NuGetReference>
+  <Namespace>Newtonsoft.Json</Namespace>
+  <Namespace>Newtonsoft.Json.Linq</Namespace>
+</Query>
+
 /*
 
 Overview
