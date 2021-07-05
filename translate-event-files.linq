@@ -1,9 +1,3 @@
-<Query Kind="Program">
-  <NuGetReference>Newtonsoft.Json</NuGetReference>
-  <Namespace>Newtonsoft.Json</Namespace>
-  <Namespace>Newtonsoft.Json.Linq</Namespace>
-</Query>
-
 /*
 
 Overview
@@ -63,24 +57,25 @@ to use this script.
 
 */
 /*********
-** Configuration
-*********/
-/***
 ** Common settings
-***/
+*********/
 /// <summary>The full path to the event script to parse.</summary>
 readonly string EventFile = @"C:\Users\patho\Downloads\example_event.json";
 
 /// <summary>The internal name for the NPC, if this is a single-NPC content pack. This allows more readable translation keys like "4hearts" instead of using the event ID.</summary>
 readonly string ForNpc = null;
 
-/***
-** Overrides (rarely need to change these)
-***/
+/// <summary>The absolute folder path in which to save the translated event and i18n <c>.json</c> files for easier copying, or <c>null</c> to output directly to the console.</summary>
+readonly string OutputFolderPath = null; // for example: @"C:\Users\patho\Downloads\i18n";
+
+
+/*********
+** Override settings (rarely need to edit these)
+*********/
 /// <summary>For a fork event, whether to prefix its translation keys with the key for the last full event.</summary>
 readonly bool AddForksToPrevious = true;
 
-/// <summary>The character encoding for the file. This should usually be UTF-8, but you can override it for files with unusual encodings.</summary>
+/// <summary>The character encoding for the event file. This should usually be UTF-8, but you can override it for files with unusual encodings.</summary>
 readonly Encoding FileEncoding = Encoding.UTF8;
 
 /// <summary>Get the translation key prefix for an event.</summary>
@@ -104,50 +99,103 @@ public void Main()
 	Console.WriteLine("Reading file...");
 	var eventFile = this.ParseRawFile(this.EventFile, this.FileEncoding);
 
-	int eventsParsed = 0;
-	string lastEventPrefix = null;
-	foreach (var @event in eventFile)
+	// generate scripts/i18n for each event and output to console
+	StringBuilder log = new StringBuilder();
+	try
 	{
-		Console.WriteLine($@"Parsing event {++eventsParsed} of {eventFile.Count} ({@event.Key})...");
-		
-		// get event info
-		string[] commands = @event.Value.Split('/');
-		string translationPrefix = this.GetTranslationPrefix(@event.Key, this.ForNpc);
-
-		// link forks to previous event
-		if (this.AddForksToPrevious)
+		Dictionary<string, string> allI18n = new();
+		Dictionary<string, string> allEvents = new();
+		List<object> consoleOutput = new();
+		int eventsParsed = 0;
+		string lastEventPrefix = null;
+		foreach (var @event in eventFile)
 		{
-			string rawId = @event.Key.Split('/')[0];
-			if (long.TryParse(rawId, out long eventId))
-				lastEventPrefix = translationPrefix;
-			else if (lastEventPrefix != null)
-				translationPrefix = $"{lastEventPrefix}.{rawId}";
+			log.AppendLine($@"Parsing event {++eventsParsed} of {eventFile.Count} ({@event.Key})...");
+
+			// get event info
+			string[] commands = @event.Value.Split('/');
+			string translationPrefix = this.GetTranslationPrefix(@event.Key, this.ForNpc);
+
+			// extract unique event key (either event ID or fork key)
+			string uniqueKey = @event.Key.Split('/')[0];
+
+			// link forks to previous event
+			if (this.AddForksToPrevious)
+			{
+				if (long.TryParse(uniqueKey, out long eventId))
+					lastEventPrefix = translationPrefix;
+				else if (lastEventPrefix != null)
+					translationPrefix = $"{lastEventPrefix}.{uniqueKey}";
+			}
+
+			// build translated script
+			var i18n = new TranslationDictionary(translationPrefix);
+			string newScript;
+			{
+				StringBuilder scriptBuilder = new StringBuilder();
+				for (int i = 0, last = commands.Length - 1; i <= last; i++)
+				{
+					// translate command
+					string command = commands[i];
+					if (this.TryTranslateCommand(command, i18n, out string newCommand))
+						command = newCommand;
+
+					// append to new script
+					scriptBuilder.Append(command);
+					if (i != last)
+						scriptBuilder.Append('/');
+				}
+				newScript = scriptBuilder.ToString();
+			}
+
+			// add to full output files
+			foreach (var entry in i18n.Values)
+				allI18n[entry.Key] = entry.Value;
+			allEvents[@event.Key] = newScript;
+
+			// get report entry
+			consoleOutput.Add(new
+			{
+				key = @event.Key,
+				hearts = this.GetFriendshipRequirement(@event.Key, this.ForNpc) / 250m,
+				i18n = this.ToJson(i18n.Values),
+				newScript = this.ToJson(new Dictionary<string, string> { [@event.Key] = newScript }),
+				oldScript = new Lazy<string>(() => @event.Value)
+			});
 		}
 
-		// build translated script
-		var i18n = new TranslationDictionary(translationPrefix);
-		StringBuilder newScript = new StringBuilder();
-		for (int i = 0, last = commands.Length - 1; i <= last; i++)
+		// output
+		if (this.OutputFolderPath != null)
 		{
-			// translate command
-			string command = commands[i];
-			if (this.TryTranslateCommand(command, i18n, out string newCommand))
-				command = newCommand;
+			Directory.CreateDirectory(this.OutputFolderPath);
+			File.WriteAllText(Path.Combine(this.OutputFolderPath, "events.json"), this.ToJson(allEvents));
+			File.WriteAllText(Path.Combine(this.OutputFolderPath, "i18n.json"), this.ToJson(allI18n));
 
-			// append to new script
-			newScript.Append(command);
-			if (i != last)
-				newScript.Append('/');
+			new
+			{
+				SavedToFolder = new Hyperlinq(this.OutputFolderPath),
+				Log = new Lazy<string>(() => log.ToString()),
+				RawEvents = new Lazy<object>(() => consoleOutput)
+			}.Dump("translated events");
 		}
-
+		else
+		{
+			new
+			{
+				AllEvents = new Lazy<string>(() => this.ToJson(allEvents)),
+				AllI18n = new Lazy<string>(() => this.ToJson(allI18n)),
+				RawEvents = new Lazy<object>(() => consoleOutput),
+				Log = new Lazy<string>(() => log.ToString())
+			}.Dump("translated events");
+		}
+	}
+	catch (Exception ex)
+	{
 		new
 		{
-			key = @event.Key,
-			hearts = this.GetFriendshipRequirement(@event.Key, this.ForNpc) / 250m,
-			i18n = string.Join("\n", i18n.Values.Select(p => $@"    ""{p.Key}"": ""{p.Value}"",")),
-			newScript = JsonConvert.SerializeObject(new Dictionary<string, string> { [@event.Key] = newScript.ToString() }, Newtonsoft.Json.Formatting.Indented),
-			oldScript = @event.Value
-		}.Dump();
+			Log = log.ToString(),
+			Exception = ex
+		}.Dump("An unhandled exception occurred.");
 	}
 }
 
@@ -351,6 +399,13 @@ private int? GetFriendshipRequirement(string preconditions, string forNpc)
 	}
 
 	return null;
+}
+
+/// <summary>Get a formatted JSON representation of the given value.</summary>
+/// <param name="value">The raw value to serialize.</param>
+private string ToJson(object value)
+{
+	return JsonConvert.SerializeObject(value, Newtonsoft.Json.Formatting.Indented);
 }
 
 /// <summary>Manages translations for an event.</summary>
