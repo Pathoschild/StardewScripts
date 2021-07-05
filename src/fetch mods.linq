@@ -344,6 +344,7 @@ async Task Main()
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
 	this.GetModTypes(mods).Dump("mod types");
+	this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version");
 }
 
 
@@ -630,6 +631,57 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 	}
 
 	return counts;
+}
+
+/// <summary>Get the number of unique content packs by Content Patcher version.</summary>
+/// <param name="mods">The mods to check.</param>
+IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ParsedMod> mods)
+{
+	// get unique versions by content pack ID
+	var modVersions = new Dictionary<string, ISemanticVersion>(StringComparer.OrdinalIgnoreCase);
+	foreach (ParsedMod mod in mods)
+	{
+		foreach (ParsedFile folder in mod.ModFolders)
+		{
+			// parse manifest
+			IManifest manifest = folder.RawFolder.Value.Manifest;
+			string id = manifest?.UniqueID?.Trim();
+			string contentPackFor = manifest?.ContentPackFor?.UniqueID?.Trim();
+			if (string.IsNullOrWhiteSpace(id) || !string.Equals(contentPackFor, "Pathoschild.ContentPatcher", StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			// skip if content.json doesn't exist
+			FileInfo contentFile = new FileInfo(Path.Combine(folder.RawFolder.Value.Directory.FullName, "content.json"));
+			if (!contentFile.Exists)
+				continue;
+
+			// extract format version
+			ISemanticVersion format = null;
+			try
+			{
+				var template = new { Format = "" };
+				var rawContent = JsonConvert.DeserializeAnonymousType(File.ReadAllText(contentFile.FullName), template);
+				if (!SemanticVersion.TryParse(rawContent?.Format, out format))
+					continue;
+			}
+			catch (JsonException)
+			{
+				continue; // ignore invalid content.json
+			}
+
+			// track latest version
+			if (!modVersions.TryGetValue(id, out ISemanticVersion prevVersion) || format.IsNewerThan(prevVersion))
+				modVersions[id] = format;
+		}
+	}
+
+	// get counts
+	return modVersions
+		.OrderBy(p => p.Value.MajorVersion)
+		.ThenBy(p => p.Value.MinorVersion)
+		.ThenBy(p => p.Value.PatchVersion)
+		.GroupBy(p => p.Value.ToString())
+		.ToDictionary(p => p.Key.ToString(), p => p.Count());
 }
 
 /// <summary>Get all mods which depend on the given mod.</summary>
