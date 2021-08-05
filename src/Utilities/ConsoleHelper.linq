@@ -42,7 +42,7 @@ public static class ConsoleHelper
 	/// <param name="formatDump">Create a custom object to dump to the console instead of the exception.</param>
 	public static bool AutoRetry(Action action, Func<Exception, object> formatDump = null)
 	{
-		return Helper.AutoRetry<bool>(
+		return ConsoleHelper.AutoRetry<bool>(
 			() => { action(); return true; },
 			out bool _,
 			formatDump
@@ -65,7 +65,7 @@ public static class ConsoleHelper
 			catch (Exception ex)
 			{
 				(formatDump != null ? formatDump(ex) : ex).Dump("error occurred");
-				string choice = Helper.GetChoice("Do you want to [r]etry, [s]kip, or [a]bort?", "r", "s", "a");
+				string choice = ConsoleHelper.GetChoice("Do you want to [r]etry, [s]kip, or [a]bort?", "r", "s", "a");
 				if (choice == "r")
 					continue; // retry
 				else if (choice == "s")
