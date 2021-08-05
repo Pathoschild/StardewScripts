@@ -42,6 +42,7 @@ private readonly Regex[] IgnoreLegitNames =
 
 	// large non-code files
 	new Regex(@"\.gif$", RegexOptions.Compiled),
+	new Regex(@"\.ogg$", RegexOptions.Compiled),
 	new Regex(@"\.psd$", RegexOptions.Compiled),
 	new Regex(@"\.wav$", RegexOptions.Compiled),
 	new Regex(@"\.xcf$", RegexOptions.Compiled)
@@ -73,6 +74,7 @@ private readonly IDictionary<string, Regex> IgnoreFilesByRepo = new Dictionary<s
 	["Chest Label System"] = new Regex(@"^zip\.exe$", RegexOptions.Compiled),
 	["Faster Run"] = new Regex(@"^Release$", RegexOptions.Compiled),
 	["HD Sprites"] = new Regex(@"^tools$", RegexOptions.Compiled), // dependencies, including exe over 10MB
+	["Ridgeside Village"] = new Regex("^Versions", RegexOptions.Compiled), // releases
 	["StackSplitX"] = new Regex(@"^Demo\.gif$", RegexOptions.Compiled), // 10MB file
 };
 

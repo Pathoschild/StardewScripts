@@ -99,6 +99,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.CurseForge, 306750), // TMXL Map Toolkit
 	new(ModSite.CurseForge, 307573), // Visualize
 
+	// unmaintained copies
+	new (ModSite.CurseForge, 308018), // Tool Geodes
+
 
 	/*********
 	** CurseForge files
@@ -151,8 +154,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7571), // Green House Sprinklers (tr)
 	new(ModSite.Nexus, 3954), // Happy Birthday (pt)
 	new(ModSite.Nexus, 6693), // Happy Birthday (pt)
+	new(ModSite.Nexus, 9117), // Happy Birthday (ru)
 	new(ModSite.Nexus, 6111), // Immersive Characters - Shane (es)
 	new(ModSite.Nexus, 8946), // Junimo Dialog (pt)
+	new(ModSite.Nexus, 9143), // Lookup Anything (id)
 	new(ModSite.Nexus, 4339), // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 7082), // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265), // Magic (pt)
