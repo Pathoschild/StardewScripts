@@ -34,6 +34,7 @@
 	 3. displays the metadata for review, with available updates shown first.
 
 */
+#load "Utilities/IncrementalProgressBar.linq"
 
 /*********
 ** Configuration

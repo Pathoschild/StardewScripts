@@ -26,6 +26,7 @@
   Prerequisites:
      1. Install Git (https://git-scm.com) and Mercurial (https://www.mercurial-scm.org).
 */
+#load "Utilities\ConsoleHelper"
 
 /*********
 ** Configuration
@@ -111,7 +112,7 @@ async Task Main()
 	** Fetch repo URLs
 	****/
 	List<ModRepository> repos = new List<ModRepository>();
-	Helper.Print("Fetching repository URLs...");
+	ConsoleHelper.Print("Fetching repository URLs...");
 	{
 		// fetch mods
 		WikiModEntry[] mods = (await toolkit.GetWikiCompatibilityListAsync()).Mods.Where(p => p.ContentPackFor == null).ToArray();
@@ -145,14 +146,14 @@ async Task Main()
 		int haveCode = repos.SelectMany(repo => repo.Mods).Count();
 		int haveSharedRepo = haveCode - uniqueRepos;
 
-		Helper.Print($"   {totalMods} mods in the SMAPI compatibility list.");
-		Helper.Print($"   {haveCode} mods ({this.GetPercentage(haveCode, totalMods)}) have a source repository.");
-		Helper.Print($"   {haveSharedRepo} repositories ({this.GetPercentage(haveSharedRepo, haveCode)}) contain multiple mods.");
+		ConsoleHelper.Print($"   {totalMods} mods in the SMAPI compatibility list.");
+		ConsoleHelper.Print($"   {haveCode} mods ({this.GetPercentage(haveCode, totalMods)}) have a source repository.");
+		ConsoleHelper.Print($"   {haveSharedRepo} repositories ({this.GetPercentage(haveSharedRepo, haveCode)}) contain multiple mods.");
 		if (invalidUrls.Any())
 		{
-			Helper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the wiki:", Severity.Trace);
+			ConsoleHelper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the wiki:", Severity.Trace);
 			foreach (string url in invalidUrls.OrderBy(p => p))
-				Helper.Print($"      {url}", Severity.Trace);
+				ConsoleHelper.Print($"      {url}", Severity.Trace);
 		}
 	}
 	Console.WriteLine();
@@ -177,7 +178,7 @@ async Task Main()
 	****/
 	if (rootDir.EnumerateFileSystemInfos().Any())
 	{
-		Helper.Print($"Deleting old source repositories...");
+		ConsoleHelper.Print($"Deleting old source repositories...");
 		foreach (FileSystemInfo entry in rootDir.EnumerateFileSystemInfos())
 			this.Delete(entry);
 		Console.WriteLine();
@@ -186,19 +187,19 @@ async Task Main()
 	/****
 	** Clone repos
 	****/
-	Helper.Print("Fetching source repositories...");
+	ConsoleHelper.Print("Fetching source repositories...");
 	int reposLeft = repoFolders.Count;
 	foreach (var entry in repoFolders.OrderBy(p => p.Key))
 	{
 		// collect info
 		DirectoryInfo dir = new DirectoryInfo(Path.Combine(this.RootPath, entry.Key));
 		ModRepository repo = entry.Value;
-		Helper.Print($"   [{reposLeft--}] {dir.Name} → {repo.SourceUrl}...");
+		ConsoleHelper.Print($"   [{reposLeft--}] {dir.Name} → {repo.SourceUrl}...");
 
 		// validate
 		if (dir.Exists)
 		{
-			Helper.Print($"   ERROR: directory already exists.", Severity.Error);
+			ConsoleHelper.Print($"   ERROR: directory already exists.", Severity.Error);
 			continue;
 		}
 
@@ -240,7 +241,7 @@ async Task Main()
 			catch (Exception ex)
 			{
 				ex.Dump();
-				string choice = Helper.GetChoice($"Cloning the {repo.SourceType} repository failed! [r]etry, [s]kip as failed, [c]ontinue as cloned, or change repo [U]RL?", "r", "s", "c", "u");
+				string choice = ConsoleHelper.GetChoice($"Cloning the {repo.SourceType} repository failed! [r]etry, [s]kip as failed, [c]ontinue as cloned, or change repo [U]RL?", "r", "s", "c", "u");
 				if (choice == "c")
 				{
 					cloned = true;
@@ -284,7 +285,7 @@ async Task Main()
 			catch (Exception ex)
 			{
 				ex.Dump();
-				string choice = Helper.GetChoice($"Reading the latest commit for the {repo.SourceType} repository failed! [r]etry or or [c]ontinue without commit info?", "r", "c");
+				string choice = ConsoleHelper.GetChoice($"Reading the latest commit for the {repo.SourceType} repository failed! [r]etry or or [c]ontinue without commit info?", "r", "c");
 				if (choice == "c")
 					break;
 			}
@@ -305,7 +306,7 @@ async Task Main()
 			.Where(deleted => !this.IgnoreLegitNames.Any(pattern => pattern.IsMatch(deleted.Name)))
 			.ToArray();
 		if (logDeletedEntries.Any())
-			Helper.Print($"      deleted: {string.Join(", ", logDeletedEntries.Select(p => p.FullName.Substring(dir.FullName.Length + 1)))}.", Severity.Warning);
+			ConsoleHelper.Print($"      deleted: {string.Join(", ", logDeletedEntries.Select(p => p.FullName.Substring(dir.FullName.Length + 1)))}.", Severity.Warning);
 
 		// add file headers to avoid confusion
 		foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
@@ -325,7 +326,7 @@ async Task Main()
 	}
 	Console.WriteLine();
 
-	Helper.Print("Done!");
+	ConsoleHelper.Print("Done!");
 }
 
 /*********
@@ -487,7 +488,7 @@ public void Delete(FileSystemInfo entry)
 		catch (Exception ex)
 		{
 			ex.Dump();
-			string choice = Helper.GetChoice($"Deleting {entry.FullName} failed! [r]etry [s]kip?", "r", "s");
+			string choice = ConsoleHelper.GetChoice($"Deleting {entry.FullName} failed! [r]etry [s]kip?", "r", "s");
 			if (choice == "s")
 				break;
 		}
