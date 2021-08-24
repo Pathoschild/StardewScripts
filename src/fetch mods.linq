@@ -194,8 +194,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8670), // CFAutomate
 	new(ModSite.Nexus, 1427), // Prairie King Made Easy
 	new(ModSite.Nexus, 887),  // Reseed
+	new(ModSite.Nexus, 9350), // Reset Terrain Features
 	new(ModSite.Nexus, 1363), // Save Anywhere
 	new(ModSite.Nexus, 8386), // Save Anywhere
+	new(ModSite.Nexus, 9128), // Shop Tile Framework
 	new(ModSite.Nexus, 1077), // UI Mod Suite
 
 	// other

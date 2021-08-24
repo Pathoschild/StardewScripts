@@ -75,7 +75,8 @@ private readonly IDictionary<string, Regex> IgnoreFilesByRepo = new Dictionary<s
 	["Chest Label System"] = new Regex(@"^zip\.exe$", RegexOptions.Compiled),
 	["Faster Run"] = new Regex(@"^Release$", RegexOptions.Compiled),
 	["HD Sprites"] = new Regex(@"^tools$", RegexOptions.Compiled), // dependencies, including exe over 10MB
-	["Ridgeside Village"] = new Regex("^Versions", RegexOptions.Compiled), // releases
+	["Raised Garden Beds"] = new Regex("^(?:Media|Work)$", RegexOptions.Compiled),
+	["Ridgeside Village"] = new Regex("^Versions$", RegexOptions.Compiled), // releases
 	["StackSplitX"] = new Regex(@"^Demo\.gif$", RegexOptions.Compiled), // 10MB file
 };
 
