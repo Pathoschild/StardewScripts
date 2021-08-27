@@ -215,111 +215,182 @@ private bool TryTranslateCommand(string command, TranslationDictionary translati
 	int initialCount = translations.Values.Count;
 	
 	string commandName = command.Split(' ').FirstOrDefault()?.ToLower();
-	switch (commandName)
+	newCommand = commandName switch
 	{
-		case "end":
-			newCommand = Regex.Replace(
-				command,
-				@"^(end dialogue(?:WarpOut)? [a-z0-9]+) ""(.+)""",
-				match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
-				RegexOptions.IgnoreCase
-			);
-		
-			break;
+		"end" => this.TryTranslateEnd(command, translations),
+		"message" => this.TryTranslateMessage(command, translations),
+		"question" => this.TryTranslateQuestion(command, translations),
+		"quickquestion" => this.TryTranslateQuickQuestion(command, translations),
+		"speak" => this.TryTranslateSpeak(command, translations),
+		"textabovehead" => this.TryTranslateTextAboveHead(command, translations),
+		_ => command
+	};
 	
-		case "message":
-			newCommand = Regex.Replace(
-				command,
-				@"^message ""(.+)""$",
-				match => $@"message ""{translations.Add(match.Groups[1].Value)}"""
-			);
-			break;
+	return translations.Values.Count > initialCount;
+}
 
-		case "question":
-			newCommand = Regex.Replace(
-				command,
-				@"^(question [a-z0-9]+) ""([^#]+)(?:#([^#]+))+(#?)""",
-				match =>
-				{
-					StringBuilder newStr = new StringBuilder();
+/// <summary>Translate an <c>end</c> event command if needed.</summary>
+/// <param name="command">The event command to translate.</param>
+/// <param name="translations">The translations for this event.</param>
+private string TryTranslateEnd(string command, TranslationDictionary translations)
+{
+	return Regex.Replace(
+		command,
+		@"^(end dialogue(?:WarpOut)? [a-z0-9]+) ""(.+)""",
+		match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
+		RegexOptions.IgnoreCase
+	);
+}
 
-					newStr.Append($@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}");
+/// <summary>Translate a <c>message</c> event command if needed.</summary>
+/// <param name="command">The event command to translate.</param>
+/// <param name="translations">The translations for this event.</param>
+private string TryTranslateMessage(string command, TranslationDictionary translations)
+{
+	return Regex.Replace(
+		command,
+		@"^message ""(.+)""$",
+		match => $@"message ""{translations.Add(match.Groups[1].Value)}"""
+	);
+}
 
-					foreach (Capture capture in match.Groups[3].Captures)
-					{
-						newStr.Append('#');
-						newStr.Append(translations.Add(capture.Value));
-					}
+/// <summary>Translate a <c>question</c> event command if needed.</summary>
+/// <param name="command">The event command to translate.</param>
+/// <param name="translations">The translations for this event.</param>
+private string TryTranslateQuestion(string command, TranslationDictionary translations)
+{
+	return Regex.Replace(
+		command,
+		@"^(question [a-z0-9]+) ""([^#]+)(?:#([^#]+))+(#?)""",
+		match =>
+		{
+			StringBuilder newStr = new StringBuilder();
 
-					if (match.Groups[4].Success)
-						newStr.Append('#');
-					newStr.Append('"');
-					return newStr.ToString();
-				}
-			);
-			break;
+			newStr.Append($@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}");
 
-		case "speak":
-			// question fork
-			if (command.Contains("$q"))
+			foreach (Capture capture in match.Groups[3].Captures)
 			{
-				newCommand = Regex.Replace(
-					command,
-					@"^(speak [a-z0-9]+ ""\$q [^#]+)#([^#]+)(?:#(\$r [^#]+#[^#]+))+""$",
-					match =>
-					{
-						StringBuilder newStr = new StringBuilder();
-						newStr.Append($@"{match.Groups[1].Value} """);
+				newStr.Append('#');
+				newStr.Append(translations.Add(capture.Value));
+			}
+
+			if (match.Groups[4].Success)
+				newStr.Append('#');
+			newStr.Append('"');
+			return newStr.ToString();
+		}
+	);
+}
+
+/// <summary>Translate a <c>quickQuestion</c> event command if needed.</summary>
+/// <param name="command">The event command to translate.</param>
+/// <param name="translations">The translations for this event.</param>
+private string TryTranslateQuickQuestion(string command, TranslationDictionary translations)
+{
+	// translate a subscript embedded within a quickQuestion command
+	string TranslateSubscript(string script)
+	{
+		IEnumerable<string> subcommands = script
+			.Split('\\')
+			.Select(subcommand =>
+			{
+				this.TryTranslateCommand(subcommand, translations, out string newSubcommand);
+				return newSubcommand;
+			});
+		return string.Join('\\', subcommands);
+	}
+
+	// translate command
+	return Regex.Replace(
+		command,
+		// quickQuestion #It's probably because you talk too much.#That might be, but I'm sure you can all be friends.#That's silly, I'm sure he likes you well enough.#You're just kids. You'll get over it.(break)speak Eloise \"Oh... He does say I chatter like a parrot...$3\"(break)speak Eloise \"Of course we're all friends. You don't understand...$2\"(break)emote Eloise 12\\
+		@"^quickQuestion (?:#(?<questions>[^#]+?))+?\(break\)(?<commands>.+?)(?:\(break\)(?<scripts>.+?))+$",
+		match =>
+		{
+			StringBuilder result = new StringBuilder("quickQuestion ");
+
+			// questions
+			foreach (string question in match.Groups["questions"].Captures.Select(p => p.Value))
+			{
+				result.Append("#");
+				result.Append(translations.Add(question));
+			}
+
+			// commands
+			result.Append("(break)");
+			result.Append(TranslateSubscript(match.Groups["commands"].Captures.Single().Value));
+
+			// answer scripts
+			foreach (string answerScript in match.Groups["scripts"].Captures.Select(p => p.Value))
+			{
+				result.Append("(break)");
+				result.Append(TranslateSubscript(answerScript));
+			}
+
+			new { before = match.Value, after = result.ToString() }.Dump();
+			return result.ToString();
+		}
+	);
+}
+
+/// <summary>Translate a <c>speak</c> event command if needed.</summary>
+/// <param name="command">The event command to translate.</param>
+/// <param name="translations">The translations for this event.</param>
+private string TryTranslateSpeak(string command, TranslationDictionary translations)
+{
+	// question fork
+	if (command.Contains("$q"))
+	{
+		return Regex.Replace(
+			command,
+			@"^(speak [a-z0-9]+ ""\$q [^#]+)#([^#]+)(?:#(\$r [^#]+#[^#]+))+""$",
+			match =>
+			{
+				StringBuilder newStr = new StringBuilder();
+				newStr.Append($@"{match.Groups[1].Value} """);
 
 						// question
 						newStr.Append('#');
-						newStr.Append(translations.Add(match.Groups[2].Value));
+				newStr.Append(translations.Add(match.Groups[2].Value));
 
 						// answers
 						foreach (Capture capture in match.Groups[3].Captures)
-						{
-							string[] parts = capture.Value.Split('#');
-							
-							newStr.Append('#');
-							newStr.Append(parts[0]);
-							newStr.Append('#');
-							newStr.Append(translations.Add(parts[1]));
-						}
+				{
+					string[] parts = capture.Value.Split('#');
 
-						newStr.Append(@"""");
-						return newStr.ToString();
-					},
-					RegexOptions.IgnoreCase
-				);
-			}
+					newStr.Append('#');
+					newStr.Append(parts[0]);
+					newStr.Append('#');
+					newStr.Append(translations.Add(parts[1]));
+				}
 
-			// normal message
-			else
-			{
-				newCommand = Regex.Replace(
-					command,
-					@"^(speak [a-z0-9]+) ""(.+)""$",
-					match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
-					RegexOptions.IgnoreCase
-				);
-			}
-			break;
-		
-		case "textabovehead":
-			newCommand = Regex.Replace(
-				command,
-				@"^(textAboveHead [a-z0-9]+) ""(.+)""",
-				match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
-				RegexOptions.IgnoreCase
-			);
-			break;
-
-		default:
-			newCommand = command;
-			break;
+				newStr.Append(@"""");
+				return newStr.ToString();
+			},
+			RegexOptions.IgnoreCase
+		);
 	}
-	
-	return translations.Values.Count > initialCount;
+
+	// normal message
+	return Regex.Replace(
+		command,
+		@"^(speak [a-z0-9]+) ""(.+)""$",
+		match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
+		RegexOptions.IgnoreCase
+	);
+}
+
+/// <summary>Translate a <c>textAboveHead</c> event command if needed.</summary>
+/// <param name="command">The event command to translate.</param>
+/// <param name="translations">The translations for this event.</param>
+private string TryTranslateTextAboveHead(string command, TranslationDictionary translations)
+{
+	return Regex.Replace(
+		command,
+		@"^(textAboveHead [a-z0-9]+) ""(.+)""",
+		match => $@"{match.Groups[1].Value} ""{translations.Add(match.Groups[2].Value)}""",
+		RegexOptions.IgnoreCase
+	);
 }
 
 /// <summary>Extract the event entries from a raw file.</summary>
