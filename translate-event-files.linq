@@ -467,11 +467,18 @@ private int? GetFriendshipRequirement(string preconditions, string forNpc)
 {
 	if (forNpc != null)
 	{
-		string friendshipPrefix = $"f {forNpc} ";
-		foreach (var part in preconditions.Split('/'))
+		foreach (var condition in preconditions.Split('/'))
 		{
-			if (part.StartsWith(friendshipPrefix) && int.TryParse(part.Substring(friendshipPrefix.Length), out int points))
-				return points;
+			// parse friendship condition format (`f NameA 250 NameB 250 ...`)
+			if (!condition.StartsWith("f "))
+				continue;
+			
+			string[] parts = condition.Split(' ').Skip(1).ToArray();
+			for (int i = 0; i + 1 < parts.Length; i += 2)
+			{
+				if (parts[i] == forNpc && int.TryParse(parts[i + 1], out int points))
+					return points;
+			}
 		}
 	}
 
