@@ -211,6 +211,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352), // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 30, 279),     // Enemy Health Bars, Storm mod
+	new(ModSite.Nexus, 8442, 42804), // Gleann_Dealtreul
 	new(ModSite.Nexus, 2602, 10660), // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886), // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),    // No Soil Decay, invalid version "0.0.0"
@@ -269,6 +270,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomNPC"),              // New NPC Alec
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
+	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
