@@ -429,7 +429,13 @@ async Task Main()
 
 				// sanitize name
 				foreach (char ch in Path.GetInvalidFileNameChars())
-					newName = newName.Replace(ch, '_');
+				{
+					char replacementChar = ch is '"' && !newName.Contains('\'')
+						? '\'' // special case: change " to ' for readability
+						: '_';
+
+					newName = newName.Replace(ch, replacementChar);
+				}
 
 				// move to new name
 				DirectoryInfo newDir = new DirectoryInfo(Path.Combine(this.ModFolderPath, newName));
