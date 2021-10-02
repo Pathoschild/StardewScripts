@@ -636,6 +636,11 @@ async Task Main()
 			bool highlightStatus = mod.WikiStatus != null && this.HighlightStatuses.Contains(mod.WikiStatus.Value);
 			var apiMetadata = mod.ModData.ApiRecord?.Metadata;
 
+			// parse overrides
+			ChangeDescriptor changeLocalVersion = ChangeDescriptor.Parse(apiMetadata?.ChangeLocalVersions, out var changeLocalVersionErrors);
+			ChangeDescriptor changeRemoteVersion = ChangeDescriptor.Parse(apiMetadata?.ChangeRemoteVersions, out var changeRemoteVersionErrors);
+			ChangeDescriptor changeUpdateKeys = ChangeDescriptor.Parse(apiMetadata?.ChangeUpdateKeys, out var changeUpdateKeysErrors);
+
 			// format version
 			string versionHtml;
 			if (mod.Latest == null)
@@ -647,7 +652,7 @@ async Task Main()
 
 			// build issues
 			XElement issues = new XElement("div");
-			foreach (var error in mod.Errors)
+			foreach (var error in mod.Errors.Concat(changeLocalVersionErrors).Concat(changeRemoteVersionErrors).Concat(changeUpdateKeysErrors))
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {errorStyle}"), $"⚠ {error}"));
 			foreach (var warning in mod.Warnings)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {warnStyle}"), $"⚠ {warning}"));
@@ -669,8 +674,13 @@ async Task Main()
 				Manifest = new Lazy<Manifest>(() => mod.Manifest),
 				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
 				Links = new Lazy<object>(() => mod.Links),
-				VersionMaps = apiMetadata?.MapLocalVersions?.Any() == true || apiMetadata?.MapRemoteVersions?.Any() == true
-					? new Lazy<object>(() => new { apiMetadata.MapLocalVersions, apiMetadata.MapRemoteVersions })
+				Overrides = changeLocalVersion.HasChanges || changeRemoteVersion.HasChanges || changeUpdateKeys.HasChanges
+					? new Lazy<object>(() => new
+					{
+						LocalVersion = changeLocalVersion?.ToString(),
+						RemoteVersion = changeRemoteVersion?.ToString(),
+						UpdateKeys = changeUpdateKeys?.ToString()
+					})
 					: null
 			};
 		})
@@ -840,7 +850,7 @@ class ModData
 	public bool IsInstalled => this.Folder?.Manifest != null;
 
 	/// <summary>The installed mod version.</summary>
-	public ISemanticVersion InstalledVersion => this.Folder?.Manifest?.Version;
+	public ISemanticVersion InstalledVersion { get; private set; }
 
 
 	/*********
@@ -957,6 +967,17 @@ class ModData
 	{
 		this.IDs = this.GetIDs().ToArray();
 		this.UpdateKeys = this.GetUpdateKeys().ToArray();
+		this.InstalledVersion = this.Folder?.Manifest?.Version;
+
+		// map installed version
+		if (this.InstalledVersion != null && this.ApiRecord?.Metadata.ChangeLocalVersions != null)
+		{
+			var versions = new List<string>() { this.Folder.Manifest.Version.ToString() };
+			var changes = ChangeDescriptor.Parse(this.ApiRecord.Metadata.ChangeLocalVersions, out _);
+			changes.Apply(versions);
+			if (SemanticVersion.TryParse(versions.FirstOrDefault(), out ISemanticVersion version))
+				this.InstalledVersion = version;
+		}
 	}
 
 	/// <summary>Get the possible mod IDs.</summary>
@@ -1104,7 +1125,7 @@ class ReportEntry
 		this.NormalizedFolder = mod.Folder.Directory.Name;
 		this.Name = manifest.Name;
 		this.Author = manifest.Author;
-		this.Installed = manifest.Version.ToString();
+		this.Installed = mod.InstalledVersion.ToString();
 		this.Latest = latestVersion?.ToString();
 		this.ManifestUpdateKeys = manifest.UpdateKeys != null ? string.Join(", ", manifest.UpdateKeys) : null;
 		this.UpdateKeys = string.Join(", ", mod.UpdateKeys);
@@ -1153,10 +1174,6 @@ class ReportEntry
 			this.Warnings.Add("unofficial version on wiki is older");
 		if (string.IsNullOrWhiteSpace(this.UpdateKeys))
 			this.Warnings.Add("no valid update keys in manifest or wiki");
-		if (apiMetadata?.MapLocalVersions != null && apiMetadata.MapLocalVersions.Any(p => tryFormatVersion(p.Key) != tryFormatVersion(this.Installed)))
-			this.Warnings.Add($"wiki maps local versions which don't match installed version.");
-		if (apiMetadata?.MapRemoteVersions != null && apiMetadata.MapRemoteVersions.Any(p => SemanticVersion.TryParse(p.Key, true, out _) && new SemanticVersion(p.Key, true).IsOlderThan(this.Latest)))
-			this.Warnings.Add($"wiki maps remote versions older than the latest available version.");
 
 		// update check errors
 		foreach (string message in this.UpdateCheckErrors)
