@@ -10,8 +10,8 @@
 
 Overview
 -------------------------------------------------
-This script splits a Stardew Valley spritesheet into individual sprite images, optionally resizing
-each sprite and cropping whitespace.
+This script splits one or more Stardew Valley spritesheets into individual sprite images,
+optionally resizing each sprite and cropping whitespace.
 
 
 Usage
@@ -26,7 +26,7 @@ To use this script:
 /*********
 ** Configuration
 *********/
-/// <summary>The absolute path to the spritesheet image to split.</summary>
+/// <summary>The absolute path to the spritesheet image to split, or a folder containing any number of spritesheets with the same sprite size.</summary>
 readonly string SpritesheetPath = @"C:\source\_Stardew\Stardew Valley\Content\Maps\springobjects.png";
 
 /// <summary>The folder in which to export sprites.</summary>
@@ -48,21 +48,50 @@ readonly bool CropWhitespace = true;
 /// <summary>Run the export.</summary>
 void Main()
 {
-    string exportPath = Path.Combine(this.OutputPath, Path.GetFileNameWithoutExtension(this.SpritesheetPath));
-    Directory.CreateDirectory(exportPath);
+	foreach (var pair in this.GetFiles(this.SpritesheetPath))
+	{
+		string relativeName = pair.Key;
+		FileInfo file = pair.Value;
+		
+		string exportPath = Path.Combine(this.OutputPath, relativeName);
+		Directory.CreateDirectory(exportPath);
 
-    int sprites = this.ExportSheet(this.SpriteSize.Width, this.SpriteSize.Height, exportPath);
-    $"Exported {sprites} sprites to {exportPath}.".Dump();
+		int sprites = this.ExportSheet(file.FullName, this.SpriteSize.Width, this.SpriteSize.Height, exportPath);
+		$"[{relativeName}] Exported {sprites} sprites to {exportPath}.".Dump();
+	}
+}
+
+private IDictionary<string, FileInfo> GetFiles(string path)
+{
+	var results = new Dictionary<string, FileInfo>();
+	
+	FileInfo rootFile = new FileInfo(path);
+	DirectoryInfo rootDir = new DirectoryInfo(path);
+	if (rootFile.Exists)
+		results[Path.GetFileNameWithoutExtension(path)] = rootFile;
+	else if (rootDir.Exists)
+	{
+		foreach (FileInfo file in rootDir.GetFiles("*.*", SearchOption.AllDirectories))
+		{
+			string relativeName = Path.GetRelativePath(rootDir.FullName, file.FullName);
+			relativeName = Path.Combine(Path.GetDirectoryName(relativeName), Path.GetFileNameWithoutExtension(relativeName));
+			
+			results[relativeName] = file;
+		}
+	}
+
+	return results;
 }
 
 /// <summary>Export the spritesheet with a fixed sprite size.</summary>
+/// <param name="filePath">The path to the spritesheet to split.</param>
 /// <param name="spriteWidth">The fixed sprite width.</param>
 /// <param name="spriteHeight">The fixed sprite height.</param>
 /// <param name="exportPath">The folder in which to export sprites.</param>
-private int ExportSheet(int spriteWidth, int spriteHeight, string exportPath)
+private int ExportSheet(string filePath, int spriteWidth, int spriteHeight, string exportPath)
 {
     // load image
-    using var sheetEditor = new ImageFactory().Load(this.SpritesheetPath);
+    using var sheetEditor = new ImageFactory().Load(filePath);
     Image sheet = sheetEditor.Image;
 
     // validate sprite size
