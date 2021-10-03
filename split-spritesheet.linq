@@ -61,6 +61,8 @@ void Main()
 	}
 }
 
+/// <summary>Get the files to split given a file or folder path.</summary>
+/// <param name="path">The file or folder path to scan.</param>
 private IDictionary<string, FileInfo> GetFiles(string path)
 {
 	var results = new Dictionary<string, FileInfo>();
@@ -71,7 +73,7 @@ private IDictionary<string, FileInfo> GetFiles(string path)
 		results[Path.GetFileNameWithoutExtension(path)] = rootFile;
 	else if (rootDir.Exists)
 	{
-		foreach (FileInfo file in rootDir.GetFiles("*.*", SearchOption.AllDirectories))
+		foreach (FileInfo file in rootDir.GetFiles("*.png", SearchOption.AllDirectories))
 		{
 			string relativeName = Path.GetRelativePath(rootDir.FullName, file.FullName);
 			relativeName = Path.Combine(Path.GetDirectoryName(relativeName), Path.GetFileNameWithoutExtension(relativeName));
