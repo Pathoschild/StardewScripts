@@ -182,7 +182,8 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["spacechase0.DynamicGameAssets"] = "@@Dynamic Game Assets",
 	["spacechase0.JsonAssets"] = "@@Json Assets",
 	["spacechase0.SpaceCore"] = "@@SpaceCore",
-	["TehPers.CoreMod"] = "@@Teh's Core Mod",
+	["TehPers.CoreMod"] = "@@TehCore",
+	["tylergibbs2.BattleRoyalleyYear2"] = "(2) Battle Royalley - Year 2",
 
 	// fix invalid names
 	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by wiki

@@ -32,7 +32,7 @@
 ** Configuration
 *********/
 /// <summary>The absolute path to the folder which contains the source repositories.</summary>
-private readonly string RootPath = @"C:\source\_Stardew\_smapi-mod-dump\source";
+private readonly string RootPath = @"E:\source\_Stardew\_smapi-mod-dump\source";
 
 /// <summary>Patterns matching valid file or folder names that are legitimately part of the source repository, but should be removed from the cloned repositories.</summary>
 private readonly Regex[] IgnoreLegitNames =
@@ -90,8 +90,15 @@ private readonly HashSet<string> IgnoreSourceUrls = new HashSet<string>(StringCo
 /// <summary>Maps source URLs to the folder name to use, overriding the generated name.</summary>
 public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 {
-	["https://github.com/Floogen/GreenhouseGatherers.git"] = "GreenhouseGatherers", // Greenhouse Gatherers + Greenhouse Gatherers Automate = ~Floogen
-	["https://github.com/Floogen/IslandGatherers.git"] = "IslandGatherers",         // Island Gatherers + Island Gatherers Automate = ~Floogen
+	// ~b-b-blueberry conflict
+	["https://github.com/b-b-blueberry/BlueberryMushroomMachine.git"] = "MushroomPropagator",
+	["https://github.com/b-b-blueberry/CustomCommunityCentre.git"] = "CustomCommunityCentre",
+
+	// ~Floogen conflict
+	["https://github.com/Floogen/GreenhouseGatherers.git"] = "GreenhouseGatherers",
+	["https://github.com/Floogen/IslandGatherers.git"] = "IslandGatherers",
+
+	// generic name
 	["https://github.com/TheThor59/StardewMods.git"] = "Mods.TheThor59"
 };
 

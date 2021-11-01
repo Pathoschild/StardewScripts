@@ -143,6 +143,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5879), // Child Age Up (zh)
 	new(ModSite.Nexus, 4305), // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197), // Companion NPCs (pt)
+	new(ModSite.Nexus, 9920), // Crop Regrowth and Perennial Crops (pt)
 	new(ModSite.Nexus, 5811), // Custom NPC - Riley (de)
 	new(ModSite.Nexus, 5396), // Dwarvish (pt)
 	new(ModSite.Nexus, 5428), // Dwarvish (zh)
@@ -170,6 +171,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5329), // Prismatic Tools (pt)
 	new(ModSite.Nexus, 8468), // Prismatic Tools (tr)
 	new(ModSite.Nexus, 8030), // Ridgeside Village (es)
+	new(ModSite.Nexus, 9942), // Ridgeside Village (fr)
 	new(ModSite.Nexus, 8170), // Riley (de)
 	new(ModSite.Nexus, 6096), // Sailor Moon Hairstyles Clothing and Kimono (zh)
 	new(ModSite.Nexus, 6424), // Shadow Cove (zh)
@@ -260,7 +262,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
-	new(ModSite.Nexus, 8712, manifestId: "spacechase0.JsonAssets"),             // Custom Ore Procession
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
