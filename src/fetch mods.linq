@@ -60,7 +60,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 06, 23), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 12, 31), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -137,59 +137,61 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	** Nexus mods
 	*********/
 	// mod translations
-	new(ModSite.Nexus, 7932), // Animals Need Water (fr)
-	new(ModSite.Nexus, 7562), // Animals Need Water (tr)
-	new(ModSite.Nexus, 8679), // Animals Need Water (tr)
-	new(ModSite.Nexus, 5879), // Child Age Up (zh)
-	new(ModSite.Nexus, 4305), // Climates of Ferngill (pt)
-	new(ModSite.Nexus, 4197), // Companion NPCs (pt)
-	new(ModSite.Nexus, 9920), // Crop Regrowth and Perennial Crops (pt)
-	new(ModSite.Nexus, 5811), // Custom NPC - Riley (de)
-	new(ModSite.Nexus, 5396), // Dwarvish (pt)
-	new(ModSite.Nexus, 5428), // Dwarvish (zh)
-	new(ModSite.Nexus, 8784), // East Scarpe (pt)
-	new(ModSite.Nexus, 8675), // East Scarpe (tr)
-	new(ModSite.Nexus, 6157), // Garden Village Shops (ru)
-	new(ModSite.Nexus, 6500), // Garden Village Shops (ru)
-	new(ModSite.Nexus, 5828), // Gift Taste Helper (tr)
-	new(ModSite.Nexus, 7571), // Green House Sprinklers (tr)
-	new(ModSite.Nexus, 3954), // Happy Birthday (pt)
-	new(ModSite.Nexus, 6693), // Happy Birthday (pt)
-	new(ModSite.Nexus, 9117), // Happy Birthday (ru)
-	new(ModSite.Nexus, 6111), // Immersive Characters - Shane (es)
-	new(ModSite.Nexus, 8946), // Junimo Dialog (pt)
-	new(ModSite.Nexus, 9143), // Lookup Anything (id)
-	new(ModSite.Nexus, 4339), // Lunar Disturbances (pt)
-	new(ModSite.Nexus, 7082), // Lunar Disturbances (pt)
-	new(ModSite.Nexus, 4265), // Magic (pt)
-	new(ModSite.Nexus, 5871), // Mermaid Island (ko)
-	new(ModSite.Nexus, 6295), // Nice Messages (ru)
-	new(ModSite.Nexus, 8928), // Multiple Spouse Dialogs (tr)
-	new(ModSite.Nexus, 5551), // NPC Adventures (ru)
-	new(ModSite.Nexus, 8767), // NPC Adventures (tr)
-	new(ModSite.Nexus, 8696), // Personal Effects Redux (pt)
-	new(ModSite.Nexus, 5329), // Prismatic Tools (pt)
-	new(ModSite.Nexus, 8468), // Prismatic Tools (tr)
-	new(ModSite.Nexus, 8030), // Ridgeside Village (es)
-	new(ModSite.Nexus, 9942), // Ridgeside Village (fr)
-	new(ModSite.Nexus, 8170), // Riley (de)
-	new(ModSite.Nexus, 6096), // Sailor Moon Hairstyles Clothing and Kimono (zh)
-	new(ModSite.Nexus, 6424), // Shadow Cove (zh)
-	new(ModSite.Nexus, 5259), // Stardew Valley Expanded (de)
-	new(ModSite.Nexus, 5272), // Stardew Valley Expanded (es)
-	new(ModSite.Nexus, 5901), // Stardew Valley Expanded (fr)
-	new(ModSite.Nexus, 8411), // Stardew Valley Expanded (fr)
-	new(ModSite.Nexus, 5788), // Stardew Valley Expanded (ja)
-	new(ModSite.Nexus, 5321), // Stardew Valley Expanded (ko)
-	new(ModSite.Nexus, 8650), // Stardew Valley Expanded (po)
-	new(ModSite.Nexus, 4206), // Stardew Valley Expanded (pt)
-	new(ModSite.Nexus, 6332), // Stardew Valley Expanded (tr)
-	new(ModSite.Nexus, 4325), // Stardew Valley Expanded (zh)
-	new(ModSite.Nexus, 8143), // Stardew Valley Expanded (zh)
-	new(ModSite.Nexus, 8312), // Town School Functions (tr)
-	new(ModSite.Nexus, 6356), // Town School Functions (zh)
-	new(ModSite.Nexus, 7556), // UI Info Suite (fr)
-	new(ModSite.Nexus, 6637), // Underground Secrets (ru)
+	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
+	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
+	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
+	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
+	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
+	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
+	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
+	new(ModSite.Nexus, 5811),  // Custom NPC - Riley (de)
+	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
+	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
+	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
+	new(ModSite.Nexus, 8675),  // East Scarpe (tr)
+	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
+	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
+	new(ModSite.Nexus, 5828),  // Gift Taste Helper (tr)
+	new(ModSite.Nexus, 7571),  // Green House Sprinklers (tr)
+	new(ModSite.Nexus, 3954),  // Happy Birthday (pt)
+	new(ModSite.Nexus, 6693),  // Happy Birthday (pt)
+	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
+	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
+	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
+	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
+	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
+	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
+	new(ModSite.Nexus, 4265),  // Magic (pt)
+	new(ModSite.Nexus, 5871),  // Mermaid Island (ko)
+	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
+	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
+	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
+	new(ModSite.Nexus, 8928),  // Multiple Spouse Dialogs (tr)
+	new(ModSite.Nexus, 5551),  // NPC Adventures (ru)
+	new(ModSite.Nexus, 8767),  // NPC Adventures (tr)
+	new(ModSite.Nexus, 8696),  // Personal Effects Redux (pt)
+	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
+	new(ModSite.Nexus, 8468),  // Prismatic Tools (tr)
+	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
+	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
+	new(ModSite.Nexus, 8170),  // Riley (de)
+	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
+	new(ModSite.Nexus, 6424),  // Shadow Cove (zh)
+	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
+	new(ModSite.Nexus, 5272),  // Stardew Valley Expanded (es)
+	new(ModSite.Nexus, 5901),  // Stardew Valley Expanded (fr)
+	new(ModSite.Nexus, 8411),  // Stardew Valley Expanded (fr)
+	new(ModSite.Nexus, 5788),  // Stardew Valley Expanded (ja)
+	new(ModSite.Nexus, 5321),  // Stardew Valley Expanded (ko)
+	new(ModSite.Nexus, 8650),  // Stardew Valley Expanded (po)
+	new(ModSite.Nexus, 4206),  // Stardew Valley Expanded (pt)
+	new(ModSite.Nexus, 6332),  // Stardew Valley Expanded (tr)
+	new(ModSite.Nexus, 4325),  // Stardew Valley Expanded (zh)
+	new(ModSite.Nexus, 8143),  // Stardew Valley Expanded (zh)
+	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
+	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
+	new(ModSite.Nexus, 7556),  // UI Info Suite (fr)
+	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
 
 	// reposts
 	new(ModSite.Nexus, 8792), // Animal Sitter
@@ -211,21 +213,21 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	** Nexus files
 	*********/
 	// broken manifests
-	new(ModSite.Nexus, 1632, 10352), // Birthstone Plants, missing comma
-	new(ModSite.Nexus, 30, 279),     // Enemy Health Bars, Storm mod
-	new(ModSite.Nexus, 8442, 42804), // Gleann_Dealtreul
-	new(ModSite.Nexus, 2602, 10660), // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
-	new(ModSite.Nexus, 5202, 22886), // Minecraft Mobs as Rarecrows, missing quote
-	new(ModSite.Nexus, 237, 929),    // No Soil Decay, invalid version "0.0.0"
-	new(ModSite.Nexus, 5401, 24009), // Open Greenhouse, missing quote
-	new(ModSite.Nexus, 7093, 33160), // Penny as Penny Polendina from RWBY, corrupted characters
-	new(ModSite.Nexus, 7600, 36539), // Pink Tools Recolor, missing quotes in update keys
-	new(ModSite.Nexus, 2472, 9967),  // Sam to Samantha, missing quotes in update keys
-	new(ModSite.Nexus, 366, 2949),   // Siv's Marriage Mod, invalid version "0.0.0"
-	new(ModSite.Nexus, 1048, 3757),  // SmartMod, invalid version "0.0.0"
-	new(ModSite.Nexus, 6284, 28109), // Upgraded Seed Maker Fantasy Crops Addon, missing comma
-	new(ModSite.Nexus, 5881, 26283), // Void Pendant Replacer, UpdateKeys has {} instead of []
-	new(ModSite.Nexus, 5558, 24942), // Zen Garden Desert Obelisk, unescaped quote in string
+	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
+	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
+	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
+	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
+	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
+	new(ModSite.Nexus, 5401, 24009),  // Open Greenhouse, missing quote
+	new(ModSite.Nexus, 10463, 48639), // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
+	new(ModSite.Nexus, 7093, 33160),  // Penny as Penny Polendina from RWBY, corrupted characters
+	new(ModSite.Nexus, 7600, 36539),  // Pink Tools Recolor, missing quotes in update keys
+	new(ModSite.Nexus, 2472, 9967),   // Sam to Samantha, missing quotes in update keys
+	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
+	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
+	new(ModSite.Nexus, 6284, 28109),  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
+	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
+	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
 
 	// utility mods that are part of a larger mod
 	new(ModSite.Nexus, 2677, 14752), // Always On Server for Multiplayer > Server Connection Reset
@@ -265,6 +267,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
+	new(ModSite.Nexus, 10218, manifestId: "Pathoschild.TractorMod"),            // Kehbii Kitty Tractor and Shed
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
