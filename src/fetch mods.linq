@@ -556,19 +556,16 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 		.GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
 		.ToDictionary(p => p.Key, p => p.First().Name, StringComparer.OrdinalIgnoreCase);
 
-	// get type priority
+	// get type priority for ID conflicts
 	static int GetPriority(string type)
 	{
-		if (string.IsNullOrWhiteSpace(type))
-			return int.MaxValue;
-
 		return type switch
 		{
-			"SMAPI" => 5,
-			"content pack (Content Patcher)" => 4,
-			"XNB" => 2,
-			"other" => 1,
-			_ => type.StartsWith("content pack") ? 3 : -1
+			"SMAPI" => 4,
+			"content pack (Content Patcher)" => 3,
+			_ when (type?.StartsWith("content pack") == true) => 2,
+			"XNB" => 1,
+			_ => -1
 		};
 	}
 
@@ -576,43 +573,46 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 	var typesByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 	foreach (ParsedMod mod in mods)
 	{
-		var typesForCurPage = new HashSet<ModType>(mod.ModFolders.Select(p => p.ModType));
+		// get all the mods available to download from this page (including downloads which contain multiple submods)
+		var submods =
+			(
+				from folder in mod.ModFolders
+				where folder.ModType is not (ModType.Ignored or ModType.Invalid)
 
-		foreach (ParsedFile folder in mod.ModFolders)
+				let manifest = folder.RawFolder.Value.Manifest
+				let contentPackFor = manifest?.ContentPackFor?.UniqueID
+				let type = folder.ModType switch
+				{
+					ModType.Smapi => "SMAPI",
+					ModType.ContentPack => !string.IsNullOrWhiteSpace(contentPackFor) && namesById.TryGetValue(contentPackFor.Trim(), out string name)
+						? $"content pack ({name})"
+						: $"content pack ({contentPackFor?.Trim()})",
+					ModType.Xnb => "XNB",
+					_ => $"other ({folder.ModType})"
+				}
+
+				orderby GetPriority(type)
+				select (folder, manifest, type)
+			);
+		if (!submods.Any())
+			continue;
+
+		// count submods by type
+		bool hasNonXnb = submods.Any(p => p.type != "XNB");
+		foreach ((ParsedFile folder, IManifest manifest, string type) in submods)
 		{
-			IManifest manifest = folder.RawFolder.Value.Manifest;
-
-			// get type name
-			string contentPackFor = manifest?.ContentPackFor?.UniqueID;
-			string type = folder.ModType switch
-			{
-				ModType.Smapi => "SMAPI",
-				ModType.ContentPack => !string.IsNullOrWhiteSpace(contentPackFor) && namesById.TryGetValue(contentPackFor.Trim(), out string name)
-					? $"content pack ({name})"
-					: $"content pack ({contentPackFor?.Trim()})",
-				ModType.Xnb => "XNB",
-				ModType.Ignored => null,
-				ModType.Invalid => null,
-				_ => "other"
-			};
-			if (type == null)
+			// special case: if the mod has both XNB and non-XNB components, ignore the XNB ones (they're generally old/alternative versions)
+			if (type == "XNB" && hasNonXnb)
 				continue;
 
-			// get ID for tracking
-			string key = null;
-			if (!string.IsNullOrWhiteSpace(manifest?.UniqueID))
-				key = manifest.UniqueID.Trim();
-			else if (folder.ModType == ModType.Xnb)
-				key = $"XNB:{mod.Site}:{mod.ID}";
-			else
-				key = $"legacy:{mod.Site}:{mod.ID}";
+			// get tracking key
+			string key = !string.IsNullOrWhiteSpace(manifest?.UniqueID)
+				? manifest.UniqueID.Trim()
+				: $"{type}:{mod.Site}:{mod.ID}";
 
-			// skip XNB mods if the same page has a non-XNB version
-			if (type == "XNB mod" && (typesForCurPage.Contains(ModType.Smapi) || typesForCurPage.Contains(ModType.ContentPack)))
-				continue;
-
-			// skip if higher priority mod type already set
-			if (typesByKey.TryGetValue(key, out string prevType) && GetPriority(type) < GetPriority(prevType))
+			// ignore duplicates by ID
+			// (Each player can only install one mod with a given ID. If two mods have the same ID, we assume they're equivalent and count them once in priority order.)
+			if (typesByKey.TryGetValue(key, out string prevType) && GetPriority(type) <= GetPriority(prevType))
 				continue;
 
 			// set type
