@@ -47,9 +47,12 @@ readonly string[] IgnoreRelativePaths = new[] { "_archived" };
 /// <summary>The translation table style (one of <c>Auto</c>, <c>RowPerLocale</c>, or <c>RowPerMod</c>).</summary>
 readonly TableStyle Style = TableStyle.Auto;
 
-/// <summary>Whether to link each status in the translation table to the i18n file.</summary>
+/// <summary>Whether to link each status in the translation table to the i18n file, if it exists.</summary>
 /// <remarks>This also changes how mods with multiple <c>i18n</c> folders are handled. If true, each linked file will have its own status in the summary cell. If false, only one overall status will be shown.</remarks>
-readonly bool LinkFiles = true;
+readonly bool LinkToFiles = true;
+
+/// <summary>Whether to link the status for a missing translation file to the <c>i18n</c> folder so it's easier to find.</summary>
+readonly bool LinkMissingToFolder = true;
 
 /// <summary>The display info for known languages.</summary>
 readonly Dictionary<string, ModLanguage> Languages = new(StringComparer.OrdinalIgnoreCase)
@@ -72,6 +75,14 @@ readonly Dictionary<string, ModLanguage> Languages = new(StringComparer.OrdinalI
 	["th"] = new ModLanguage("Thai", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/7052"),
 	["uk"] = new ModLanguage("Ukrainian", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/8427")
 };
+
+/// <summary>A hidden comment to add just under the section header. You can set it to null to disable it.</summary>
+readonly string AddSectionComment = @"<!--
+
+    This section is auto-generated using a script, there's no need to edit it manually.
+    https://gist.github.com/Pathoschild/040ff6c8dc863ed2a7a828aa04447033
+
+-->";
 
 
 /*********
@@ -120,8 +131,12 @@ private string FormatTranslationSummary(ModFolder[] modFolders)
 
 	// generic header
 	StringBuilder str = new StringBuilder();
+	str.AppendLine("## Translating the mods");
+
+	if (!string.IsNullOrWhiteSpace(this.AddSectionComment))
+		str.AppendLine(this.AddSectionComment);
+
 	str
-		.AppendLine("## Translating the mods")
 		.AppendLine("The mods can be translated into any language supported by the game, and SMAPI will automatically")
 		.AppendLine("use the right translations.")
 		.AppendLine()
@@ -225,7 +240,7 @@ private string RenderLocaleCell(string locale, ModLanguage data)
 private string RenderStatusCell(ModFolder modFolder, string locale)
 {
 	// single status without link
-	if (!this.LinkFiles)
+	if (!this.LinkToFiles)
 	{
 		TranslationStatus[] statuses = modFolder.GetStatusForLocale(locale).Values.Distinct().ToArray();
 		if (statuses.All(p => p == TranslationStatus.Complete))
@@ -242,19 +257,36 @@ private string RenderStatusCell(ModFolder modFolder, string locale)
 			.GetStatusForLocale(locale)
 			.Select(p =>
 			{
-				if (p.Value == TranslationStatus.Missing)
-					return "❑";
+				string relativePath = p.Key;
+				TranslationStatus status = p.Value;
 
-				string symbol = p.Value == TranslationStatus.Complete ? "✓" : "↻";
-				string url = Path.Combine(modFolder.RelativePath, p.Key, $"{locale}.json").Replace("\\", "/");
+				// get status symbol
+				string symbol = status switch
+				{
+					TranslationStatus.Missing => "❑",
+					TranslationStatus.Complete => "✓",
+					_ => "↻"
+				};
 
-				// unfortunately we can't just escape backslash-escape square brackets
+				// render plain symbol if link disabled
+				if (status == TranslationStatus.Missing && !this.LinkMissingToFolder)
+					return symbol;
+
+				// get link URL
+				string url = Path.Combine(modFolder.RelativePath, relativePath);
+				if (status != TranslationStatus.Missing)
+					url = Path.Combine(url, $"{locale}.json");
+				url = url.Replace("\\", "/");
+
+				// fix Markdown handling for [] characters
+				// unfortunately we can't just escape backslash-escape them
 				url = Regex.Replace(url, @" *[\[\]] *", match => match.Value
 					.Replace(" ", "%20")
 					.Replace("[", "%5B")
 					.Replace("]", "%5D")
 				);
 
+				// render
 				return $"[{symbol}]({url})";
 			})
 	);
