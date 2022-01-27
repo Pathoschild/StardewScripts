@@ -95,10 +95,21 @@ public void Main()
 	ModFolder[] modFolders = this
 		.GetModFolders(new DirectoryInfo(this.SolutionFolder))
 		.Where(p => !this.ShouldIgnore(p.RelativePath))
+		.OrderBy(p => p.ModName.ToLower())
 		.ToArray();
 	
 	// get translation metadata
 	this.PopulateTranslationStatuses(modFolders);
+
+	// show warnings
+	{
+		var warnings = modFolders
+			.Where(p => p.Warnings.Any())
+			.Select(p => new { p.RelativePath, p.ModName, p.Warnings })
+			.ToArray();
+		if (warnings.Any())
+			warnings.Dump("Warnings");
+	}
 
 	// format
 	Util.WithStyle(this.FormatTranslationSummary(modFolders), "font-family: 'DejaVu Sans Mono', monospace").Dump();
@@ -117,7 +128,7 @@ private bool ShouldIgnore(string relativePath)
 private string FormatTranslationSummary(ModFolder[] modFolders)
 {
 	// get known locales
-	modFolders = modFolders.OrderBy(p => p.ModName.ToLower()).ToArray();
+	modFolders = modFolders.ToArray();
 	var locales =
 		(
 			from locale in this.GetKnownLocales(modFolders)
@@ -495,7 +506,7 @@ private record ModFolder(DirectoryInfo ModDir, string RelativePath, string ModNa
 	public Dictionary<string, Dictionary<string, TranslationStatus>> TranslationStatus { get; } = new();
 
 	/// <summary>The validation warnings for issues like missing or unknown keys.</summary>
-	public List<string> Warnings { get; } = new();
+	public HashSet<string> Warnings { get; } = new();
 
 	/// <summary>Get the statuses by relative folder path for the given locale.</summary>
 	/// <param name="locale">The locale code to match.</param>
