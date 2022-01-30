@@ -121,6 +121,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// special cases
 	new(ModSite.ModDrop, 580803), // PPJA Home of Abandoned Mods - CFR Conversions
 	new(ModSite.ModDrop, 624116), // Sprint Sprint Sprint, replaced by Sprint Sprint
+	new(ModSite.ModDrop, 1034925), // Better Tappers, duplicate mod page
 
 
 	/*********
@@ -159,6 +160,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
 	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
+	new(ModSite.Nexus, 10720), // Loved Labels (pl)
 	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265),  // Magic (pt)
@@ -215,6 +217,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
+	new(ModSite.Nexus, 10022, 46664), // Harvey Revised, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
