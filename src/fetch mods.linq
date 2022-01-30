@@ -679,6 +679,8 @@ IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ParsedMod> mo
 				var rawContent = JsonConvert.DeserializeAnonymousType(File.ReadAllText(contentFile.FullName), template);
 				if (!SemanticVersion.TryParse(rawContent?.Format, out format))
 					continue;
+
+				format = new SemanticVersion(format.MajorVersion, format.MinorVersion, 0);
 			}
 			catch (JsonException)
 			{
