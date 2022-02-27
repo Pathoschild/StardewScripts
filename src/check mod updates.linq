@@ -235,6 +235,17 @@ private IBarrel Cache;
 async Task Main()
 {
 	/****
+	** Add launch button
+	****/
+	new Hyperlinq(
+		() => Process.Start(
+			fileName: Path.Combine(this.GameFolderPath, "StardewModdingAPI.exe"),
+			arguments: @$"--mods-path ""{this.ModFolderPath}"""
+		),
+		"launch SMAPI"
+	).Dump("actions");
+
+	/****
 	** Initialize
 	****/
 	Console.WriteLine("Initialising...");
