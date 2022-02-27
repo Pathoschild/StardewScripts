@@ -58,7 +58,7 @@ private string MetadataFilePath => Path.Combine(this.GameFolderPath, "smapi-inte
 private readonly string CacheApplicationKey = @"smapi";
 
 /// <summary>How long mod data should be cached.</summary>
-private readonly TimeSpan CacheTime = TimeSpan.FromMinutes(30);
+private readonly TimeSpan CacheTime = TimeSpan.FromMinutes(5);
 
 /****
 ** Common settings
