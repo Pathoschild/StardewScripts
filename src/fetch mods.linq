@@ -146,6 +146,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
 	new(ModSite.Nexus, 5811),  // Custom NPC - Riley (de)
+	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
@@ -196,15 +197,16 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
 
 	// reposts
-	new(ModSite.Nexus, 8792), // Animal Sitter
-	new(ModSite.Nexus, 8670), // CFAutomate
-	new(ModSite.Nexus, 1427), // Prairie King Made Easy
-	new(ModSite.Nexus, 887),  // Reseed
-	new(ModSite.Nexus, 9350), // Reset Terrain Features
-	new(ModSite.Nexus, 1363), // Save Anywhere
-	new(ModSite.Nexus, 8386), // Save Anywhere
-	new(ModSite.Nexus, 9128), // Shop Tile Framework
-	new(ModSite.Nexus, 1077), // UI Mod Suite
+	new(ModSite.Nexus, 8792),  // Animal Sitter
+	new(ModSite.Nexus, 8670),  // CFAutomate
+	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
+	new(ModSite.Nexus, 10916), // Qi Exchanger
+	new(ModSite.Nexus, 887),   // Reseed
+	new(ModSite.Nexus, 9350),  // Reset Terrain Features
+	new(ModSite.Nexus, 1363),  // Save Anywhere
+	new(ModSite.Nexus, 8386),  // Save Anywhere
+	new(ModSite.Nexus, 9128),  // Shop Tile Framework
+	new(ModSite.Nexus, 1077),  // UI Mod Suite
 
 	// other
 	new(ModSite.Nexus, 4109), // PPJA Home of Abandoned Mods - CFR Conversions
