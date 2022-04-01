@@ -398,26 +398,8 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 		where (!wikiHasManifestId || !wikiHasSiteId)
 
 		let manifest = folder.RawFolder.Value.Manifest
-		let names =
-			(
-				from name in new[] { folder.ModDisplayName?.Trim(), mod.Name?.Trim() }
-				where !string.IsNullOrWhiteSpace(name)
-				orderby name
-				select name
-			)
-			.Distinct(StringComparer.InvariantCultureIgnoreCase).OrderBy(p => p)
-		let authorNames =
-			(
-				from name in
-					new[] { manifest?.Author?.Trim(), mod.Author?.Trim(), mod.AuthorLabel?.Trim() }
-					.Where(p => p != null)
-					.SelectMany(p => p.Split(','))
-					.Select(p => p.Trim())
-				where !string.IsNullOrWhiteSpace(name)
-				orderby name
-				select name
-			)
-			.Distinct(StringComparer.InvariantCultureIgnoreCase)
+		let names = this.GetModNames(folder, mod)
+		let authorNames = this.GetAuthorNames(manifest, mod)
 
 		select new
 		{
@@ -1063,6 +1045,42 @@ private IEnumerable<DirectoryInfo> GetSortedSubfolders(DirectoryInfo root)
 			orderby numericName, subfolder.Name
 			select subfolder
 		);
+}
+
+/// <summary>Get the human-readable mod names for the compatibility list.</summary>
+/// <param name="folder">The downloaded mod folder.</param>
+/// <param name="mod">The mod metadata.</param>
+private string[] GetModNames(ParsedFile folder, ParsedMod mod)
+{
+	// get possible names
+	string[] names = new[] { folder.ModDisplayName?.Trim(), mod.Name?.Trim() }
+		.Where(name => !string.IsNullOrWhiteSpace(name))
+		.OrderBy(name => name)
+		.Distinct(StringComparer.InvariantCultureIgnoreCase)
+		.ToArray();
+
+	// if both names are equivalent except for spacing (e.g. SomeModName vs Some Mod Name), use the longer version
+	if (names.Length == 2 && names[0].Replace(" ", "").ToLower() == names[1].Replace(" ", "").ToLower())
+	{
+		names = names
+			.OrderByDescending(p => p.Length)
+			.Take(1)
+			.ToArray();
+	}
+	
+	return names;
+}
+
+/// <summary>Get the human-readable mod author names for the compatibility list.</summary>
+/// <param name="manifest">The downloaded mod manifest file.</param>
+/// <param name="mod">The mod metadata.</param>
+private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
+{
+	return new[] { manifest?.Author?.Trim(), mod.Author?.Trim(), mod.AuthorLabel?.Trim() }
+		.SelectMany(field => field?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
+		.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+		.Distinct()
+		.ToArray();
 }
 
 /// <summary>Extract an archive file to the given folder.</summary>
