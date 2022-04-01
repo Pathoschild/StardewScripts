@@ -356,7 +356,7 @@ async Task Main()
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
 	{
 		var result = this.GetModsNotOnWiki(mods, compatList).ToArray().Dump("SMAPI mods not on the wiki");
-		new Lazy<dynamic>(() => string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value))).Dump("SMAPI mods not on the wiki (wiki format)");
+		new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
 	}
 
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
