@@ -71,6 +71,7 @@ private readonly Regex[] IgnoreIncorrectNames =
 private readonly IDictionary<string, Regex> IgnoreFilesByRepo = new Dictionary<string, Regex>
 {
 	["~JessebotX"] = new Regex(@"^oldversions$", RegexOptions.Compiled),
+	["Battle Royalley - Year 2"] = new Regex("^Saves$", RegexOptions.Compiled),
 	["Birthday Mail"] = new Regex(@"^Release$", RegexOptions.Compiled),
 	["Chest Label System"] = new Regex(@"^zip\.exe$", RegexOptions.Compiled),
 	["Faster Run"] = new Regex(@"^Release$", RegexOptions.Compiled),

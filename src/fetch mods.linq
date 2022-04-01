@@ -141,6 +141,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
+	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
@@ -151,6 +152,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
 	new(ModSite.Nexus, 8675),  // East Scarpe (tr)
+	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
+	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 5828),  // Gift Taste Helper (tr)
@@ -175,6 +178,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8696),  // Personal Effects Redux (pt)
 	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
 	new(ModSite.Nexus, 8468),  // Prismatic Tools (tr)
+	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
 	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
 	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
 	new(ModSite.Nexus, 8170),  // Riley (de)
@@ -199,6 +203,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// reposts
 	new(ModSite.Nexus, 8792),  // Animal Sitter
 	new(ModSite.Nexus, 8670),  // CFAutomate
+	new(ModSite.Nexus, 11297), // Friends Forever
 	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
 	new(ModSite.Nexus, 10916), // Qi Exchanger
 	new(ModSite.Nexus, 887),   // Reseed
@@ -218,6 +223,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	*********/
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
+	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
 	new(ModSite.Nexus, 10022, 46664), // Harvey Revised, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
@@ -270,10 +276,11 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
+	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
-	new(ModSite.Nexus, 10218, manifestId: "Pathoschild.TractorMod"),            // Kehbii Kitty Tractor and Shed
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
+	new(ModSite.Nexus, 10218, manifestId: "Pathoschild.TractorMod"),            // Kehbii Kitty Tractor and Shed
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
