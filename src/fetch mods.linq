@@ -1083,7 +1083,7 @@ private string[] GetModNames(ParsedFile folder, ParsedMod mod)
 /// <param name="mod">The mod metadata.</param>
 private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
 {
-	return new[] { manifest?.Author?.Trim(), mod.Author?.Trim(), mod.AuthorLabel?.Trim() }
+	return new[] { manifest?.Author?.Trim(), mod.AuthorLabel?.Trim() ?? mod.Author?.Trim() }
 		.SelectMany(field => field?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
 		.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
 		.Distinct()
