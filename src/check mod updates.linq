@@ -810,7 +810,9 @@ T CacheOrFetch<T>(string key, Func<T> fetch)
 	if (this.Cache.Exists(key))
 	{
 		string json = this.Cache.Get<string>(key);
-		return jsonHelper.Deserialize<T>(json);
+		return !string.IsNullOrWhiteSpace(json) && json != "null"
+			? jsonHelper.Deserialize<T>(json)
+			: default;
 	}
 	else
 	{
