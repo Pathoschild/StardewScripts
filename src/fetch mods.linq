@@ -407,6 +407,10 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 		let manifest = folder.RawFolder.Value.Manifest
 		let names = this.GetModNames(folder, mod)
 		let authorNames = this.GetAuthorNames(manifest, mod)
+		let githubRepo = this.GetGitHubRepo(manifest, mod)
+		let customSourceUrl = githubRepo == null
+			? this.GetCustomSourceUrl(mod)
+			: null
 
 		select new
 		{
@@ -439,7 +443,11 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 				+ (mod.Site == ModSite.CurseForge ? $"  |curseforge key = {mod.PageUrl.Split("/").Last()}\n" : "")
 				+ (mod.Site == ModSite.ModDrop ? $"  |moddrop id = {mod.ID}\n" : "")
 				+ $"  |nexus id = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
-				+ $"  |github   = {manifest?.UpdateKeys?.Where(p => p.Trim().StartsWith("GitHub:")).Select(p => p.Trim().Substring("GitHub:".Length)).FirstOrDefault()}\n"
+				+ $"  |github   = {githubRepo}\n"
+				+ (customSourceUrl != null
+					? $"  |source   = {customSourceUrl}\n"
+					: ""
+				)
 				+ "}}"
 			)
 		}
@@ -1090,6 +1098,72 @@ private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
 		.ToArray();
 }
 
+/// <summary>Get the GitHub repository name for a mod, if available.</summary>
+/// <param name="manifest">The downloaded mod manifest file.</param>
+/// <param name="mod">The mod metadata.</param>
+private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
+{
+	// from update key
+	foreach (string rawUpdateKey in manifest?.UpdateKeys ?? Array.Empty<string>())
+	{
+		string updateKey = rawUpdateKey?.Trim();
+		if (updateKey?.StartsWith("GitHub", StringComparison.OrdinalIgnoreCase) == true)
+		{
+			Match match = Regex.Match(updateKey, @"^GitHub\s*:\s*(.+)");
+			if (match.Success)
+				return match.Groups[1].Value;
+		}
+	}
+
+	// from mod description
+	string description = this.TryGetModDescription(mod);
+	if (!string.IsNullOrWhiteSpace(description))
+	{
+		Match match = Regex.Match(description, @"github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		if (match.Success)
+			return match.Groups[1].Value;
+	}
+
+	// none found
+	return null;
+}
+
+/// <summary>Get the custom source code URL for a mod, if available.</summary>
+/// <param name="mod">The mod metadata.</param>
+private string GetCustomSourceUrl(ParsedMod mod)
+{
+	// from mod description
+	string description = this.TryGetModDescription(mod);
+	if (!string.IsNullOrWhiteSpace(description))
+	{
+		Match match = Regex.Match(description, @"(gitlab\.com/[a-z0-9_\-\.]+/[a-z0-9_\-\.]+|sourceforge\.net/p/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		if (match.Success)
+			return $"https://{match.Groups[1].Value}";
+	}
+
+	// none found
+	return null;
+}
+
+/// <summary>Get the raw mod page description, if available.</summary>
+/// <param name="mod">The mod metadata.</param>
+private string TryGetModDescription(ParsedMod mod)
+{
+	// ModDrop
+	{
+		if (mod.RawData.TryGetValue("desc", out object rawValue) && rawValue is string description)
+			return description;
+	}
+	
+	// Nexus
+	{
+		if (mod.RawData.TryGetValue("Description", out object rawValue) && rawValue is string description)
+			return description;
+	}
+
+	return null;
+}
+
 /// <summary>Extract an archive file to the given folder.</summary>
 /// <param name="file">The archive file to extract.</param>
 /// <param name="extractTo">The directory to extract into.</param>
@@ -1191,42 +1265,39 @@ class GenericMod
 	** Accessors
 	*********/
 	/// <summary>The mod site which has the mod.</summary>
-	public ModSite Site { get; set; }
+	public ModSite Site { get; }
 
 	/// <summary>The mod ID within the site.</summary>
-	public int ID { get; set; }
+	public int ID { get; }
 
 	/// <summary>The mod display name.</summary>
-	public string Name { get; set; }
+	public string Name { get; }
 
 	/// <summary>The mod author name.</summary>
-	public string Author { get; set; }
+	public string Author { get; }
 
 	/// <summary>Custom author text, if different from <see cref="Author" />.</summary>
-	public string AuthorLabel { get; set; }
+	public string AuthorLabel { get; }
 
 	/// <summary>The URL to the user-facing mod page.</summary>
-	public string PageUrl { get; set; }
+	public string PageUrl { get; }
 
 	/// <summary>The main mod version, if applicable.</summary>
-	public string Version { get; set; }
+	public string Version { get; }
 
 	/// <summary>When the mod metadata or files were last updated.</summary>
-	public DateTimeOffset Updated { get; set; }
+	public DateTimeOffset Updated { get; }
 
 	/// <summary>The original data from the mod site.</summary>
-	public Dictionary<string, object> RawData { get; set; }
+	public Dictionary<string, object> RawData { get; }
 
 	/// <summary>The available mod downloads.</summary>
-	public GenericFile[] Files { get; set; }
+	public GenericFile[] Files { get; }
 
 
 	/*********
 	** Public methods
 	*********/
-	/// <summary>Construct an instance.</summary>
-	public GenericMod() { }
-
 	/// <summary>Construct an instance.</summary>
 	/// <param name="site">The mod site which has the mod.</param>
 	/// <param name="id">The mod ID within the site.</param>
