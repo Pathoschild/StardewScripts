@@ -461,14 +461,19 @@ async Task Main()
 						FileUtilities.ForceDelete(newDir);
 					}
 					actualDir.MoveTo(newDir.FullName);
-					if (Directory.Exists(searchDir.FullName) && !searchDir.EnumerateFiles("*.*", SearchOption.AllDirectories).Any())
-						FileUtilities.ForceDelete(searchDir);
 				}
 			}
 			catch (Exception error)
 			{
 				new { error, newName, mod }.Dump("error normalising mod folder");
 			}
+		}
+
+		// delete empty folders
+		foreach (DirectoryInfo dir in new DirectoryInfo(this.ModFolderPath).EnumerateDirectories())
+		{
+			if (this.IsEmptyFolder(dir))
+				FileUtilities.ForceDelete(dir);
 		}
 	}
 
@@ -823,6 +828,27 @@ private string TryFormatVersion(string version)
 	return SemanticVersion.TryParse(version, allowNonStandard: true, out ISemanticVersion parsed)
 		? parsed.ToString()
 		: version?.Trim();
+}
+
+/// <summary>Get whether a folder is empty, ignoring metadata files like the __MACOSX folder.</summary>
+/// <param name="directory">The directory to check.</param>
+private bool IsEmptyFolder(DirectoryInfo directory)
+{
+	foreach (FileSystemInfo info in directory.EnumerateFileSystemInfos())
+	{
+		if (info is DirectoryInfo subdir)
+		{
+			if (subdir.Name == "__MACOSX")
+				continue;
+
+			if (!this.IsEmptyFolder(subdir))
+				return false;
+		}
+		else
+			return false;
+	}
+	
+	return true;
 }
 
 /// <summary>The aggregated data for a mod.</summary>
