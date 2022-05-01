@@ -47,6 +47,9 @@ readonly string[] IgnoreRelativePaths = new[] { "_archived" };
 /// <summary>The translation table style (one of <c>Auto</c>, <c>RowPerLocale</c>, or <c>RowPerMod</c>).</summary>
 readonly TableStyle Style = TableStyle.Auto;
 
+/// <summary>Whether to output an HTML preview of the output instead of the raw Markdown.</summary>
+readonly bool OutputHtml = false;
+
 /// <summary>Whether to link each status in the translation table to the i18n file, if it exists.</summary>
 /// <remarks>This also changes how mods with multiple <c>i18n</c> folders are handled. If true, each linked file will have its own status in the summary cell. If false, only one overall status will be shown.</remarks>
 readonly bool LinkToFiles = true;
@@ -112,7 +115,14 @@ public void Main()
 	}
 
 	// format
-	Util.WithStyle(this.FormatTranslationSummary(modFolders), "font-family: 'DejaVu Sans Mono', monospace").Dump();
+	var markdown = this.FormatTranslationSummary(modFolders);
+	if (this.OutputHtml)
+	{
+		var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+		Util.RawHtml(Markdown.ToHtml(markdown, pipeline)).Dump();
+	}
+	else
+		Util.WithStyle(markdown, "font-family: 'DejaVu Sans Mono', monospace").Dump();
 }
 
 /// <summary>Whether a mod folder should be ignored, based on <see cref="IgnoreFolders"/>.</summary>
