@@ -16,7 +16,7 @@ Usage
 To use this script:
 1. Open this file in LINQPad. (It's a small app: https://www.linqpad.net/.)
 2. Change the settings under 'configure' below.
-3. Click the execute (▶) button to generate the translated event.
+3. Click the execute (▶) button to generate the translation summary.
 
 
 Assumptions
