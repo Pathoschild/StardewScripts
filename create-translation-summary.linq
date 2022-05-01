@@ -1,6 +1,8 @@
 <Query Kind="Program">
+  <NuGetReference>Markdig</NuGetReference>
   <NuGetReference>Newtonsoft.Json</NuGetReference>
   <Namespace>Newtonsoft.Json</Namespace>
+  <Namespace>Markdig</Namespace>
 </Query>
 
 /*
