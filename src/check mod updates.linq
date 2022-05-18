@@ -187,6 +187,7 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 
 	// fix invalid names
 	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by wiki
+	["leclair.bcbuildings"] = "Better Crafting - Buildings", // : replaced with _
 	["minervamaga.FeelingLucky"] = "Feeling Lucky", // ? replaced with _, just strip it instead
 
 	// fix duplicate IDs (Slime Minigame)

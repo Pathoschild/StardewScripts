@@ -60,7 +60,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2021, 12, 31), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 05, 18), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -147,6 +147,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
 	new(ModSite.Nexus, 5811),  // Custom NPC - Riley (de)
+	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
@@ -170,6 +171,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4265),  // Magic (pt)
 	new(ModSite.Nexus, 5871),  // Mermaid Island (ko)
 	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
+	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
 	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
 	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
 	new(ModSite.Nexus, 8928),  // Multiple Spouse Dialogs (tr)
@@ -184,10 +186,12 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8170),  // Riley (de)
 	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
 	new(ModSite.Nexus, 6424),  // Shadow Cove (zh)
+	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
 	new(ModSite.Nexus, 5272),  // Stardew Valley Expanded (es)
 	new(ModSite.Nexus, 5901),  // Stardew Valley Expanded (fr)
 	new(ModSite.Nexus, 8411),  // Stardew Valley Expanded (fr)
+	new(ModSite.Nexus, 9136),  // Stardew Valley Expanded (id)
 	new(ModSite.Nexus, 5788),  // Stardew Valley Expanded (ja)
 	new(ModSite.Nexus, 5321),  // Stardew Valley Expanded (ko)
 	new(ModSite.Nexus, 8650),  // Stardew Valley Expanded (po)
@@ -225,6 +229,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
+	new(ModSite.Nexus, 11798, 53626), // Grandpa Pissed Himself
 	new(ModSite.Nexus, 10022, 46664), // Harvey Revised, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
