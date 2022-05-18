@@ -42,7 +42,9 @@
 /// <summary>The mod site clients from which to fetch mods.</summary>
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
 {
-	new CurseForgeApiClient(),
+	new CurseForgeApiClient(
+		apiKey: null
+	),
 	new ModDropApiClient(
 		username: null,
 		password: null
@@ -1603,10 +1605,10 @@ class CurseForgeApiClient : IModSiteClient
 	private readonly Regex VersionInNamePattern = new Regex(@"^(?:.+? | *)v?(\d+\.\d+(?:\.\d+)?(?:-.+?)?) *(?:\.(?:zip|rar|7z))?$", RegexOptions.Compiled);
 
 	/// <summary>The mod data fetched as part of a previous call.</summary>
-	private IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
+	private readonly IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
 
 	/// <summary>The CurseForge API client.</summary>
-	private IClient CurseForge = new FluentClient("https://addons-ecs.forgesvc.net/api/v2");
+	private readonly IClient CurseForge;
 
 
 	/*********
@@ -1619,6 +1621,14 @@ class CurseForgeApiClient : IModSiteClient
 	/*********
 	** Public methods
 	*********/
+	/// <summary>Construct an instance.</summary>
+	/// <param name="apiKey">The API key with which to authenticate.</param>
+	public CurseForgeApiClient(string apiKey)
+	{
+		this.CurseForge = new FluentClient("https://api.curseforge.com/v1")
+			.AddDefault(req => req.WithHeader("x-api-key", apiKey));
+	}
+
 	/// <summary>Authenticate with the mod site if needed.</summary>
 	public Task AuthenticateAsync()
 	{
@@ -1646,20 +1656,21 @@ class CurseForgeApiClient : IModSiteClient
 		while (true)
 		{
 			// fetch data
-			JArray response = await this.CurseForge
-				.GetAsync("addon/search")
+			JObject response = await this.CurseForge
+				.GetAsync("mods/search")
 				.WithArguments(new
 				{
 					gameId = this.GameId,
 					index = page,
 					pageSize = pageSize,
-					sort = 2 // Last Updated
+					sortField = 3, // Last Updated
+					sortOrder = "desc"
 				})
-				.AsRawJsonArray();
+				.AsRawJsonObject();
 
 			// handle results
 			bool reachedEnd = response.Count < pageSize;
-			foreach (JObject rawMod in response)
+			foreach (JObject rawMod in response["data"])
 			{
 				// parse mod
 				GenericMod mod = this.Parse(rawMod);
@@ -1753,7 +1764,7 @@ class CurseForgeApiClient : IModSiteClient
 
 			files.Add(new GenericFile(
 				id: rawFile["id"].Value<int>(),
-				type: rawFile["isAlternate"].Value<bool>() ? GenericFileType.Optional : GenericFileType.Main,
+				type: rawFile["releaseType"].Value<int>() == 1 ? GenericFileType.Main : GenericFileType.Optional, // FileReleaseType: 1=release, 2=beta, 3=alpha
 				displayName: displayName,
 				fileName: fileName,
 				version: this.GetFileVersion(displayName, fileName),
@@ -1771,7 +1782,7 @@ class CurseForgeApiClient : IModSiteClient
 			name: rawMod["name"].Value<string>(),
 			author: authorNames.FirstOrDefault(),
 			authorLabel: authorNames.Length > 1 ? string.Join(", ", authorNames) : null,
-			pageUrl: rawMod["websiteUrl"].Value<string>(),
+			pageUrl: rawMod["links"]["websiteUrl"].Value<string>(),
 			version: null,
 			updated: lastUpdated,
 			rawData: rawModWithoutFiles,
