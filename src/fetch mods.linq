@@ -1036,7 +1036,7 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 					GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
 
 					// get mod folders from toolkit
-					ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName).ToArray();
+					ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName, useCaseInsensitiveFilePaths: true).ToArray();
 					if (mods.Length == 0)
 					{
 						ConsoleHelper.Print($"   Ignored {fileDir.FullName}, folder is empty?");

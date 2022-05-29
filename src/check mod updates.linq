@@ -272,7 +272,7 @@ async Task Main()
 	** Read local mod data
 	****/
 	Console.WriteLine("Reading local data...");
-	foreach (ModFolder folder in toolkit.GetModFolders(this.ModFolderPath))
+	foreach (ModFolder folder in toolkit.GetModFolders(this.ModFolderPath, useCaseInsensitiveFilePaths: true))
 	{
 		if (folder.Manifest == null)
 		{
