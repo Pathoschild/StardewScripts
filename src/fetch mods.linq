@@ -62,7 +62,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 05, 18), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 05, 28), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -143,6 +143,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
+	new(ModSite.Nexus, 12138), // Better Junimos (pt)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
@@ -151,11 +152,14 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5811),  // Custom NPC - Riley (de)
 	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
+	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
 	new(ModSite.Nexus, 8675),  // East Scarpe (tr)
 	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
+	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
+	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
 	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
@@ -231,7 +235,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
-	new(ModSite.Nexus, 11798, 53626), // Grandpa Pissed Himself
 	new(ModSite.Nexus, 10022, 46664), // Harvey Revised, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
@@ -293,7 +296,11 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomNPC"),              // New NPC Alec
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
+	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
+	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
+	new(ModSite.Nexus, 8409, manifestId: "spacechase0.GenericModConfigMenu"),   // Stardew Valley - Vietnamese
+	new(ModSite.Nexus, 12010, manifestId: "Stashek.FishingRodRecolor"),         // Synergistic Tools
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
