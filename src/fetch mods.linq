@@ -419,6 +419,8 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 			? this.GetCustomSourceUrl(mod)
 			: null
 
+		let missingLabels = (new[] { !wikiHasManifestId ? "manifest ID" : null, !wikiHasSiteId ? "site ID" : null }).Where(p => p is not null).ToArray()
+
 		select new
 		{
 			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
@@ -432,10 +434,9 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 			FileType = folder.ModType,
 			folder.ModID,
 			folder.ModVersion,
-			Missing = string.Join(", ",
-				from label in new[] { !wikiHasManifestId ? "manifest ID" : null, !wikiHasSiteId ? "site ID" : null }
-				where label != null
-				select label
+			Missing = Util.WithStyle(
+				string.Join(", ", missingLabels),
+				missingLabels.Length == 1 ? "color: red" : "" // highlight mods that are partly missing, which usually means outdated info
 			),
 			UpdateKeys = new Lazy<string[]>(() => manifest.UpdateKeys),
 			Manifest = new Lazy<Manifest>(() => manifest),
