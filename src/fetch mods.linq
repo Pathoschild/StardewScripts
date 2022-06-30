@@ -62,7 +62,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 05, 28), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 06, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -143,7 +143,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
-	new(ModSite.Nexus, 12138), // Better Junimos (pt)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
@@ -161,6 +160,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
 	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
 	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
+	new(ModSite.Nexus, 12519), // Frozen Yogurt (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 5828),  // Gift Taste Helper (tr)
@@ -169,6 +169,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6693),  // Happy Birthday (pt)
 	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
 	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
+	new(ModSite.Nexus, 12399), // Instant Tool Upgrades (tr)
 	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
 	new(ModSite.Nexus, 10720), // Loved Labels (pl)
@@ -235,7 +236,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
-	new(ModSite.Nexus, 10022, 46664), // Harvey Revised, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
@@ -298,6 +298,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
+	new(ModSite.Nexus, 12517, manifestId: "hootless.BusLocations"),             // Stardew Cove (Chinese translation)
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
 	new(ModSite.Nexus, 8409, manifestId: "spacechase0.GenericModConfigMenu"),   // Stardew Valley - Vietnamese
 	new(ModSite.Nexus, 12010, manifestId: "Stashek.FishingRodRecolor"),         // Synergistic Tools
