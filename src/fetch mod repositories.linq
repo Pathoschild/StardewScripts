@@ -177,7 +177,19 @@ async Task Main()
 			folderName = repo.GetRecommendedFolderName();
 
 		if (repoFolders.ContainsKey(folderName))
-			throw new InvalidOperationException($"Folder name conflict: can't add {folderName}, it matches both [{repo.SourceUrl}] and [{repoFolders[folderName].SourceUrl}].");
+		{
+			int discriminator = 2;
+			string newName = folderName;
+			do
+			{
+				newName = $"{folderName} ({discriminator})";
+				discriminator++;
+			}
+			while (repoFolders.ContainsKey(newName));
+
+			ConsoleHelper.Print($"Multiple repos would have name '{folderName}'; renamed one to '{newName}' to avoid a collision.", Severity.Warning);
+			folderName = newName;
+		}
 
 		repoFolders[folderName] = repo;
 	}
