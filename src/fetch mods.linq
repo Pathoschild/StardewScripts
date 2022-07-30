@@ -116,6 +116,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	/*********
 	** ModDrop mods
 	*********/
+	// mod translations
+	new(ModSite.ModDrop, 1190770), // Extra Fish Information (es)
+	new(ModSite.ModDrop, 1190547), // Stardew Valley Expanded (es)
+
 	// reposts
 	new(ModSite.ModDrop, 509776), // Object Progress Bars
 	new(ModSite.ModDrop, 509780), // Running Late
@@ -148,6 +152,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
+	new(ModSite.Nexus, 12968), // Custom NPC Belos (id)
 	new(ModSite.Nexus, 5811),  // Custom NPC - Riley (de)
 	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
@@ -160,6 +165,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
 	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
 	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
+	new(ModSite.Nexus, 13106), // Festival of the Mundane (zh)
+	new(ModSite.Nexus, 13165), // Fishing Trawler (vi)
 	new(ModSite.Nexus, 12519), // Frozen Yogurt (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
@@ -196,8 +203,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
 	new(ModSite.Nexus, 5272),  // Stardew Valley Expanded (es)
+	new(ModSite.Nexus, 5509),  // Stardew Valley Expanded (es)
 	new(ModSite.Nexus, 5901),  // Stardew Valley Expanded (fr)
 	new(ModSite.Nexus, 8411),  // Stardew Valley Expanded (fr)
+	new(ModSite.Nexus, 12867), // Stardew Valley Expanded (fr)
 	new(ModSite.Nexus, 9136),  // Stardew Valley Expanded (id)
 	new(ModSite.Nexus, 5788),  // Stardew Valley Expanded (ja)
 	new(ModSite.Nexus, 5321),  // Stardew Valley Expanded (ko)
@@ -214,7 +223,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// reposts
 	new(ModSite.Nexus, 8792),  // Animal Sitter
 	new(ModSite.Nexus, 8670),  // CFAutomate
+	new(ModSite.Nexus, 12920), // Extra Map Layers (version for Android by original author, with same mod ID)
 	new(ModSite.Nexus, 11297), // Friends Forever
+	new(ModSite.Nexus, 12729), // Many Enchantments
 	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
 	new(ModSite.Nexus, 10916), // Qi Exchanger
 	new(ModSite.Nexus, 887),   // Reseed
