@@ -42,6 +42,13 @@ readonly string SolutionFolder = @"E:\source\_Stardew\Mods.Pathoschild";
 /// <summary>The relative paths within <see cref="SolutionFolder"/> to ignore when scanning for mod folders, using the system default separators (e.g. <c>\</c> on Windows).</summary>
 readonly string[] IgnoreRelativePaths = new[] { "_archived" };
 
+/// <summary>Path substrings within <see cref="SolutionFolder"/> to ignore when scanning for mod folders, using the system default separators (e.g. <c>\</c> on Windows).</summary>
+readonly string[] IgnorePathSubstrings = new[]
+{
+	Path.Combine("bin", "Debug"),
+	Path.Combine("bin", "Release")
+};
+
 
 /****
 ** Format settings
@@ -131,8 +138,13 @@ public void Main()
 /// <param name="relativePath">The relative path to check.</param>
 private bool ShouldIgnore(string relativePath)
 {
-	return this.IgnoreRelativePaths
-		.Any(ignorePath => relativePath == ignorePath || relativePath.StartsWith(ignorePath + Path.DirectorySeparatorChar));
+	if (this.IgnoreRelativePaths.Any(ignorePath => relativePath == ignorePath || relativePath.StartsWith(ignorePath + Path.DirectorySeparatorChar)))
+		return true;
+
+	if (this.IgnorePathSubstrings.Any(ignoreSubstr => relativePath.Contains(ignoreSubstr)))
+		return true;
+
+	return false;
 }
 
 /// <summary>Render a Markdown translation summary section for the given mods.</summary>
@@ -301,13 +313,12 @@ private string RenderStatusCell(ModFolder modFolder, string locale)
 					url = Path.Combine(url, $"{locale}.json");
 				url = url.Replace("\\", "/");
 
-				// fix Markdown handling for [] characters
-				// unfortunately we can't just escape backslash-escape them
-				url = Regex.Replace(url, @" *[\[\]] *", match => match.Value
+				// fix URL encoding
+				// Markdown links break if a relative URL contains [] or spaces
+				url = url
 					.Replace(" ", "%20")
 					.Replace("[", "%5B")
-					.Replace("]", "%5D")
-				);
+					.Replace("]", "%5D");
 
 				// render
 				return $"[{symbol}]({url})";
