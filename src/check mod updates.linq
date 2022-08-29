@@ -207,6 +207,9 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 
 	["HorseWhistle_SMAPI"] = "Horse Whistle (Nabuma)",
 	["icepuente.HorseWhistle"] = "Horse Whistle (Icepuente)",
+	
+	["stokastic.SmartCursor"] = "Smart Cursor (Stokastic)",
+	["DecidedlyHuman.SmartCursor"] = "Smart Cursor (DecidedlyHuman)",
 
 	// prefix sub-mods
 	["SilentOak.AutoQualityPatch"] = "Quality Products - Auto Quality Patch"

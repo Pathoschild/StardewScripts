@@ -62,7 +62,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 06, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 08, 28), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -172,6 +172,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 5828),  // Gift Taste Helper (tr)
 	new(ModSite.Nexus, 7571),  // Green House Sprinklers (tr)
+	new(ModSite.Nexus, 9874),  // Happy Birthday (fr)
 	new(ModSite.Nexus, 3954),  // Happy Birthday (pt)
 	new(ModSite.Nexus, 6693),  // Happy Birthday (pt)
 	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
@@ -191,7 +192,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8928),  // Multiple Spouse Dialogs (tr)
 	new(ModSite.Nexus, 5551),  // NPC Adventures (ru)
 	new(ModSite.Nexus, 8767),  // NPC Adventures (tr)
+	new(ModSite.Nexus, 13369), // NPC Map Locations (vi)
 	new(ModSite.Nexus, 8696),  // Personal Effects Redux (pt)
+	new(ModSite.Nexus, 13244), // PPJA (vi)
 	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
 	new(ModSite.Nexus, 8468),  // Prismatic Tools (tr)
 	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
@@ -218,6 +221,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
 	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
 	new(ModSite.Nexus, 7556),  // UI Info Suite (fr)
+	new(ModSite.Nexus, 13389), // UI Info Suite (vi)
 	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
 
 	// reposts
@@ -295,6 +299,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new (ModSite.Nexus, 4582, 29417), // NPC Adventures > localization package
 
 	// mods which include a copy of another mod for some reason
+	new(ModSite.Nexus, 13179, manifestId: "Stashek.FishingRodRecolor"),         // Coexistence Items
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
 	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
