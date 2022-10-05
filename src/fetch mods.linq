@@ -1118,7 +1118,7 @@ private string[] GetModNames(ParsedFile folder, ParsedMod mod)
 		.Distinct(StringComparer.InvariantCultureIgnoreCase)
 		.ToArray();
 
-	// if both names are equivalent except for spacing (e.g. SomeModName vs Some Mod Name), use the longer version
+	// if both names are equivalent except for spacing and capitalization (e.g. SomeModName vs Some Mod Name), use the longer version
 	if (names.Length == 2 && names[0].Replace(" ", "").ToLower() == names[1].Replace(" ", "").ToLower())
 	{
 		names = names
@@ -1138,7 +1138,7 @@ private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
 	return new[] { manifest?.Author?.Trim(), mod.AuthorLabel?.Trim() ?? mod.Author?.Trim() }
 		.SelectMany(field => field?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
 		.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
-		.Distinct()
+		.Distinct(StringComparer.OrdinalIgnoreCase)
 		.ToArray();
 }
 
