@@ -999,7 +999,8 @@ class ModData
 	/// <summary>Get a recommended folder name based on the mod data.</summary>
 	public string GetRecommendedFolderName()
 	{
-		return this.ApiRecord?.Metadata?.Name ?? this.Folder.DisplayName;
+		return (this.ApiRecord?.Metadata?.Name ?? this.Folder.DisplayName)
+			?.Replace("&#44;", ",");
 	}
 
 
