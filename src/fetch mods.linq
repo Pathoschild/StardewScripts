@@ -62,7 +62,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 08, 28), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 09, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -129,6 +129,16 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.ModDrop, 624116), // Sprint Sprint Sprint, replaced by Sprint Sprint
 	new(ModSite.ModDrop, 1034925), // Better Tappers, duplicate mod page
 
+	// mods which include a copy of another mod for some reason
+	new(ModSite.ModDrop, 1240025, manifestId: "Cherry.ExpandedPreconditionsUtility"), // Little Witch Academia Constanze NPC
+	new(ModSite.ModDrop, 1240025, manifestId: "Cherry.ShopTileFramework"),            // Little Witch Academia Constanze NPC
+	new(ModSite.ModDrop, 1240025, manifestId: "Pathoschild.ContentPatcher"),          // Little Witch Academia Constanze NPC
+	new(ModSite.ModDrop, 1240025, manifestId: "Platonymous.CustomMusic"),             // Little Witch Academia Constanze NPC
+	new(ModSite.ModDrop, 1163121, manifestId: "Cherry.ExpandedPreconditionsUtility"), // Little Witch Academia Constanze NPC - (SVE)
+	new(ModSite.ModDrop, 1163121, manifestId: "Cherry.ShopTileFramework"),            // Little Witch Academia Constanze NPC - (SVE)
+	new(ModSite.ModDrop, 1163121, manifestId: "Pathoschild.ContentPatcher"),          // Little Witch Academia Constanze NPC - (SVE)
+	new(ModSite.ModDrop, 1163121, manifestId: "Platonymous.CustomMusic"),             // Little Witch Academia Constanze NPC - (SVE)
+
 
 	/*********
 	** ModDrop files
@@ -179,6 +189,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
 	new(ModSite.Nexus, 12399), // Instant Tool Upgrades (tr)
 	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
+	new(ModSite.Nexus, 13866), // Line Sprinklers (fr)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
 	new(ModSite.Nexus, 10720), // Loved Labels (pl)
 	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
@@ -307,6 +318,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
 	new(ModSite.Nexus, 10218, manifestId: "Pathoschild.TractorMod"),            // Kehbii Kitty Tractor and Shed
+	new(ModSite.Nexus, 13248, manifestId: "Stashek.FishingRodRecolor"),         // Main Questline Redux (PMC CCJ)
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
