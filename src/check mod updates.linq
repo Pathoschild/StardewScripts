@@ -2,14 +2,9 @@
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
   <NuGetReference>HtmlAgilityPack</NuGetReference>
-  <NuGetReference Prerelease="true">MonkeyCache.FileStore</NuGetReference>
   <NuGetReference>Newtonsoft.Json</NuGetReference>
   <NuGetReference>Pathoschild.Http.FluentClient</NuGetReference>
   <Namespace>HtmlAgilityPack</Namespace>
-  <Namespace>MonkeyCache</Namespace>
-  <Namespace>MonkeyCache.FileStore</Namespace>
-  <Namespace>Newtonsoft.Json</Namespace>
-  <Namespace>Newtonsoft.Json.Linq</Namespace>
   <Namespace>Pathoschild.Http.Client</Namespace>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
@@ -51,14 +46,6 @@ private string ModFolderPath => Path.Combine(this.GameFolderPath, "Mods (test)")
 /// <summary>The absolute path for the file which, if present, indicates mod folders should not be normalized.</summary>
 private string ModFolderPathDoNotNormalizeToken => Path.Combine(this.ModFolderPath, "DO_NOT_NORMALIZE.txt");
 
-/// <summary>The absolute path for SMAPI's metadata file.</summary>
-private string MetadataFilePath => Path.Combine(this.GameFolderPath, "smapi-internal", "StardewModdingAPI.metadata.json");
-
-/// <summary>The application ID for the mod data cache.</summary>
-private readonly string CacheApplicationKey = @"smapi";
-
-/// <summary>How long mod data should be cached.</summary>
-private readonly TimeSpan CacheTime = TimeSpan.FromMinutes(5);
 
 /****
 ** Common settings
@@ -233,9 +220,6 @@ public IDictionary<string, Tuple<string, string>> EquivalentModVersions = new Di
 /*********
 ** Script
 *********/
-/// <summary>The data cache for expensive fetches.</summary>
-private IBarrel Cache;
-
 async Task Main()
 {
 	/****
@@ -253,12 +237,6 @@ async Task Main()
 	** Initialize
 	****/
 	Console.WriteLine("Initialising...");
-
-	// cache
-	Barrel.ApplicationId = this.CacheApplicationKey;
-	this.Cache = Barrel.Current;
-	this.Cache.EmptyExpired();
-	//this.Cache.EmptyAll();
 
 	// data
 	var toolkit = new ModToolkit();
@@ -811,20 +789,10 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 async Task<T> CacheOrFetchAsync<T>(string key, Func<Task<T>> fetch)
 {
 	var jsonHelper = new JsonHelper();
-	if (this.Cache.Exists(key))
-	{
-		string json = this.Cache.Get<string>(key);
-		return !string.IsNullOrWhiteSpace(json) && json != "null"
-			? jsonHelper.Deserialize<T>(json)
-			: default;
-	}
-	else
-	{
-		T data = await fetch();
-		string json = jsonHelper.Serialize(data); // MonkeyCache handles string values weirdly, and will try to deserialize as JSON when we read it
-		this.Cache.Add(key, json, this.CacheTime);
-		return data;
-	}
+
+	T data = await fetch();
+	string json = jsonHelper.Serialize(data); // MonkeyCache handles string values weirdly, and will try to deserialize as JSON when we read it
+	return data;
 }
 
 /// <summary>Get a normalized representation of a version if it's parseable.</summary>
