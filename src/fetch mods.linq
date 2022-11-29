@@ -1163,9 +1163,16 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 	string description = this.TryGetModDescription(mod);
 	if (!string.IsNullOrWhiteSpace(description))
 	{
-		Match match = Regex.Match(description, @"github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
-		if (match.Success)
-			return match.Groups[1].Value;
+		MatchCollection matches = Regex.Matches(description, @"github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		foreach (Match match in matches)
+		{
+			string repo = match.Groups[1].Value;
+
+			if (repo.StartsWith("Pathoschild/", StringComparison.OrdinalIgnoreCase))
+				continue; // this is usually not the mod's source link (e.g. links to the Content Patcher docs, or copy/pasted without changing the link)
+
+			return repo;
+		}
 	}
 
 	// none found
