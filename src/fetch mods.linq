@@ -777,6 +777,8 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 /// <returns>Returns the imported mod IDs.</returns>
 async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPath)
 {
+	Stopwatch timer = Stopwatch.StartNew();
+
 	// get mod IDs
 	if (!modIds.Any())
 		return modIds;
@@ -793,7 +795,8 @@ async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPa
 		await this.ImportMod(modSite, id, rootPath);
 	}
 
-	progress.Caption = $"Fetched {modIds.Length} updated mods from {modSite.SiteKey} ({progress.Percent}%)";
+	timer.Stop();
+	progress.Caption = $"Fetched {modIds.Length} updated mods from {modSite.SiteKey} ({progress.Percent}%) in {this.GetFormattedTime(timer.Elapsed)}";
 	return modIds;
 }
 
@@ -1045,6 +1048,8 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 
 	foreach (DirectoryInfo siteFolder in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
 	{
+		Stopwatch timer = Stopwatch.StartNew();
+
 		var modFolders = this.GetSortedSubfolders(siteFolder).ToArray();
 		var progress = new IncrementalProgressBar(modFolders.Length).Dump();
 
@@ -1088,7 +1093,9 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 			// yield mod
 			yield return new ParsedMod(metadata, unpackedFileFolders);
 		}
-		progress.Caption = $"Read {progress.Total} mods from {siteFolder.Name} (100%)";
+
+		timer.Stop();
+		progress.Caption = $"Read {progress.Total} mods from {siteFolder.Name} (100%) in {this.GetFormattedTime(timer.Elapsed)}";
 	}
 }
 
@@ -1275,11 +1282,29 @@ private bool ShouldIgnoreForAnalysis(ModSite site, int siteId, int fileId, strin
 
 /// <summary>Get a human-readable formatted time span.</summary>
 /// <param name="span">The time span to format.</param>
-private string GetFormattedTime(TimeSpan span)
+private string GetFormattedTime(TimeSpan time)
 {
-	int hours = (int)span.TotalHours;
-	int minutes = (int)span.TotalMinutes - (hours * 60);
-	return $"{hours:00}:{minutes:00}";
+	if (time.TotalSeconds < 1)
+		return $"{Math.Round(time.TotalMilliseconds, 0)} ms";
+
+	StringBuilder formatted = new();
+	void Format(int amount, string label)
+	{
+		if (amount > 0)
+		{
+			formatted.Append(" ");
+			formatted.Append(amount);
+			formatted.Append(" ");
+			formatted.Append(label);
+			if (amount != 1)
+				formatted.Append('s');
+		}
+	}
+	Format((int)time.TotalHours, "hour");
+	Format(time.Minutes, "minute");
+	Format(time.Seconds, "second");
+
+	return formatted.ToString().TrimStart();
 }
 
 /// <summary>Log a human-readable summary for a rate limit exception, and pause the thread until the rate limit is refreshed.</summary>
