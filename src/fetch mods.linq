@@ -1008,6 +1008,7 @@ void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 			continue;
 
 		// unpack files
+		Stopwatch timer = Stopwatch.StartNew();
 		var progress = new IncrementalProgressBar(modDirs.Count()).Dump();
 		foreach (DirectoryInfo modDir in modDirs)
 		{
@@ -1073,7 +1074,8 @@ void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 				});
 			}
 		}
-		progress.Caption = $"Unpacked {progress.Total} mods from {siteDir.Name} (100%)";
+		timer.Stop();
+		progress.Caption = $"Unpacked {progress.Total} mods from {siteDir.Name} in {this.GetFormattedTime(timer.Elapsed)} (100%)";
 	}
 }
 
