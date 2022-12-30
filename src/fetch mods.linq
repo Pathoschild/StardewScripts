@@ -62,7 +62,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 09, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 12, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -117,8 +117,18 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	** ModDrop mods
 	*********/
 	// mod translations
+	new(ModSite.ModDrop, 1264767), // Always Raining in the Valley (es)
+	new(ModSite.ModDrop, 1258337), // East Scarp (es)
 	new(ModSite.ModDrop, 1190770), // Extra Fish Information (es)
+	new(ModSite.ModDrop, 1258338), // Juliet and Jessie the Joja Clerks (es)
+	new(ModSite.ModDrop, 1258750), // Lavril (es)
+	new(ModSite.ModDrop, 1258746), // Mister Ginger Cat NPC (es)
+	new(ModSite.ModDrop, 1267948), // Nagito - Custom NPC (es)
+	new(ModSite.ModDrop, 1264764), // Ridgeside Village (es)
 	new(ModSite.ModDrop, 1190547), // Stardew Valley Expanded (es)
+	new(ModSite.ModDrop, 1264765), // The Ranch Expansion Marnie and Jas (es)
+	new(ModSite.ModDrop, 1264766), // The Robin Romance Mod (es)
+	new(ModSite.ModDrop, 1258745), // Tristan (es)
 
 	// reposts
 	new(ModSite.ModDrop, 509776), // Object Progress Bars
@@ -154,21 +164,27 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	** Nexus mods
 	*********/
 	// mod translations
+	new(ModSite.Nexus, 11463), // Always Raining in the Valley (es)
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
+	new(ModSite.Nexus, 14724), // Child Age Up (id)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
+	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
+	new(ModSite.Nexus, 14723), // Cooking Skill (ru)
 	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
 	new(ModSite.Nexus, 12968), // Custom NPC Belos (id)
-	new(ModSite.Nexus, 5811),  // Custom NPC - Riley (de)
+	new(ModSite.Nexus, 5811),  // Custom NPC Riley (de)
+	new(ModSite.Nexus, 14548), // Custom NPC Riley (tr)
 	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
+	new(ModSite.Nexus, 10626), // East Scarp (es)
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
 	new(ModSite.Nexus, 8675),  // East Scarpe (tr)
 	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
@@ -188,7 +204,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
 	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
 	new(ModSite.Nexus, 12399), // Instant Tool Upgrades (tr)
+	new(ModSite.Nexus, 10685), // Juliet and Jessie the Joja Clerks (es)
 	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
+	new(ModSite.Nexus, 11282), // Lavril (es)
 	new(ModSite.Nexus, 13866), // Line Sprinklers (fr)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
 	new(ModSite.Nexus, 10720), // Loved Labels (pl)
@@ -196,15 +214,20 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265),  // Magic (pt)
 	new(ModSite.Nexus, 5871),  // Mermaid Island (ko)
+	new(ModSite.Nexus, 10804), // Mister Ginger Cat NPC (es)
 	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
 	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
 	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
+	new(ModSite.Nexus, 14478), // Never Ending Adventure - NPC Mateo (es)
 	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
 	new(ModSite.Nexus, 8928),  // Multiple Spouse Dialogs (tr)
 	new(ModSite.Nexus, 5551),  // NPC Adventures (ru)
 	new(ModSite.Nexus, 8767),  // NPC Adventures (tr)
 	new(ModSite.Nexus, 13369), // NPC Map Locations (vi)
+	new(ModSite.Nexus, 14437), // NPC Map Locations (zh)
+	new(ModSite.Nexus, 14878), // Ornithologist's Guild (ru)
 	new(ModSite.Nexus, 8696),  // Personal Effects Redux (pt)
+	new(ModSite.Nexus, 14821), // Personal Effects Redux (pt)
 	new(ModSite.Nexus, 13244), // PPJA (vi)
 	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
 	new(ModSite.Nexus, 8468),  // Prismatic Tools (tr)
@@ -212,8 +235,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
 	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
 	new(ModSite.Nexus, 8170),  // Riley (de)
+	new(ModSite.Nexus, 10349), // Robin Romance (es)
 	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
 	new(ModSite.Nexus, 6424),  // Shadow Cove (zh)
+	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
 	new(ModSite.Nexus, 5272),  // Stardew Valley Expanded (es)
@@ -229,11 +254,14 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6332),  // Stardew Valley Expanded (tr)
 	new(ModSite.Nexus, 4325),  // Stardew Valley Expanded (zh)
 	new(ModSite.Nexus, 8143),  // Stardew Valley Expanded (zh)
+	new(ModSite.Nexus, 10221), // The Ranch Expansion Marnie and Jas (es)
 	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
 	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
+	new(ModSite.Nexus, 10785), // Tristan (es)
 	new(ModSite.Nexus, 7556),  // UI Info Suite (fr)
 	new(ModSite.Nexus, 13389), // UI Info Suite (vi)
 	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
+	new(ModSite.Nexus, 14398), // Tristan (es)
 
 	// reposts
 	new(ModSite.Nexus, 8792),  // Animal Sitter
@@ -251,8 +279,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1077),  // UI Mod Suite
 
 	// other
-	new(ModSite.Nexus, 4109), // PPJA Home of Abandoned Mods - CFR Conversions
-	new(ModSite.Nexus, 3294), // Sprint Sprint Sprint, replaced by Sprint Sprint
+	new(ModSite.Nexus, 4109),   // PPJA Home of Abandoned Mods - CFR Conversions
+	new(ModSite.Nexus, 3294),   // Sprint Sprint Sprint, replaced by Sprint Sprint
+	new (ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
 
 
 	/*********
@@ -317,7 +346,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
-	new(ModSite.Nexus, 10218, manifestId: "Pathoschild.TractorMod"),            // Kehbii Kitty Tractor and Shed
 	new(ModSite.Nexus, 13248, manifestId: "Stashek.FishingRodRecolor"),         // Main Questline Redux (PMC CCJ)
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
@@ -330,6 +358,15 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
 	new(ModSite.Nexus, 8409, manifestId: "spacechase0.GenericModConfigMenu"),   // Stardew Valley - Vietnamese
 	new(ModSite.Nexus, 12010, manifestId: "Stashek.FishingRodRecolor"),         // Synergistic Tools
+	new(ModSite.Nexus, 14079, manifestId: "Cherry.ExpandedPreconditionsUtility"), // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "Cherry.ShopTileFramework"),          // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "Platonymous.Toolkit"),               // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "Esca.FarmTypeManager"),              // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "Pathoschild.ContentPatcher"),        // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "Platonymous.TMXLoader"),             // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "Platonymous.Toolkit"),               // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "spacechase0.JsonAssets"),            // The Night City
+	new(ModSite.Nexus, 14079, manifestId: "spacechase0.SpaceCore"),             // The Night City
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
@@ -1212,7 +1249,7 @@ private string TryGetModDescription(ParsedMod mod)
 		if (mod.RawData.TryGetValue("desc", out object rawValue) && rawValue is string description)
 			return description;
 	}
-	
+
 	// Nexus
 	{
 		if (mod.RawData.TryGetValue("Description", out object rawValue) && rawValue is string description)
