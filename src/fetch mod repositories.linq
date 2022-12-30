@@ -38,7 +38,7 @@ private readonly string RootPath = @"E:\source\_Stardew\_smapi-mod-dump\source";
 private readonly Regex[] IgnoreLegitNames =
 {
 	// Git/Mercurial metadata
-	new Regex(@"^\.git(?:attributes|ignore)?$", RegexOptions.Compiled),
+	new Regex(@"^\.git(?:attributes|ignore|modules)?$", RegexOptions.Compiled),
 	new Regex(@"^\.hg(?:ignore|sub|substate|tags)?$", RegexOptions.Compiled),
 
 	// large non-code files
