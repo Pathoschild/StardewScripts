@@ -700,7 +700,7 @@ private dynamic GetReportLinks(WikiModEntry mod)
 	{
 		Nexus = mod.NexusID.HasValue ? new Hyperlinq($"https://www.nexusmods.com/stardewvalley/mods/{mod.NexusID}", $"Nexus:{mod.NexusID}") : null,
 		ModDrop = mod.ModDropID.HasValue ? new Hyperlinq($"https://www.moddrop.com/sdv/mod/{mod.ModDropID}", $"ModDrop:{mod.ModDropID}") : null,
-		CurseForge = mod.CurseForgeID.HasValue ? new Hyperlinq($"https://stardewvalley.curseforge.com/projects/{mod.CurseForgeKey}", $"CurseForge:{mod.CurseForgeKey}") : null,
+		CurseForge = mod.CurseForgeID.HasValue ? new Hyperlinq($"https://curseforge.com/stardewvalley/mods/{mod.CurseForgeKey}", $"CurseForge:{mod.CurseForgeKey}") : null,
 		Chucklefish = mod.ChucklefishID.HasValue ? new Hyperlinq($"https://community.playstarbound.com/resources/{mod.ChucklefishID}", $"Chucklefish:{mod.ChucklefishID}") : null,
 		GitHub = mod.GitHubRepo != null ? new Hyperlinq($"https://github.com/{mod.GitHubRepo}", $"GitHub:{mod.GitHubRepo}") : null,
 		Custom = mod.CustomUrl != null ? new Hyperlinq(mod.CustomUrl, "custom") : null,

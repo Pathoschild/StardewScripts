@@ -560,7 +560,7 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 			mod.Author,
 			mod.Version,
 			mod.Updated,
-			PageUrl = new Hyperlinq(mod.PageUrl),
+			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
 			Data = new Lazy<object>(() => mod),
 			InvalidFile = invalid.Select(parsedFile => new
 			{
