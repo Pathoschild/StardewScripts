@@ -935,7 +935,24 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string 
 			{
 				if (!sources.Any())
 				{
-					ConsoleHelper.Print($"Skipped file {mod.ID} > {file.ID}: no download sources available for this file.", Severity.Error);
+					ConsoleHelper.Print($"File {mod.ID} > {file.ID} has no download sources available.", Severity.Error);
+					ConsoleHelper.Print($"You can optionally download it yourself from {mod.PageUrl} and put the file at {localFile.FullName}.", Severity.Error);
+					while (true)
+					{
+						if (ConsoleHelper.GetChoice("Do you want to [u]se a manually downloaded file or [s]kip this file?", "u", "s") == "u")
+						{
+							if (!File.Exists(localFile.FullName))
+							{
+								ConsoleHelper.Print($"No file found at {localFile.FullName}.", Severity.Error);
+								continue;
+							}
+
+							ConsoleHelper.Print($"Using manually downloaded file.", Severity.Info);
+						}
+						else
+							ConsoleHelper.Print($"Skipped file.", Severity.Info);
+						break;
+					}
 					break;
 				}
 
@@ -1833,7 +1850,9 @@ class CurseForgeApiClient : IModSiteClient
 	{
 		string downloadUrl = (string)file.RawData["downloadUrl"];
 
-		return Task.FromResult(new[] { new Uri(downloadUrl) });
+		return downloadUrl != null
+			? Task.FromResult(new[] { new Uri(downloadUrl) })
+			: Task.FromResult(Array.Empty<Uri>());
 	}
 
 
