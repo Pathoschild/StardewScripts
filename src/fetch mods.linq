@@ -62,7 +62,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2022, 12, 30), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 01, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -169,6 +169,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
+	new(ModSite.Nexus, 14960), // Bus Locations (fr)
 	new(ModSite.Nexus, 14724), // Child Age Up (id)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
 	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
@@ -180,6 +181,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5811),  // Custom NPC Riley (de)
 	new(ModSite.Nexus, 14548), // Custom NPC Riley (tr)
 	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
+	new(ModSite.Nexus, 15007), // Deluxe Journal (fr)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
@@ -193,6 +195,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
 	new(ModSite.Nexus, 13106), // Festival of the Mundane (zh)
 	new(ModSite.Nexus, 13165), // Fishing Trawler (vi)
+	new(ModSite.Nexus, 15286), // Fireworks Festival (zh)
 	new(ModSite.Nexus, 12519), // Frozen Yogurt (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
@@ -213,10 +216,12 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265),  // Magic (pt)
+	new(ModSite.Nexus, 15183), // Mermaid Island (es)
 	new(ModSite.Nexus, 5871),  // Mermaid Island (ko)
 	new(ModSite.Nexus, 10804), // Mister Ginger Cat NPC (es)
 	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
 	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
+	new(ModSite.Nexus, 15180), // More New Fish (es)
 	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
 	new(ModSite.Nexus, 14478), // Never Ending Adventure - NPC Mateo (es)
 	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
@@ -259,6 +264,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
 	new(ModSite.Nexus, 10785), // Tristan (es)
 	new(ModSite.Nexus, 7556),  // UI Info Suite (fr)
+	new(ModSite.Nexus, 15208), // UI Info Suite 2 (vi)
 	new(ModSite.Nexus, 13389), // UI Info Suite (vi)
 	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
 	new(ModSite.Nexus, 14398), // Tristan (es)
