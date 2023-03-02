@@ -48,11 +48,14 @@ Usage:
 5. Optionally edit the script to set `RootPath` and other options.
 6. Run the script to begin downloading.
 
-## Get wiki stats
-`get wiki stats.js` can be run on [the mod compatibility page](https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3)
-to log some high-level compatibility stats about the listed mods.
-
-## Sort wiki table
-`sort wiki table.js` can be run on [the mod compatibility page](https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3)
-to list mods that aren't sorted in the expected order (i.e. alphabetical ignoring case and
-non-alphanumeric characters).
+## Wiki compatibility page scripts
+* `wiki compat - get stats.js` can be run while [editing the mod compatibility page]
+  (https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3)
+  to log some high-level compatibility stats about the listed mods.
+* `wiki compat - highlight workaround links to a broken mod.js` can be run while editing [the mod
+  compatibility page](https://stardewvalleywiki.com/Modding:Mod_compatibility)
+  to highlight any 'use X instead' links which point to a mod which is marked broken, abandoned, or bsolete.
+* `wiki compat - sort table.js` can be run on [the mod compatibility page]
+  (https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3) to list mods that
+  aren't sorted in the expected order (i.e. alphabetical ignoring case and non-alphanumeric
+  characters).

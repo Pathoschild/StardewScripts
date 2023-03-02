@@ -25,7 +25,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
             .replace(/[^a-z0-9]/gm, '');
     };
 
-    const compareModNames = function(a, b) {
+    const compareNames = function(a, b) {
         const comparableA = getComparable(a);
         const comparableB = getComparable(b);
 
@@ -42,18 +42,18 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
     }
 
     // get mod names
-    const modNames = $("#mod-list").find("tr.mod").get().map(row => $(row).attr("data-name"));
+    const names = $("#mod-list").find("tr.mod").get().map(row => $(row).attr("data-name"));
 
     // get sorted list
-    const sortedNames = [...modNames];
-    sortedNames.sort(compareModNames);
+    const sortedNames = [...names];
+    sortedNames.sort(compareNames);
 
     // list incorrectly sorted values
     let unsorted = [];
-    for (let i = 0; i < modNames.length; i++)
+    for (let i = 0; i < names.length; i++)
     {
-        if (modNames[i] != sortedNames[i])
-            unsorted.push({ position: i + 1, current: modNames[i], sorted: sortedNames[i] });
+        if (names[i] != sortedNames[i])
+            unsorted.push({ position: i + 1, current: names[i], sorted: sortedNames[i] });
     }
 
     // log summary
