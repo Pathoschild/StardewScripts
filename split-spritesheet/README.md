@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This script splits one or more Stardew Valley spritesheets into individual sprite images,
 optionally resizing each sprite and cropping whitespace.
 

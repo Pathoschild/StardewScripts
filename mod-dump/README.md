@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This folder has scripts used to download and analyze all Stardew Valley mods. This is used to help
 keep the [mod compatibility list](https://stardewvalleywiki.com/Modding:Mod_compatibility#SMAPI_mods)
 up-to-date, prepare monthly stats [for Patreon](https://www.patreon.com/pathoschild), and perform

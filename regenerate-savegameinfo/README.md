@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This script generates a `SaveGameInfo` file for a save folder which doesn't have one.
 
 # Usage

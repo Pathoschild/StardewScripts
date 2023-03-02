@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This script can be run on Nexus to clean up messy notification lists. It will...
 
 * hide all but the latest new-comments notification for each mod:

@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This script generates a translation summary for a repository's README.md by scanning the
 translation files in the repository. This makes it much easier for translators to see what's left
 to translate.

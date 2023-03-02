@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This script pulls text strings out of Stardew Valley events and generates translatable versions
 using Content Patcher's `{{i18n}}` token.
 

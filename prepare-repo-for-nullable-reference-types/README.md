@@ -1,5 +1,3 @@
-[← back to repo](../)
-
 This script prepares a C# mod repo to migrate to [nullable reference type annotations]
 (https://docs.microsoft.com/en-us/dotnet/csharp/nullable-references).
 
