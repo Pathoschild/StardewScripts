@@ -4,15 +4,7 @@
 
 /*
 
-This script generates a SaveGameInfo for a save file which doesn't have one.
-
-Usage
--------------------------------------------------
-To use this script:
-
-1. Open this file in LINQPad. (It's a small app: https://www.linqpad.net/.)
-2. Change the 'SaveFilePath' value below to the full path to the save file.
-3. Click the execute (▶) button to generate the SaveGameInfo in the same folder.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
 

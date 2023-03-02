@@ -19,12 +19,8 @@
 
 /*
 
-  This script...
-     1. fetches the list of SMAPI mods from the wiki;
-     2. downloads every source repository for those mods to a local folder.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
-  Prerequisites:
-     1. Install Git (https://git-scm.com) and Mercurial (https://www.mercurial-scm.org).
 */
 #load "Utilities\ConsoleHelper"
 

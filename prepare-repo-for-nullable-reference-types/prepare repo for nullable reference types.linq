@@ -1,29 +1,9 @@
 <Query Kind="Program" />
 
 /*
-Overview
--------------------------------------------------
-This script prepares a C# mod repo to migrate to nullable reference type annotations:
-https://docs.microsoft.com/en-us/dotnet/csharp/nullable-references.
 
-Specifically, the script...
-   1. Adds `<Nullable>enable</Nullable>` to each project file.
-   2. For each C# code file:
-      a. If it has `#nullable enable`, remove it and continue to the next file.
-      b. If it only has an enum, continue to the next file.
-      c. Else add `#nullable disable` to the file.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
-Once that's done, you can go through code (starting from the lowest level) and remove the
-`#nullable disable` as each file is migrated.
-
-
-Usage
--------------------------------------------------
-To use this script:
-
-1. Open this file in LINQPad. (It's a small app: https://www.linqpad.net/.)
-2. Change the settings under 'configure' below.
-3. Click the execute (▶) button to generate the translated event.
 */
 
 /*********

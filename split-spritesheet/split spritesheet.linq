@@ -8,19 +8,7 @@
 
 /*
 
-Overview
--------------------------------------------------
-This script splits one or more Stardew Valley spritesheets into individual sprite images,
-optionally resizing each sprite and cropping whitespace.
-
-
-Usage
--------------------------------------------------
-To use this script:
-
-1. Open this file in LINQPad. (It's a small app: https://www.linqpad.net/.)
-2. Change the settings under 'configuration' below.
-3. Click the execute (▶) button to export the sprites.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
 /*********

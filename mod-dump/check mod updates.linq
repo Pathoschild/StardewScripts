@@ -23,10 +23,7 @@
 
 /*
 
-  This script...
-     1. scans the Mods folder for installed mods;
-	 2. crossreferences each mod to the update API and wiki;
-	 3. displays the metadata for review, with available updates shown first.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
 #load "Utilities/IncrementalProgressBar.linq"

@@ -1,8 +1,6 @@
 /*
 
-When run on https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3, this
-script lists the mods which aren't sorted in the expected order (i.e. alphabetical ignoring case
-and non-alphanumeric characters).
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
 (function() {

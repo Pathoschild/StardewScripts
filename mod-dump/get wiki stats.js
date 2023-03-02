@@ -1,7 +1,6 @@
 /*
 
-When run on https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3, this
-script logs compatibility stats about the mods in the table.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
 (function() {

@@ -25,11 +25,7 @@
 
 /*
 
-  This script...
-     1. fetches metadata and files for every Stardew Valley mod on Nexus;
-	 2. unpacks the downloaded files;
-	 3. parses the unpacked downloads;
-	 4. optionally runs custom queries over the metadata & downloads.
+See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
 #load "Utilities/ConsoleHelper.linq"
