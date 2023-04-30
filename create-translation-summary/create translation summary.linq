@@ -73,7 +73,7 @@ readonly Dictionary<string, ModLanguage> Languages = new(StringComparer.OrdinalI
 readonly string AddSectionComment = @"<!--
 
     This section is auto-generated using a script, there's no need to edit it manually.
-    https://gist.github.com/Pathoschild/040ff6c8dc863ed2a7a828aa04447033
+    https://github.com/Pathoschild/StardewScripts/tree/main/create-translation-summary
 
 -->";
 
