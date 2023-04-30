@@ -492,6 +492,7 @@ async Task Main()
 				|| !EqualsInvariant(metadata.NexusID?.ToString(), mod.GetModID("Nexus", mustBeInt: true))
 				|| !EqualsInvariant(metadata.ChucklefishID?.ToString(), mod.GetModID("Chucklefish", mustBeInt: true))
 				|| !EqualsInvariant(metadata.GitHubRepo, mod.GetModID("GitHub"))
+
 			select new
 			{
 				ID = ids.FirstOrDefault(),
@@ -875,7 +876,7 @@ class ModData
 
 	/// <summary>Get the mod ID in a repository from the mod's update keys, if available.</summary>
 	/// <param name="repositoryKey">The case-insensitive repository key (like Nexus or Chucklefish) to match.</summary>
-	/// <param name="mustBeInt">Whether the mod must be an integer value.</param>
+	/// <param name="mustBeInt">Whether the mod must be a positive integer value.</param>
 	/// <returns>Retudns the mod ID, or <c>null</c> if not found.</returns>
 	public string GetModID(string repositoryKey, bool mustBeInt = false)
 	{
@@ -887,7 +888,7 @@ class ModData
 			
 			if (mustBeInt)
 			{
-				if (int.TryParse(parts[1], out int id))
+				if (int.TryParse(parts[1], out int id) && id >= 0)
 					return id.ToString(CultureInfo.InvariantCulture);
 				continue;
 			}
