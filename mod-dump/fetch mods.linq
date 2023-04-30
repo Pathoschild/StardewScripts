@@ -379,14 +379,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 private IDictionary<string, ModSearch[]> IgnoreForAnalysisBySiteId;
 
 /// <summary>The settings to use when writing JSON files.</summary>
-readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
-{
-	Formatting = Newtonsoft.Json.Formatting.Indented,
-	Converters = new List<JsonConverter>
-	{
-		new StringEnumConverter() // save enums as their string names
-	}
-};
+readonly JsonSerializerSettings JsonSettings = JsonHelper.CreateDefaultSettings();
 
 
 /*********
@@ -402,16 +395,19 @@ async Task Main()
 		.ToDictionary(p => $"{p.Key.Site}:{p.Key.SiteId}", p => p.ToArray());
 
 	// init clients
+	ConsoleHelper.Print("Initializing clients...");
 	foreach (var site in this.ModSites)
 		await site.AuthenticateAsync();
 
 	// fetch compatibility list
+	ConsoleHelper.Print("Fetching wiki compatibility list...");
 	WikiModList compatList = await new ModToolkit().GetWikiCompatibilityListAsync();
 
 	// fetch mods
 	HashSet<string> unpackMods = new HashSet<string>();
 	if (this.FetchMods != null)
 	{
+		ConsoleHelper.Print("Fetching mods...");
 		foreach (IModSiteClient modSite in this.ModSites)
 		{
 			// get mod IDs
@@ -438,16 +434,24 @@ async Task Main()
 	}
 
 	// unpack fetched files
+	ConsoleHelper.Print($"Unpacking mod folders...");
 	HashSet<string> modFoldersToUnpack = new HashSet<string>(this.GetModFoldersWithFilesNotUnpacked(this.RootPath), StringComparer.InvariantCultureIgnoreCase);
-	this.UnpackMods(rootPath: this.RootPath, filter: folder => this.ResetUnpacked || unpackMods.Any(p => folder.FullName.EndsWith(p)) || modFoldersToUnpack.Any(p => folder.FullName.EndsWith(p)));
+	if (modFoldersToUnpack.Any())
+	{
+		this.DeleteCache();
+		this.UnpackMods(rootPath: this.RootPath, filter: folder => this.ResetUnpacked || unpackMods.Any(p => folder.FullName.EndsWith(p)) || modFoldersToUnpack.Any(p => folder.FullName.EndsWith(p)));
+	}
 
-	// run analysis
+	// read mod data
+	ConsoleHelper.Print($"Reading mod folders...");
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
+
+	// run analyses
+	ConsoleHelper.Print($"Running analyses...");
 	{
 		var result = this.GetModsNotOnWiki(mods, compatList).ToArray().Dump("SMAPI mods not on the wiki");
 		new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
 	}
-
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
 	this.GetModTypes(mods).Dump("mod types");
@@ -486,7 +490,7 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 
 		where (!wikiHasManifestId || !wikiHasSiteId)
 
-		let manifest = folder.RawFolder.Value.Manifest
+		let manifest = folder.RawFolder.Manifest
 		let names = this.GetModNames(folder, mod)
 		let authorNames = this.GetAuthorNames(manifest, mod)
 		let githubRepo = this.GetGitHubRepo(manifest, mod)
@@ -575,13 +579,13 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 				Data = new Lazy<object>(() => parsedFile),
 				Manifest = new Lazy<string>(() =>
 				{
-					FileInfo file = new FileInfo(Path.Combine(parsedFile.RawFolder.Value.Directory.FullName, "manifest.json"));
+					FileInfo file = new FileInfo(Path.Combine(parsedFile.RawFolder.Directory.FullName, "manifest.json"));
 					return file.Exists
 						? File.ReadAllText(file.FullName)
 						: "<file not found>";
 				}),
-				ManifestError = new Lazy<string>(() => $"{parsedFile.RawFolder.Value.ManifestParseError}\n{parsedFile.RawFolder.Value.ManifestParseErrorText}"),
-				FileList = new Lazy<string>(() => this.BuildFileList(parsedFile.RawFolder.Value.Directory))
+				ManifestError = new Lazy<string>(() => $"{parsedFile.RawFolder.ManifestParseError}\n{parsedFile.RawFolder.ManifestParseErrorText}"),
+				FileList = new Lazy<string>(() => this.BuildFileList(parsedFile.RawFolder.Directory))
 			})
 		}
 	)
@@ -664,7 +668,7 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 				from folder in mod.ModFolders
 				where folder.ModType is not (ModType.Ignored or ModType.Invalid)
 
-				let manifest = folder.RawFolder.Value.Manifest
+				let manifest = folder.RawFolder.Manifest
 				let contentPackFor = manifest?.ContentPackFor?.UniqueID
 				let type = folder.ModType switch
 				{
@@ -745,14 +749,14 @@ IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ParsedMod> mo
 		foreach (ParsedFile folder in mod.ModFolders)
 		{
 			// parse manifest
-			IManifest manifest = folder.RawFolder.Value.Manifest;
+			IManifest manifest = folder.RawFolder.Manifest;
 			string id = manifest?.UniqueID?.Trim();
 			string contentPackFor = manifest?.ContentPackFor?.UniqueID?.Trim();
 			if (string.IsNullOrWhiteSpace(id) || !string.Equals(contentPackFor, "Pathoschild.ContentPatcher", StringComparison.OrdinalIgnoreCase))
 				continue;
 
 			// skip if content.json doesn't exist
-			FileInfo contentFile = new FileInfo(Path.Combine(folder.RawFolder.Value.Directory.FullName, "content.json"));
+			FileInfo contentFile = new FileInfo(Path.Combine(folder.RawFolder.Directory.FullName, "content.json"));
 			if (!contentFile.Exists)
 				continue;
 
@@ -794,7 +798,7 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 {
 	foreach (ParsedMod mod in parsedMods)
 	{
-		foreach (ModFolder folder in mod.ModFolders.Select(p => p.RawFolder.Value))
+		foreach (ModFolder folder in mod.ModFolders.Select(p => p.RawFolder))
 		{
 			bool dependency =
 				folder.Manifest?.Dependencies?.Any(p => p.UniqueID?.Equals(modID, StringComparison.InvariantCultureIgnoreCase) == true) == true
@@ -938,7 +942,9 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string 
 				if (!sources.Any())
 				{
 					ConsoleHelper.Print($"File {mod.ID} > {file.ID} has no download sources available.", Severity.Error);
-					ConsoleHelper.Print($"You can optionally download it yourself from {mod.PageUrl} and put the file at {localFile.FullName}.", Severity.Error);
+					ConsoleHelper.Print("You can optionally download it yourself:", Severity.Error);
+					ConsoleHelper.Print($"   download from: {mod.PageUrl}", Severity.Error);
+					ConsoleHelper.Print($"   download to:   {localFile.FullName}", Severity.Error);
 					while (true)
 					{
 						if (ConsoleHelper.GetChoice("Do you want to [u]se a manually downloaded file or [s]kip this file?", "u", "s") == "u")
@@ -983,20 +989,21 @@ IEnumerable<string> GetModFoldersWithFilesNotUnpacked(string rootPath)
 		foreach (DirectoryInfo modDir in this.GetSortedSubfolders(siteDir))
 		{
 			// get packed folder
-			DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
-			if (!packedDir.Exists)
+			string filesPath = Path.Combine(modDir.FullName, "files");
+			if (!Directory.Exists(filesPath))
 				continue;
 
 			// check for files that need unpacking
-			DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
-			foreach (FileInfo archiveFile in packedDir.GetFiles())
+			string unpackedDirPath = Path.Combine(modDir.FullName, "unpacked");
+			foreach (string archiveFilePath in Directory.GetFiles(filesPath))
 			{
-				if (archiveFile.Extension == ".exe")
+				string extension = Path.GetExtension(archiveFilePath);
+				if (extension == ".exe")
 					continue;
 
-				string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
-				DirectoryInfo targetDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, id));
-				if (!targetDir.Exists)
+				string id = Path.GetFileNameWithoutExtension(archiveFilePath);
+				string targetDirPath = Path.Combine(unpackedDirPath, id);
+				if (!Directory.Exists(targetDirPath))
 				{
 					yield return Path.Combine(siteDir.Name, modDir.Name);
 					break;
@@ -1102,8 +1109,23 @@ void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
 /// <param name="rootPath">The full path to the folder containing unpacked mod files.</param>
 IEnumerable<ParsedMod> ReadMods(string rootPath)
 {
-	ModToolkit toolkit = new ModToolkit();
+	// get from cache
+	string cacheFilePath = this.GetCacheFilePath();
+	if (File.Exists(cacheFilePath))
+	{
+		Stopwatch timer = Stopwatch.StartNew();
+		string cachedJson = File.ReadAllText(cacheFilePath);
+		ParsedMod[] mods = JsonConvert.DeserializeObject<ParsedMod[]>(cachedJson, this.JsonSettings);
+		timer.Stop();
 
+		ConsoleHelper.Print($"Read {mods.Length} mods from cache in {this.GetFormattedTime(timer.Elapsed)}.");
+
+		return mods;
+	}
+
+	// read data from each mod's folder
+	List<ParsedMod> parsedMods = new();
+	ModToolkit toolkit = new ModToolkit();
 	foreach (DirectoryInfo siteFolder in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
 	{
 		Stopwatch timer = Stopwatch.StartNew();
@@ -1149,12 +1171,36 @@ IEnumerable<ParsedMod> ReadMods(string rootPath)
 			}
 
 			// yield mod
-			yield return new ParsedMod(metadata, unpackedFileFolders);
+			parsedMods.Add(new ParsedMod(metadata, unpackedFileFolders));
 		}
 
 		timer.Stop();
 		progress.Caption = $"Read {progress.Total} mods from {siteFolder.Name} (100%) in {this.GetFormattedTime(timer.Elapsed)}";
 	}
+
+	// write cache file
+	{
+		Stopwatch timer = Stopwatch.StartNew();
+		string json = JsonConvert.SerializeObject(parsedMods, this.JsonSettings);
+		File.WriteAllText(cacheFilePath, json);
+		timer.Stop();
+
+		ConsoleHelper.Print($"Created cache with {parsedMods.Count} mods in {this.GetFormattedTime(timer.Elapsed)}.");
+	}
+
+	return parsedMods.ToArray();
+}
+
+/// <summary>Get the absolute file path for the JSON file containing a cached representation of the <see cref="ReadMods" /> result.</summary>
+private string GetCacheFilePath()
+{
+	return Path.Combine(this.RootPath, "cache.json");
+}
+
+/// <summary>Delete the cache of mod file data, if it exists.</summary>
+private void DeleteCache()
+{
+	File.Delete(this.GetCacheFilePath());
 }
 
 /// <summary>Get the subfolders of a given folder sorted by numerical or alphabetical order.</summary>
@@ -1494,6 +1540,15 @@ class ParsedMod : GenericMod
 			throw;
 		}
 	}
+
+	/// <inheritdoc />
+	/// <param name="modFolders">The parsed mod folders.</param>
+	[JsonConstructor]
+	public ParsedMod(ModSite site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files, ParsedFile[] modFolders)
+		: base(site, id, name, author, authorLabel, pageUrl, version, updated, rawData, files)
+	{
+		this.ModFolders = modFolders;
+	}
 }
 
 /// <summary>A file category on a mod site.</summary>
@@ -1577,7 +1632,7 @@ class ParsedFile : GenericFile
 	public string ModVersion { get; }
 
 	/// <summary>The raw parsed mod folder.</summary>
-	public Lazy<ModFolder> RawFolder { get; }
+	public ModFolder RawFolder { get; }
 
 
 	/*********
@@ -1589,13 +1644,32 @@ class ParsedFile : GenericFile
 	public ParsedFile(GenericFile download, ModFolder folder)
 		: base(id: download.ID, type: download.Type, displayName: download.DisplayName, fileName: download.FileName, version: download.Version, rawData: download.RawData)
 	{
-		this.RawFolder = new Lazy<ModFolder>(() => folder);
+		this.RawFolder = folder;
 
 		this.ModDisplayName = folder.DisplayName;
 		this.ModType = folder.Type;
 		this.ModError = folder.ManifestParseError == ModParseError.None ? (ModParseError?)null : folder.ManifestParseError;
 		this.ModID = folder.Manifest?.UniqueID;
 		this.ModVersion = folder.Manifest?.Version?.ToString();
+	}
+
+	/// <inheritdoc />
+	/// <param name="modDisplayName">The mod display name based on the manifest.</param>
+	/// <param name="modType">The mod type.</param>
+	/// <param name="modError">The mod parse error, if it could not be parsed.</param>
+	/// <param name="modId">The mod ID from the manifest.</param>
+	/// <param name="modVersion">The mod version from the manifest.</param>
+	/// <param name="rawFolder">The raw parsed mod folder.</param>
+	[JsonConstructor]
+	public ParsedFile(int id, GenericFileType type, string displayName, string fileName, string version, object rawData, string modDisplayName, ModType modType, ModParseError? modError, string modId, string modVersion, ModFolder rawFolder)
+		: base(id, type, displayName, fileName, version, rawData)
+	{
+		this.ModDisplayName = modDisplayName;
+		this.ModType = modType;
+		this.ModError = modError;
+		this.ModID = modId;
+		this.ModVersion = modVersion;
+		this.RawFolder = rawFolder;
 	}
 }
 
