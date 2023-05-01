@@ -58,7 +58,7 @@ readonly string RootPath = @"D:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 01, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 04, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -155,6 +155,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// legacy pre-standardization content packs (SI = Seasonal Immersion)
 	new(ModSite.ModDrop, 811243, 820685), // Dutch Farm Buildings, for SI
 
+	// mods which include a copy of another mod for some reason
+	new(ModSite.ModDrop, 793920, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
+
 
 	/*********
 	** Nexus mods
@@ -164,13 +167,16 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
+	new(ModSite.Nexus, 16289), // Better Juninos (fr)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 14960), // Bus Locations (fr)
+	new(ModSite.Nexus, 15665), // Cape Stardew (es)
 	new(ModSite.Nexus, 14724), // Child Age Up (id)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
 	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
+	new(ModSite.Nexus, 15932), // Convenient Inventory (pt)
 	new(ModSite.Nexus, 14723), // Cooking Skill (ru)
 	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
 	new(ModSite.Nexus, 12968), // Custom NPC Belos (id)
@@ -178,6 +184,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 14548), // Custom NPC Riley (tr)
 	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
 	new(ModSite.Nexus, 15007), // Deluxe Journal (fr)
+	new(ModSite.Nexus, 15908), // Downtown Zuzu (fr)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
@@ -186,6 +193,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
 	new(ModSite.Nexus, 8675),  // East Scarpe (tr)
 	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
+	new(ModSite.Nexus, 15717), // Extended Minecart (tr)
 	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
 	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
 	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
@@ -206,6 +214,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 10685), // Juliet and Jessie the Joja Clerks (es)
 	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
 	new(ModSite.Nexus, 11282), // Lavril (es)
+	new(ModSite.Nexus, 15624), // LewdDew Valley (zh)
 	new(ModSite.Nexus, 13866), // Line Sprinklers (fr)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
 	new(ModSite.Nexus, 10720), // Loved Labels (pl)
@@ -233,11 +242,13 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
 	new(ModSite.Nexus, 8468),  // Prismatic Tools (tr)
 	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
+	new(ModSite.Nexus, 16432), // Rodney - a new NPC for East Scarp
 	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
 	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
 	new(ModSite.Nexus, 8170),  // Riley (de)
 	new(ModSite.Nexus, 10349), // Robin Romance (es)
 	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
+	new(ModSite.Nexus, 16399), // Self Service (pt)
 	new(ModSite.Nexus, 6424),  // Shadow Cove (zh)
 	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
@@ -281,9 +292,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1077),  // UI Mod Suite
 
 	// other
-	new(ModSite.Nexus, 4109),   // PPJA Home of Abandoned Mods - CFR Conversions
-	new(ModSite.Nexus, 3294),   // Sprint Sprint Sprint, replaced by Sprint Sprint
-	new (ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
+	new(ModSite.Nexus, 4109),  // PPJA Home of Abandoned Mods - CFR Conversions
+	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint, replaced by Sprint Sprint
+	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
+	new(ModSite.Nexus, 444),   // Save Anywhere: replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID
 
 
 	/*********
@@ -337,9 +349,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 835, 5994),   // VIP Visual Improvement Program for ALL
 	new(ModSite.Nexus, 1593, 5998),  // Wax Key for ALL
 
-	// non-mod files
-	new (ModSite.Nexus, 4582, 29417), // NPC Adventures > localization package
-
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 13179, manifestId: "Stashek.FishingRodRecolor"),         // Coexistence Items
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
@@ -348,27 +357,21 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
+	new(ModSite.Nexus, 16426, manifestId: "alja.CCCB"),                         // Little Harder Community Center Bundles
 	new(ModSite.Nexus, 13248, manifestId: "Stashek.FishingRodRecolor"),         // Main Questline Redux (PMC CCJ)
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomNPC"),              // New NPC Alec
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
+	new(ModSite.Nexus, 5384, manifestId: "Platonymous.PlatoUI"),                // Plato Warp Menu
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
 	new(ModSite.Nexus, 12517, manifestId: "hootless.BusLocations"),             // Stardew Cove (Chinese translation)
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
 	new(ModSite.Nexus, 8409, manifestId: "spacechase0.GenericModConfigMenu"),   // Stardew Valley - Vietnamese
 	new(ModSite.Nexus, 12010, manifestId: "Stashek.FishingRodRecolor"),         // Synergistic Tools
-	new(ModSite.Nexus, 14079, manifestId: "Cherry.ExpandedPreconditionsUtility"), // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "Cherry.ShopTileFramework"),          // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "Platonymous.Toolkit"),               // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "Esca.FarmTypeManager"),              // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "Pathoschild.ContentPatcher"),        // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "Platonymous.TMXLoader"),             // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "Platonymous.Toolkit"),               // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "spacechase0.JsonAssets"),            // The Night City
-	new(ModSite.Nexus, 14079, manifestId: "spacechase0.SpaceCore"),             // The Night City
+	new(ModSite.Nexus, 14308, 69833),                                           // Trinkets to Treasures, "save game test" file
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
@@ -644,6 +647,8 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 		.Where(p => !string.IsNullOrWhiteSpace(p.Id) && !string.IsNullOrWhiteSpace(p.Name))
 		.GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
 		.ToDictionary(p => p.Key, p => p.First().Name, StringComparer.OrdinalIgnoreCase);
+	if (namesById.ContainsKey("Paritee.BetterFarmAnimalVariety"))
+		namesById["Paritee.BetterFarmAnimalVariety"] = "Better Farm Animal Variety"; // match format used in stats without the "Paritee's" prefix
 
 	// get type priority for ID conflicts
 	static int GetPriority(string type)
