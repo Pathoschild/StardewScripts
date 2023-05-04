@@ -1426,9 +1426,11 @@ private string GetFormattedTime(TimeSpan time)
 /// <param name="site">The mod site whose rate limit was exceeded.</param>
 private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
 {
-	TimeSpan unblockTime = ex.TimeUntilRetry;
-	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(unblockTime)} ({this.GetFormattedTime((DateTime.Now + unblockTime).TimeOfDay)} local time).");
-	Thread.Sleep(unblockTime);
+	TimeSpan resumeDelay = ex.TimeUntilRetry;
+	DateTime resumeTime = DateTime.Now + resumeDelay;
+
+	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(resumeDelay)} ({resumeTime:HH:mm:ss} local time).");
+	Thread.Sleep(resumeDelay);
 }
 
 /// <summary>Get a clone of the input as a raw data dictionary.</summary>
