@@ -977,7 +977,12 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string 
 				}
 				catch (Exception ex)
 				{
-					ConsoleHelper.Print($"Failed downloading mod {mod.ID} > file {file.ID} from {url}.{(sources.Any() ? " Trying next CDN..." : "")}\n{ex}", Severity.Error);
+					string errorPhrase = $"Failed downloading mod {mod.ID} > file {file.ID} from {url}";
+					if (sources.Any())
+						ConsoleHelper.Print($"{errorPhrase}. Trying next CDN...\n{ex}", Severity.Warning);
+					else
+						ConsoleHelper.Print($"{errorPhrase}.\n{ex}", Severity.Error);
+					Console.WriteLine();
 				}
 			}
 		}
