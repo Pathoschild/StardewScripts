@@ -71,21 +71,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	/*********
 	** CurseForge mods
 	*********/
-	// mod packs
-	new(ModSite.CurseForge, 460523),
-
 	// mods marked abandoned
-	new(ModSite.CurseForge, 308054), // Arcade 2048
-	new(ModSite.CurseForge, 308055), // Arcade Snake
-	new(ModSite.CurseForge, 308504), // ATM
-	new(ModSite.CurseForge, 306698), // Better Mixed Seeds
 	new(ModSite.CurseForge, 308067), // Custom Furniture
-	new(ModSite.CurseForge, 307367), // Custom Music
-	new(ModSite.CurseForge, 307569), // Custom Walls and Floors
 	new(ModSite.CurseForge, 393984), // Easy Prairie King
-	new(ModSite.CurseForge, 308257), // JojaBan - Arcade Sokoban
-	new(ModSite.CurseForge, 307727), // No Soil Decay Redux
-	new(ModSite.CurseForge, 307729), // Notes
 	new(ModSite.CurseForge, 309743), // Pelican TTS
 	new(ModSite.CurseForge, 308058), // Plan Importer
 	new(ModSite.CurseForge, 308062), // Portraiture
@@ -95,18 +83,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.CurseForge, 310737), // Ship From Inventory
 	new(ModSite.CurseForge, 307654), // The Harp of Yoba
 	new(ModSite.CurseForge, 306750), // TMXL Map Toolkit
-	new(ModSite.CurseForge, 307573), // Visualize
-
-	// unmaintained copies
-	new (ModSite.CurseForge, 308018), // Tool Geodes
-
-
-	/*********
-	** CurseForge files
-	*********/
-	// other
-	new(ModSite.CurseForge, 438111, 3174801), // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
-	new(ModSite.CurseForge, 438111, 3174928), // Apocalypse Later SDV, contains an invalid manifest.json and nothing else
 
 
 	/*********
@@ -165,8 +141,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// mod translations
 	new(ModSite.Nexus, 11463), // Always Raining in the Valley (es)
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
-	new(ModSite.Nexus, 7562),  // Animals Need Water (tr)
-	new(ModSite.Nexus, 8679),  // Animals Need Water (tr)
 	new(ModSite.Nexus, 16289), // Better Juninos (fr)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 14960), // Bus Locations (fr)
@@ -191,22 +165,17 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
 	new(ModSite.Nexus, 10626), // East Scarp (es)
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
-	new(ModSite.Nexus, 8675),  // East Scarpe (tr)
 	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
 	new(ModSite.Nexus, 15717), // Extended Minecart (tr)
 	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
 	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
-	new(ModSite.Nexus, 11433), // Fashion Sense (zh)
 	new(ModSite.Nexus, 13106), // Festival of the Mundane (zh)
 	new(ModSite.Nexus, 13165), // Fishing Trawler (vi)
 	new(ModSite.Nexus, 15286), // Fireworks Festival (zh)
-	new(ModSite.Nexus, 12519), // Frozen Yogurt (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
-	new(ModSite.Nexus, 5828),  // Gift Taste Helper (tr)
-	new(ModSite.Nexus, 7571),  // Green House Sprinklers (tr)
 	new(ModSite.Nexus, 9874),  // Happy Birthday (fr)
-	new(ModSite.Nexus, 3954),  // Happy Birthday (pt)
+	new(ModSite.Nexus, 4693),  // Happy Birthday (pt)
 	new(ModSite.Nexus, 6693),  // Happy Birthday (pt)
 	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
 	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
@@ -222,7 +191,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265),  // Magic (pt)
 	new(ModSite.Nexus, 15183), // Mermaid Island (es)
-	new(ModSite.Nexus, 5871),  // Mermaid Island (ko)
 	new(ModSite.Nexus, 10804), // Mister Ginger Cat NPC (es)
 	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
 	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
@@ -240,7 +208,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 14821), // Personal Effects Redux (pt)
 	new(ModSite.Nexus, 13244), // PPJA (vi)
 	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
-	new(ModSite.Nexus, 8468),  // Prismatic Tools (tr)
 	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
 	new(ModSite.Nexus, 16432), // Rodney - a new NPC for East Scarp
 	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
@@ -249,7 +216,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 10349), // Robin Romance (es)
 	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
 	new(ModSite.Nexus, 16399), // Self Service (pt)
-	new(ModSite.Nexus, 6424),  // Shadow Cove (zh)
 	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
@@ -258,13 +224,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5901),  // Stardew Valley Expanded (fr)
 	new(ModSite.Nexus, 8411),  // Stardew Valley Expanded (fr)
 	new(ModSite.Nexus, 12867), // Stardew Valley Expanded (fr)
-	new(ModSite.Nexus, 9136),  // Stardew Valley Expanded (id)
 	new(ModSite.Nexus, 5788),  // Stardew Valley Expanded (ja)
-	new(ModSite.Nexus, 5321),  // Stardew Valley Expanded (ko)
-	new(ModSite.Nexus, 8650),  // Stardew Valley Expanded (po)
 	new(ModSite.Nexus, 4206),  // Stardew Valley Expanded (pt)
 	new(ModSite.Nexus, 6332),  // Stardew Valley Expanded (tr)
-	new(ModSite.Nexus, 4325),  // Stardew Valley Expanded (zh)
 	new(ModSite.Nexus, 8143),  // Stardew Valley Expanded (zh)
 	new(ModSite.Nexus, 10221), // The Ranch Expansion Marnie and Jas (es)
 	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
@@ -277,8 +239,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 14398), // Tristan (es)
 
 	// reposts
-	new(ModSite.Nexus, 8792),  // Animal Sitter
-	new(ModSite.Nexus, 8670),  // CFAutomate
 	new(ModSite.Nexus, 12920), // Extra Map Layers (version for Android by original author, with same mod ID)
 	new(ModSite.Nexus, 11297), // Friends Forever
 	new(ModSite.Nexus, 12729), // Many Enchantments
@@ -292,7 +252,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1077),  // UI Mod Suite
 
 	// other
-	new(ModSite.Nexus, 4109),  // PPJA Home of Abandoned Mods - CFR Conversions
 	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
 	new(ModSite.Nexus, 444),   // Save Anywhere: replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID
@@ -312,7 +271,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 10463, 48639), // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
 	new(ModSite.Nexus, 7093, 33160),  // Penny as Penny Polendina from RWBY, corrupted characters
 	new(ModSite.Nexus, 7600, 36539),  // Pink Tools Recolor, missing quotes in update keys
-	new(ModSite.Nexus, 2472, 9967),   // Sam to Samantha, missing quotes in update keys
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
 	new(ModSite.Nexus, 6284, 28109),  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
@@ -338,7 +296,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 806, 5996),   // Expanded Crevices for ALL
 	new(ModSite.Nexus, 588, 3033),   // Extended Cellar for ALL
 	new(ModSite.Nexus, 588, 3083),   // Extended Cellar for ALL
-	new(ModSite.Nexus, 2030, 7706),  // Flower Valley for SI
 	new(ModSite.Nexus, 1467, 5656),  // F-SV Stable for SI
 	new(ModSite.Nexus, 1014, 3650),  // Jungle Temple for ALL
 	new(ModSite.Nexus, 864, 3149),   // Orbitz for ALL
@@ -350,7 +307,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1593, 5998),  // Wax Key for ALL
 
 	// mods which include a copy of another mod for some reason
-	new(ModSite.Nexus, 13179, manifestId: "Stashek.FishingRodRecolor"),         // Coexistence Items
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
 	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
@@ -367,11 +323,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5384, manifestId: "Platonymous.PlatoUI"),                // Plato Warp Menu
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
-	new(ModSite.Nexus, 12517, manifestId: "hootless.BusLocations"),             // Stardew Cove (Chinese translation)
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
 	new(ModSite.Nexus, 8409, manifestId: "spacechase0.GenericModConfigMenu"),   // Stardew Valley - Vietnamese
-	new(ModSite.Nexus, 12010, manifestId: "Stashek.FishingRodRecolor"),         // Synergistic Tools
-	new(ModSite.Nexus, 14308, 69833),                                           // Trinkets to Treasures, "save game test" file
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
