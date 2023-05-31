@@ -801,7 +801,7 @@ async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPa
 	return modIds;
 }
 
-/// <summary>Import data for a given mod.</summary>
+/// <summary>Import data for a mod.</summary>
 /// <param name="modSite">The mod site API client.</param>
 /// <param name="id">The unique mod ID.</param>
 /// <param name="rootPath">The path in which to store cached data.</param>
@@ -1751,9 +1751,9 @@ interface IModSiteClient
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
 	Task<GenericMod> GetModAsync(int id);
 
-	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get a download URL.</param>
-	/// <param name="file">The file for which to get a download URL.</param>
+	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get download URLs.</param>
+	/// <param name="file">The file for which to get download URLs.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
 	Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file);
 }
@@ -1883,23 +1883,36 @@ class CurseForgeApiClient : IModSiteClient
 		return this.Cache[id] = this.Parse(rawMod);
 	}
 
-	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get a download URL.</param>
-	/// <param name="file">The file for which to get a download URL.</param>
+	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get download URLs.</param>
+	/// <param name="file">The file for which to get download URLs.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
 	public Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
-		string downloadUrl = (string)file.RawData["downloadUrl"];
-
-		return downloadUrl != null
-			? Task.FromResult(new[] { new Uri(downloadUrl) })
-			: Task.FromResult(Array.Empty<Uri>());
+		return Task.FromResult(
+			GetDownloadUrls(file).Select(url => new Uri(url)).ToArray()
+		);
 	}
 
 
 	/*********
 	** Private methods
 	*********/
+	/// <summary>Get the download URLs for a CurseForge file.</summary>
+	/// <param name="file">The file for which to get download URLs.</param>
+	private IEnumerable<string> GetDownloadUrls(GenericFile file)
+	{
+		// API download URL
+		string apiDownload = (string)file.RawData["downloadUrl"];
+		if (apiDownload is not null)
+			yield return apiDownload;
+
+		// build CDN URL manually
+		// The API doesn't always return a download URL.
+		string fileId = file.ID.ToString();
+		yield return $"https://mediafilez.forgecdn.net/files/{fileId.Substring(0, 4)}/{fileId.Substring(4)}/{file.FileName.Replace(' ', '+')}";
+	}
+
 	/// <summary>Parse raw mod data from the CurseForge API.</summary>
 	/// <param name="rawMod">The raw mod data.</param>
 	private GenericMod Parse(JObject rawMod)
@@ -2110,9 +2123,9 @@ class ModDropApiClient : IModSiteClient
 		return this.Cache[id] = this.Parse(rawMod["mods"][$"{id}"].Value<JObject>());
 	}
 
-	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get a download URL.</param>
-	/// <param name="file">The file for which to get a download URL.</param>
+	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get download URLs.</param>
+	/// <param name="file">The file for which to get download URLs.</param>
 	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
 	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
@@ -2368,9 +2381,9 @@ class NexusApiClient : IModSiteClient
 		}
 	}
 
-	/// <summary>Get the download URLs for a given file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get a download URL.</param>
-	/// <param name="file">The file for which to get a download URL.</param>
+	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
+	/// <param name="mod">The mod for which to get download URLs.</param>
+	/// <param name="file">The file for which to get download URLs.</param>
 	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
 		try
