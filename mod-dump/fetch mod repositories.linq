@@ -75,6 +75,7 @@ private readonly IDictionary<string, Regex> IgnoreFilesByRepo = new Dictionary<s
 	["Raised Garden Beds"] = new Regex("^(?:Media|Work)$", RegexOptions.Compiled),
 	["Ridgeside Village"] = new Regex("^Versions$", RegexOptions.Compiled), // releases
 	["StackSplitX"] = new Regex(@"^Demo\.gif$", RegexOptions.Compiled), // 10MB file
+	["~janavarro95"] = new Regex(@"^\.(?:godot|import|mono)$", RegexOptions.Compiled) // settings/cache files
 };
 
 /// <summary>The source URLs to skip when cloning repositories. This should match the GitHub repository name or custom URL specified on the wiki.</summary>

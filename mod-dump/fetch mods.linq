@@ -53,12 +53,12 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 };
 
 /// <summary>The path in which to store cached data.</summary>
-readonly string RootPath = @"D:\dev\mod-dump";
+readonly string RootPath = @"C:\dev\mod-dump";
 
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 04, 30), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 05, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -192,7 +192,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4265),  // Magic (pt)
 	new(ModSite.Nexus, 15183), // Mermaid Island (es)
 	new(ModSite.Nexus, 10804), // Mister Ginger Cat NPC (es)
+	new(ModSite.Nexus, 16659), // Mobile Catalogues (vi)
 	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
+	new(ModSite.Nexus, 16658), // Mobile Phone (vi)
 	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
 	new(ModSite.Nexus, 15180), // More New Fish (es)
 	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
@@ -252,6 +254,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1077),  // UI Mod Suite
 
 	// other
+	new(ModSite.Nexus, 3941),  // Daily Planner: for some reason newer versions got a new mod page
+	new(ModSite.Nexus, 2676),  // PokeMania: for some reason newer versions got a new mod page
 	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
 	new(ModSite.Nexus, 444),   // Save Anywhere: replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID
@@ -262,6 +266,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	*********/
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
+	new(ModSite.Nexus, 4686, 19998),  // Clint Removes Apron
+	new(ModSite.Nexus, 4608, 22971),  // DC Burget Krobus for CP
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
@@ -269,11 +275,13 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
 	new(ModSite.Nexus, 5401, 24009),  // Open Greenhouse, missing quote
 	new(ModSite.Nexus, 10463, 48639), // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
-	new(ModSite.Nexus, 7093, 33160),  // Penny as Penny Polendina from RWBY, corrupted characters
 	new(ModSite.Nexus, 7600, 36539),  // Pink Tools Recolor, missing quotes in update keys
+	new(ModSite.Nexus, 16448, 70244), // S
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
 	new(ModSite.Nexus, 6284, 28109),  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
+	new(ModSite.Nexus, 16245, 69575), // Vex's Alex Portraits
+	new(ModSite.Nexus, 16329, 69712), // Vex's Haley Portraits
 	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
 	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
 
