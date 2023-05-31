@@ -8,7 +8,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
      * Parse a mod name into a comparable value.
      * @param name The mod name to format.
      */
-    const getComparable = function(name) {
+    function getComparable(name) {
         // sort by main mod name
         name = name.split(',')[0];
 
@@ -23,9 +23,14 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
         return name
             .toLowerCase()
             .replace(/[^a-z0-9]/gm, '');
-    };
+    }
 
-    const compareNames = function(a, b) {
+    /**
+     * Compare two mods by name alphabetically.
+     * @param a The first mod to compare.
+     * @param b The second mod to compare.
+     */
+    function compareNames(a, b) {
         const comparableA = getComparable(a);
         const comparableB = getComparable(b);
 
@@ -53,7 +58,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
     for (let i = 0; i < names.length; i++)
     {
         if (names[i] != sortedNames[i])
-            unsorted.push({ position: i + 1, current: names[i], sorted: sortedNames[i] });
+            unsorted.push({ position: i + 1, found: names[i], expected: sortedNames[i] });
     }
 
     // log summary
