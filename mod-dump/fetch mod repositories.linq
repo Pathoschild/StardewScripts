@@ -232,7 +232,7 @@ async Task Main()
 					case SourceType.Git:
 						await this.ExecuteShellAsync(
 							filename: "git",
-							arguments: $"clone -q {sourceUrl} \"{dir.Name}\"", // only get the latest version
+							arguments: $"clone -q {sourceUrl} \"{dir.Name}\" --depth 1 --no-tags", // only get the latest version
 							workingDir: rootDir.FullName,
 							ignoreErrorOut: errorOut => Regex.IsMatch(errorOut, "^Filtering content:.+/s, done.$") // git LFS logs progress output to stderr
 						);
