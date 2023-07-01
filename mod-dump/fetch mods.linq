@@ -487,16 +487,15 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 			Folder = new Lazy<ParsedFile>(() => folder),
 			WikiEntry = new Lazy<string>(() =>
 				"{{#invoke:SMAPI compatibility|entry\n"
-				+ $"  |name     = {string.Join(", ", names)}\n"
-				+ $"  |author   = {string.Join(", ", authorNames)}\n"
-				+ $"  |id       = {manifest?.UniqueID}\n"
-				+ (mod.Site == ModSite.CurseForge ? $"  |curseforge id  = {mod.ID}\n" : "")
-				+ (mod.Site == ModSite.CurseForge ? $"  |curseforge key = {mod.PageUrl.Split("/").Last()}\n" : "")
-				+ (mod.Site == ModSite.ModDrop ? $"  |moddrop id = {mod.ID}\n" : "")
-				+ $"  |nexus id = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
-				+ $"  |github   = {githubRepo}\n"
+				+ $"  |name    = {string.Join(", ", names)}\n"
+				+ $"  |author  = {string.Join(", ", authorNames)}\n"
+				+ $"  |id      = {manifest?.UniqueID}\n"
+				+ (mod.Site == ModSite.CurseForge ? $"  |curse   = {mod.ID}\n" : "")
+				+ (mod.Site == ModSite.ModDrop ? $"  |moddrop = {mod.ID}\n" : "")
+				+ $"  |nexus   = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
+				+ $"  |github  = {githubRepo}\n"
 				+ (customSourceUrl != null
-					? $"  |source   = {customSourceUrl}\n"
+					? $"  |source  = {customSourceUrl}\n"
 					: ""
 				)
 				+ "}}"
