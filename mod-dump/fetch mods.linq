@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 05, 30), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 06, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -83,6 +83,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.CurseForge, 310737), // Ship From Inventory
 	new(ModSite.CurseForge, 307654), // The Harp of Yoba
 	new(ModSite.CurseForge, 306750), // TMXL Map Toolkit
+
+	// mods which include a copy of another mod for some reason
+	new(ModSite.CurseForge, 877227, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
 
 
 	/*********
@@ -167,6 +170,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
 	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
 	new(ModSite.Nexus, 15717), // Extended Minecart (tr)
+	new(ModSite.Nexus, 17027), // Farm Helper (es)
 	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
 	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
 	new(ModSite.Nexus, 13106), // Festival of the Mundane (zh)
@@ -197,6 +201,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 16658), // Mobile Phone (vi)
 	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
 	new(ModSite.Nexus, 15180), // More New Fish (es)
+	new(ModSite.Nexus, 16987), // More Rings (ru)
 	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
 	new(ModSite.Nexus, 14478), // Never Ending Adventure - NPC Mateo (es)
 	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
@@ -244,6 +249,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 12920), // Extra Map Layers (version for Android by original author, with same mod ID)
 	new(ModSite.Nexus, 11297), // Friends Forever
 	new(ModSite.Nexus, 12729), // Many Enchantments
+	new(ModSite.Nexus, 16921), // More Random Edition
 	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
 	new(ModSite.Nexus, 10916), // Qi Exchanger
 	new(ModSite.Nexus, 887),   // Reseed

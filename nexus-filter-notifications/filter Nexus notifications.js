@@ -178,6 +178,7 @@ javascript:(function() {
             5062: "Theft of the Winter Star",
             500: "Three-Heart Dance Partner",
             5097: "Throwable Axe",
+            17139: "Unhinged Mayo Jar",
     
             /* TehPers */
             866: "Teh's Fishing Overhaul"
