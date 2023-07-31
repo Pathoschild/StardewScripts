@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 06, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 07, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -143,6 +143,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	*********/
 	// mod translations
 	new(ModSite.Nexus, 11463), // Always Raining in the Valley (es)
+	new(ModSite.Nexus, 17337), // Ancient History - A Museum Expansion mod (es)
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 16289), // Better Juninos (fr)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
@@ -151,6 +152,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 14724), // Child Age Up (id)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
 	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
+	new(ModSite.Nexus, 17430), // CJB Cheats Menu (vi)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 15932), // Convenient Inventory (pt)
@@ -261,10 +263,11 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// other
 	new(ModSite.Nexus, 3941),  // Daily Planner: for some reason newer versions got a new mod page
-	new(ModSite.Nexus, 2676),  // PokeMania: for some reason newer versions got a new mod page
-	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
+	new(ModSite.Nexus, 2676),  // PokeMania: for some reason newer versions got a new mod page
 	new(ModSite.Nexus, 444),   // Save Anywhere: replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID
+	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint, replaced by Sprint Sprint
+	new(ModSite.Nexus, 17262), // Stardrop Quick Start (not a mod itself, just has dependencies)
 
 
 	/*********

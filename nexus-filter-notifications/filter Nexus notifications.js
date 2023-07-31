@@ -120,6 +120,7 @@ javascript:(function() {
             2012: "Better Shop Menu",
             1845: "Bigger Backpack",
             7530: "Bigger Craftables",
+            17550: "Blahaj Blast",
             5099: "Bug Net",
             7636: "Capstone Professions",
             1333: "Carry Chest",
@@ -148,6 +149,7 @@ javascript:(function() {
             521: "Luck Skill",
             2007: "Magic",
             7831: "Mana Bar",
+            17436: "MaYo Rain",
             10673: "Monsters - The Framework",
             10612: "Moon Misadventures",
             2757: "More Buildings",
@@ -172,6 +174,7 @@ javascript:(function() {
             1348: "SpaceCore",
             2755: "Spenny",
             14984: "Spenny Deluxe",
+            17326: "Spennying Wheel",
             7532: "Statue of Generosity",
             /*9418: "Super Hopper",*/
             6688: "Surfing Festival",
