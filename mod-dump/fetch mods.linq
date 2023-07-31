@@ -367,11 +367,6 @@ async Task Main()
 		.GroupBy(p => new { p.Site, p.SiteId })
 		.ToDictionary(p => $"{p.Key.Site}:{p.Key.SiteId}", p => p.ToArray());
 
-	// init clients
-	ConsoleHelper.Print("Initializing clients...");
-	foreach (var site in this.ModSites)
-		await site.AuthenticateAsync();
-
 	// fetch compatibility list
 	ConsoleHelper.Print("Fetching wiki compatibility list...");
 	WikiModList compatList = await new ModToolkit().GetWikiCompatibilityListAsync();
@@ -380,6 +375,10 @@ async Task Main()
 	HashSet<string> unpackMods = new HashSet<string>();
 	if (this.FetchMods != null)
 	{
+		ConsoleHelper.Print("Initializing clients...");
+		foreach (var site in this.ModSites)
+			await site.AuthenticateAsync();
+
 		ConsoleHelper.Print("Fetching mods...");
 		foreach (IModSiteClient modSite in this.ModSites)
 		{
