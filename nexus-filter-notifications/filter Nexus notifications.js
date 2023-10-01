@@ -103,14 +103,18 @@ javascript:(function() {
             2278: "Shop Expanded",
             2268: "Stardew Patcher",
             /*2275: "XNB Loader",*/
-    
+
+            /* Jierishi */
+            7194: "Pierre Sells Tree Fertilizer",
+
             /* omegasis */
             435: "Advanced Save Backup",
             492: "Billboard Anywhere",
             520: "Happy Birthday",
             433: "Night Owl",
+            444: "Save Anywhere",
             425: "Stardew Symphony",
-    
+
             /* spacechase0 */
             3283: "Animal Social Menu",
             3379: "Another Hunger Mod",

@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 07, 30), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 09, 28), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -143,6 +143,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	*********/
 	// mod translations
 	new(ModSite.Nexus, 11463), // Always Raining in the Valley (es)
+	new(ModSite.Nexus, 18036), // Alternate Textures (fr)
 	new(ModSite.Nexus, 17337), // Ancient History - A Museum Expansion mod (es)
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 16289), // Better Juninos (fr)
@@ -151,13 +152,16 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 15665), // Cape Stardew (es)
 	new(ModSite.Nexus, 14724), // Child Age Up (id)
 	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
+	new(ModSite.Nexus, 18168), // Child to NPC (ru/uk)
 	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
 	new(ModSite.Nexus, 17430), // CJB Cheats Menu (vi)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 15932), // Convenient Inventory (pt)
 	new(ModSite.Nexus, 14723), // Cooking Skill (ru)
+	new(ModSite.Nexus, 17789), // Crop Harvest Bubbles (pt)
 	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
+	new(ModSite.Nexus, 18035), // Customize Anywhere (fr)
 	new(ModSite.Nexus, 12968), // Custom NPC Belos (id)
 	new(ModSite.Nexus, 5811),  // Custom NPC Riley (de)
 	new(ModSite.Nexus, 14548), // Custom NPC Riley (tr)
@@ -166,6 +170,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 15908), // Downtown Zuzu (fr)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
+	new(ModSite.Nexus, 18313), // Downtown Zuzu (th)
 	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
 	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
 	new(ModSite.Nexus, 10626), // East Scarp (es)
@@ -175,6 +180,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 17027), // Farm Helper (es)
 	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
 	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
+	new(ModSite.Nexus, 18034), // Fashion Sense (fr)
 	new(ModSite.Nexus, 13106), // Festival of the Mundane (zh)
 	new(ModSite.Nexus, 13165), // Fishing Trawler (vi)
 	new(ModSite.Nexus, 15286), // Fireworks Festival (zh)
@@ -186,13 +192,17 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
 	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
 	new(ModSite.Nexus, 12399), // Instant Tool Upgrades (tr)
+	new(ModSite.Nexus, 17798), // Joys of Efficiency (vi)
 	new(ModSite.Nexus, 10685), // Juliet and Jessie the Joja Clerks (es)
 	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
 	new(ModSite.Nexus, 11282), // Lavril (es)
 	new(ModSite.Nexus, 15624), // LewdDew Valley (zh)
 	new(ModSite.Nexus, 13866), // Line Sprinklers (fr)
+	new(ModSite.Nexus, 17797), // Loan Mod (vi)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
 	new(ModSite.Nexus, 10720), // Loved Labels (pl)
+	new(ModSite.Nexus, 18253), // Love Festival (ru)
+	new(ModSite.Nexus, 18150), // Love Festival (tr)
 	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265),  // Magic (pt)
@@ -204,6 +214,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
 	new(ModSite.Nexus, 15180), // More New Fish (es)
 	new(ModSite.Nexus, 16987), // More Rings (ru)
+	new(ModSite.Nexus, 18252), // Multiple Spouses (th)
 	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
 	new(ModSite.Nexus, 14478), // Never Ending Adventure - NPC Mateo (es)
 	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
@@ -211,6 +222,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5551),  // NPC Adventures (ru)
 	new(ModSite.Nexus, 8767),  // NPC Adventures (tr)
 	new(ModSite.Nexus, 13369), // NPC Map Locations (vi)
+	new(ModSite.Nexus, 17659), // NPC Map Locations (vi)
 	new(ModSite.Nexus, 14437), // NPC Map Locations (zh)
 	new(ModSite.Nexus, 14878), // Ornithologist's Guild (ru)
 	new(ModSite.Nexus, 8696),  // Personal Effects Redux (pt)
@@ -218,13 +230,16 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 13244), // PPJA (vi)
 	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
 	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
-	new(ModSite.Nexus, 16432), // Rodney - a new NPC for East Scarp
+	new(ModSite.Nexus, 18010), // Resource Storage (pt)
 	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
 	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
 	new(ModSite.Nexus, 8170),  // Riley (de)
 	new(ModSite.Nexus, 10349), // Robin Romance (es)
+	new(ModSite.Nexus, 16432), // Rodney - a new NPC for East Scarp
 	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
 	new(ModSite.Nexus, 16399), // Self Service (pt)
+	new(ModSite.Nexus, 17658), // Self Service (vi)
+	new(ModSite.Nexus, 18378), // Shiko NPC (id)
 	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
@@ -240,12 +255,15 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 10221), // The Ranch Expansion Marnie and Jas (es)
 	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
 	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
+	new(ModSite.Nexus, 17666), // Tree Transplant (vi)
 	new(ModSite.Nexus, 10785), // Tristan (es)
 	new(ModSite.Nexus, 7556),  // UI Info Suite (fr)
 	new(ModSite.Nexus, 15208), // UI Info Suite 2 (vi)
 	new(ModSite.Nexus, 13389), // UI Info Suite (vi)
 	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
+	new(ModSite.Nexus, 17727), // Time Before Harvest Enhanced (vi)
 	new(ModSite.Nexus, 14398), // Tristan (es)
+	new(ModSite.Nexus, 17684), // What Are You Missing (vi)
 
 	// reposts
 	new(ModSite.Nexus, 12920), // Extra Map Layers (version for Android by original author, with same mod ID)
@@ -279,6 +297,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4608, 22971),  // DC Burget Krobus for CP
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
+	new(ModSite.Nexus, 17346, 73218), // Ghosties Wildfood Retexture
+	new(ModSite.Nexus, 18027, 75111), // Guinea Pig Pet for Alternative Textures
+	new(ModSite.Nexus, 17279, 73016), // Helpful Spouses (pt)
+	new(ModSite.Nexus, 17705, 74245), // HxW Fairy Garden Furniture - Gnome Pack
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
@@ -289,8 +311,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
 	new(ModSite.Nexus, 6284, 28109),  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
-	new(ModSite.Nexus, 16245, 69575), // Vex's Alex Portraits
-	new(ModSite.Nexus, 16329, 69712), // Vex's Haley Portraits
 	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
 	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
 
@@ -341,11 +361,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
-	new(ModSite.Nexus, 8409, manifestId: "spacechase0.GenericModConfigMenu"),   // Stardew Valley - Vietnamese
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
-	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments")  // Unofficial Balance Patch
+	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments"), // Unofficial Balance Patch
 };
 
 /// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
@@ -421,8 +440,14 @@ async Task Main()
 	// run analyses
 	ConsoleHelper.Print($"Running analyses...");
 	{
-		var result = this.GetModsNotOnWiki(mods, compatList).ToArray().Dump("SMAPI mods not on the wiki");
-		new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", result.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
+		var notOnWiki = this.GetModsNotOnWiki(mods, compatList).ToArray();
+		if (notOnWiki.Length > 0)
+		{
+			notOnWiki.Dump("SMAPI mods not on the wiki");
+			new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", notOnWiki.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
+		}
+		else
+			"none".Dump("SMAPI mods not on the wiki");
 	}
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
