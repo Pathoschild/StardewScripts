@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 09, 28), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 10, 28), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -71,6 +71,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	/*********
 	** CurseForge mods
 	*********/
+	#region CurseForge mods
 	// mods marked abandoned
 	new(ModSite.CurseForge, 308067), // Custom Furniture
 	new(ModSite.CurseForge, 393984), // Easy Prairie King
@@ -86,11 +87,13 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.CurseForge, 877227, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
+	#endregion
 
 
 	/*********
 	** ModDrop mods
 	*********/
+	#region ModDrop mods
 	// mod translations
 	new(ModSite.ModDrop, 1264767), // Always Raining in the Valley (es)
 	new(ModSite.ModDrop, 1258337), // East Scarp (es)
@@ -109,6 +112,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.ModDrop, 509776), // Object Progress Bars
 	new(ModSite.ModDrop, 509780), // Running Late
 
+	// deleted mods (ModDrop keeps a readonly version of the deleted page)
+	new(ModSite.ModDrop, 1287339), // MARGO - Modular Gameplay Overhaul
+
 	// special cases
 	new(ModSite.ModDrop, 580803), // PPJA Home of Abandoned Mods - CFR Conversions
 	new(ModSite.ModDrop, 624116), // Sprint Sprint Sprint, replaced by Sprint Sprint
@@ -123,11 +129,13 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.ModDrop, 1163121, manifestId: "Cherry.ShopTileFramework"),            // Little Witch Academia Constanze NPC - (SVE)
 	new(ModSite.ModDrop, 1163121, manifestId: "Pathoschild.ContentPatcher"),          // Little Witch Academia Constanze NPC - (SVE)
 	new(ModSite.ModDrop, 1163121, manifestId: "Platonymous.CustomMusic"),             // Little Witch Academia Constanze NPC - (SVE)
+	#endregion
 
 
 	/*********
 	** ModDrop files
 	*********/
+	#region ModDrop files
 	// broken manifest
 	new(ModSite.ModDrop, 580762, 711129), // A Toned Down Stardew Valley, missing comma
 
@@ -136,11 +144,13 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.ModDrop, 793920, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
+	#endregion
 
 
 	/*********
 	** Nexus mods
 	*********/
+	#region Nexus mods
 	// mod translations
 	new(ModSite.Nexus, 11463), // Always Raining in the Valley (es)
 	new(ModSite.Nexus, 18036), // Alternate Textures (fr)
@@ -155,6 +165,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 18168), // Child to NPC (ru/uk)
 	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
 	new(ModSite.Nexus, 17430), // CJB Cheats Menu (vi)
+	new(ModSite.Nexus, 17649), // CJB Cheats Menu (vi)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 15932), // Convenient Inventory (pt)
@@ -168,6 +179,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
 	new(ModSite.Nexus, 15007), // Deluxe Journal (fr)
 	new(ModSite.Nexus, 15908), // Downtown Zuzu (fr)
+	new(ModSite.Nexus, 18857), // Downtown Zuzu (id)
 	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
 	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
 	new(ModSite.Nexus, 18313), // Downtown Zuzu (th)
@@ -186,6 +198,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 15286), // Fireworks Festival (zh)
 	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
 	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
+	new(ModSite.Nexus, 18721), // Generic Mod Config Menu (vi)
+	new(ModSite.Nexus, 18722), // Greenhouse Sprinklers (vi)
 	new(ModSite.Nexus, 9874),  // Happy Birthday (fr)
 	new(ModSite.Nexus, 4693),  // Happy Birthday (pt)
 	new(ModSite.Nexus, 6693),  // Happy Birthday (pt)
@@ -200,12 +214,15 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 13866), // Line Sprinklers (fr)
 	new(ModSite.Nexus, 17797), // Loan Mod (vi)
 	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
+	new(ModSite.Nexus, 18723), // Lookup Anything (vi)
 	new(ModSite.Nexus, 10720), // Loved Labels (pl)
 	new(ModSite.Nexus, 18253), // Love Festival (ru)
 	new(ModSite.Nexus, 18150), // Love Festival (tr)
 	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
 	new(ModSite.Nexus, 4265),  // Magic (pt)
+	new(ModSite.Nexus, 18747), // Magic (vi)
+	new(ModSite.Nexus, 18746), // Mana Bar (vi)
 	new(ModSite.Nexus, 15183), // Mermaid Island (es)
 	new(ModSite.Nexus, 10804), // Mister Ginger Cat NPC (es)
 	new(ModSite.Nexus, 16659), // Mobile Catalogues (vi)
@@ -232,6 +249,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
 	new(ModSite.Nexus, 18010), // Resource Storage (pt)
 	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
+	new(ModSite.Nexus, 18829), // Ridgeside Village (vi)
 	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
 	new(ModSite.Nexus, 8170),  // Riley (de)
 	new(ModSite.Nexus, 10349), // Robin Romance (es)
@@ -240,6 +258,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 16399), // Self Service (pt)
 	new(ModSite.Nexus, 17658), // Self Service (vi)
 	new(ModSite.Nexus, 18378), // Shiko NPC (id)
+	new(ModSite.Nexus, 18662), // Shopping Show (vi)
 	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
@@ -279,18 +298,26 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 9128),  // Shop Tile Framework
 	new(ModSite.Nexus, 1077),  // UI Mod Suite
 
+	// files to drop into another mod's folder
+	new(ModSite.Nexus, 18729), // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
+	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus (replaces files in CC's Horse Plus)
+
+	// newer versions uploaded to a new page for some reason
+	new(ModSite.Nexus, 3941),  // Daily Planner
+	new(ModSite.Nexus, 8876),  // Map Editor (replaced by Map Editor Extended with the same mod ID)
+	new(ModSite.Nexus, 2676),  // PokeMania
+	new(ModSite.Nexus, 444),   // Save Anywhere (replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID)
+	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint (replaced by Sprint Sprint)
+
 	// other
-	new(ModSite.Nexus, 3941),  // Daily Planner: for some reason newer versions got a new mod page
-	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus: files to drop into the CC's Horse Plus folder
-	new(ModSite.Nexus, 2676),  // PokeMania: for some reason newer versions got a new mod page
-	new(ModSite.Nexus, 444),   // Save Anywhere: replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID
-	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint, replaced by Sprint Sprint
 	new(ModSite.Nexus, 17262), // Stardrop Quick Start (not a mod itself, just has dependencies)
+	#endregion
 
 
 	/*********
 	** Nexus files
 	*********/
+	#region Nexus files
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 4686, 19998),  // Clint Removes Apron
@@ -365,6 +392,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments"), // Unofficial Balance Patch
+
+	// special cases
+	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // C# component uploaded to both #14928 and #15564, so link it to the first one
+	#endregion
 };
 
 /// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
