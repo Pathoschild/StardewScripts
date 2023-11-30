@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 10, 28), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 11, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -157,6 +157,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 17337), // Ancient History - A Museum Expansion mod (es)
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 16289), // Better Juninos (fr)
+	new(ModSite.Nexus, 18968), // Better Juninos (uk)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 14960), // Bus Locations (fr)
 	new(ModSite.Nexus, 15665), // Cape Stardew (es)
@@ -166,6 +167,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
 	new(ModSite.Nexus, 17430), // CJB Cheats Menu (vi)
 	new(ModSite.Nexus, 17649), // CJB Cheats Menu (vi)
+	new(ModSite.Nexus, 17657), // CJB Cheats Menu (vi)
 	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
 	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
 	new(ModSite.Nexus, 15932), // Convenient Inventory (pt)
@@ -260,6 +262,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 18378), // Shiko NPC (id)
 	new(ModSite.Nexus, 18662), // Shopping Show (vi)
 	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
+	new(ModSite.Nexus, 19242), // Socializing Skill (vi)
 	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
 	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
 	new(ModSite.Nexus, 5272),  // Stardew Valley Expanded (es)
@@ -271,6 +274,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 4206),  // Stardew Valley Expanded (pt)
 	new(ModSite.Nexus, 6332),  // Stardew Valley Expanded (tr)
 	new(ModSite.Nexus, 8143),  // Stardew Valley Expanded (zh)
+	new(ModSite.Nexus, 19243), // Survivalist Skill (vi)
 	new(ModSite.Nexus, 10221), // The Ranch Expansion Marnie and Jas (es)
 	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
 	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
@@ -311,6 +315,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// other
 	new(ModSite.Nexus, 17262), // Stardrop Quick Start (not a mod itself, just has dependencies)
+	new(ModSite.Nexus, 19079), // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
 	#endregion
 
 
@@ -338,6 +343,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
 	new(ModSite.Nexus, 6284, 28109),  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
+	new(ModSite.Nexus, 18388, 76292), // Van NPC
 	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
 	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
 
@@ -747,7 +753,7 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 		.ThenBy(p => p.Key)
 		.ToDictionary(p => p.Key, p => p.Count(), StringComparer.OrdinalIgnoreCase);
 
-	// merge content packs with < 10 usages
+	// merge content packs with < min usages
 	{
 		int mergedSum = 0;
 
