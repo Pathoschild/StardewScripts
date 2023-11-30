@@ -149,12 +149,11 @@ async Task Main()
 
 		// print stats
 		int uniqueRepos = repos.Count;
-		int haveCode = repos.SelectMany(repo => repo.Mods).Count();
-		int haveSharedRepo = haveCode - uniqueRepos;
+		int modsWithCode = repos.Sum(repo => repo.Mods.Length);
+		int modsWithSharedRepo = repos.Where(repo => repo.Mods.Length > 1).Sum(repo => repo.Mods.Length);
 
 		ConsoleHelper.Print($"   {totalMods} mods in the SMAPI compatibility list.");
-		ConsoleHelper.Print($"   {haveCode} mods ({this.GetPercentage(haveCode, totalMods)}) have a source repository.");
-		ConsoleHelper.Print($"   {haveSharedRepo} repositories ({this.GetPercentage(haveSharedRepo, haveCode)}) contain multiple mods.");
+		ConsoleHelper.Print($"   {modsWithCode} mods ({this.GetPercentage(modsWithCode, totalMods)}) have a source code repo, with {modsWithSharedRepo} ({this.GetPercentage(modsWithSharedRepo, modsWithCode)}) in a multi-mod repo and {modsWithCode - modsWithSharedRepo} ({this.GetPercentage(modsWithCode - modsWithSharedRepo, modsWithCode)}) in a single-mod repo.");
 		if (invalidUrls.Any())
 		{
 			ConsoleHelper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the wiki:", Severity.Trace);
