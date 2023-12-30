@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 11, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 12, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -158,6 +158,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
 	new(ModSite.Nexus, 16289), // Better Juninos (fr)
 	new(ModSite.Nexus, 18968), // Better Juninos (uk)
+	new(ModSite.Nexus, 19337), // Buff Framework - Better Together - SVE Spouse Buffs (vh)
 	new(ModSite.Nexus, 11417), // Bug Net (fr)
 	new(ModSite.Nexus, 14960), // Bus Locations (fr)
 	new(ModSite.Nexus, 15665), // Cape Stardew (es)
@@ -257,6 +258,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 10349), // Robin Romance (es)
 	new(ModSite.Nexus, 16432), // Rodney - a new NPC for East Scarp
 	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
+	new(ModSite.Nexus, 19647), // Season Affixes (vh)
 	new(ModSite.Nexus, 16399), // Self Service (pt)
 	new(ModSite.Nexus, 17658), // Self Service (vi)
 	new(ModSite.Nexus, 18378), // Shiko NPC (id)
@@ -293,6 +295,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11297), // Friends Forever
 	new(ModSite.Nexus, 12729), // Many Enchantments
 	new(ModSite.Nexus, 16921), // More Random Edition
+	new(ModSite.Nexus, 19291), // Night Owl Repacked
 	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
 	new(ModSite.Nexus, 10916), // Qi Exchanger
 	new(ModSite.Nexus, 887),   // Reseed
@@ -326,6 +329,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 4686, 19998),  // Clint Removes Apron
+	new(ModSite.Nexus, 19486, 79402), // Cool Cats, missing comma
+	new(ModSite.Nexus, 19007, 78060), // Cooler Inverted Emotes, missing quote
 	new(ModSite.Nexus, 4608, 22971),  // DC Burget Krobus for CP
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
 	new(ModSite.Nexus, 30, 279),      // Enemy Health Bars, Storm mod
@@ -339,6 +344,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 5401, 24009),  // Open Greenhouse, missing quote
 	new(ModSite.Nexus, 10463, 48639), // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
 	new(ModSite.Nexus, 7600, 36539),  // Pink Tools Recolor, missing quotes in update keys
+	new(ModSite.Nexus, 19572, 79639), // Prettier Cherry Tree, empty file
 	new(ModSite.Nexus, 16448, 70244), // S
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
@@ -377,9 +383,12 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 1593, 5998),  // Wax Key for ALL
 
 	// mods which include a copy of another mod for some reason
+	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
+	new(ModSite.Nexus, 4227, manifestId: "spacechase0.GenericModConfigMenu"),   // CATastrophic Hunger Crisis
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
-	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
+	new(ModSite.Nexus, 4130, manifestId: "spacechase0.GenericModConfigMenu"),   // Farming Made Easy Suite
+	new(ModSite.Nexus, 3623, manifestId: "spacechase0.GenericModConfigMenu"),   // Fishing Made Easy Suite
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
@@ -398,6 +407,10 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments"), // Unofficial Balance Patch
+
+	// downloads which replace files in other mods
+	new(ModSite.Nexus, 19236, 78568), // Anime Catboy Portrait Mod - Wizard SVE
+	new(ModSite.Nexus, 19426, 79169), // Bun's Dateable (and Marry) Caroline Portraits
 
 	// special cases
 	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // C# component uploaded to both #14928 and #15564, so link it to the first one

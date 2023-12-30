@@ -167,6 +167,7 @@ javascript:(function() {
             7684: "Preexisting Relationship",
             3378: "Profit Calculator",
             7455: "Pyromancer's Journey",
+            15696: "Qi Chests",
             9386: "Realtime Minimap",
             12029: "Responsive MP Knockback",
             605: "Rush Orders",
