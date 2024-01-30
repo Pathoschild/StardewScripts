@@ -76,6 +76,9 @@ public bool UpdateCheckLocal = true;
 /// <summary>Whether to show installed mods not found on the compatibility list.</summary>
 public bool ShowMissingCompatMods = true;
 
+/// <summary>Whether to show mods which are required to load the current mods but which aren't installed locally.</summary>
+public bool ShowMissingDependencies = true;
+
 /// <summary>Whether to show mods on the compatibility list that aren't installed locally. This should be false in most cases.</summary>
 public bool ShowMissingLocalMods = false;
 
@@ -558,6 +561,7 @@ async Task Main()
 	/****
 	** Report mods on the wiki not installed locally
 	****/
+	Lazy<Task<WikiModList>> compatListAsync = new(() => toolkit.GetWikiCompatibilityListAsync());
 	if (this.ShowMissingLocalMods)
 	{
 		// get mods installed locally
@@ -567,7 +571,7 @@ async Task Main()
 		);
 
 		// fetch mods on the wiki that aren't installed
-		WikiModList compatList = await toolkit.GetWikiCompatibilityListAsync();
+		WikiModList compatList = await compatListAsync.Value;
 		var missing =
 			(
 				from mod in compatList.Mods
@@ -605,6 +609,48 @@ async Task Main()
 		
 		if (missing.Any())
 			missing.Dump("Mods on compatibility list not installed locally");
+	}
+
+	/****
+	** Show missing dependencies
+	****/
+	if (this.ShowMissingDependencies)
+	{
+		WikiModList compatList = await compatListAsync.Value;
+		Lazy<Dictionary<string, WikiModEntry>> wikiModsById = new(() =>
+		{
+			Dictionary<string, WikiModEntry> values = new(StringComparer.OrdinalIgnoreCase);
+			foreach (WikiModEntry entry in compatList.Mods)
+			{
+				foreach (string id in entry.ID)
+					values.TryAdd(id, entry);
+			}
+			return values;
+		});
+
+		var dependenciesById =
+			(
+				from mod in mods
+				from dependency in mod.GetRequiredDependencies()
+				group mod by dependency into modGroup
+
+				let requiredId = modGroup.Key
+				let installed = mods.Any(p => p.IDs.Contains(requiredId))
+
+				where !installed
+
+				let requiredName = wikiModsById.Value.GetValueOrDefault(requiredId)?.Name.FirstOrDefault() ?? "???"
+				orderby requiredName
+
+				select new
+				{
+					Framework = Util.VerticalRun(requiredName, Util.WithStyle(requiredId, "color: gray; font-size: 0.9em;")),
+					Mods = "- " + string.Join("\n- ", modGroup.Select(p => p.GetDisplayName()).Order())
+				}
+			)
+			.ToArray();
+		if (dependenciesById.Length > 0)
+			dependenciesById.Dump("Missing dependencies needed to run these mods");
 	}
 
 	/****
@@ -889,17 +935,17 @@ class ModData
 			string[] parts = key.Split(new[] { ':' }, 2);
 			if (parts[1].Length <= 0)
 				continue;
-			
+
 			if (mustBeInt)
 			{
 				if (int.TryParse(parts[1], out int id) && id >= 0)
 					return id.ToString(CultureInfo.InvariantCulture);
 				continue;
 			}
-			
+
 			return parts[1];
 		}
-		
+
 		return null;
 	}
 
@@ -964,6 +1010,31 @@ class ModData
 			return this.ApiRecord.Metadata.CustomSourceUrl;
 
 		return null;
+	}
+
+	/// <summary>Get the mod IDs that must be installed to use this mod.</summary>
+	public HashSet<string> GetRequiredDependencies()
+	{
+		var dependencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		if (this.Folder.ManifestParseError is ModParseError.None)
+		{
+			IManifest manifest = this.Folder.Manifest;
+
+			if (!string.IsNullOrWhiteSpace(manifest.ContentPackFor?.UniqueID))
+				dependencies.Add(manifest.ContentPackFor.UniqueID.Trim());
+
+			if (manifest.Dependencies?.Length > 0)
+			{
+				foreach (ManifestDependency dependency in manifest.Dependencies)
+				{
+					if (dependency?.IsRequired is true && !string.IsNullOrWhiteSpace(dependency.UniqueID))
+						dependencies.Add(dependency.UniqueID.Trim());
+				}
+			}
+		}
+
+		return dependencies;
 	}
 
 	/// <summary>Get a recommended folder name based on the mod data.</summary>
