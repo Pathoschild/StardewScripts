@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2023, 12, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 01, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -239,6 +239,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 14478), // Never Ending Adventure - NPC Mateo (es)
 	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
 	new(ModSite.Nexus, 8928),  // Multiple Spouse Dialogs (tr)
+	new(ModSite.Nexus, 15327), // New Years Eve (tr)
 	new(ModSite.Nexus, 5551),  // NPC Adventures (ru)
 	new(ModSite.Nexus, 8767),  // NPC Adventures (tr)
 	new(ModSite.Nexus, 13369), // NPC Map Locations (vi)
@@ -295,6 +296,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 11297), // Friends Forever
 	new(ModSite.Nexus, 12729), // Many Enchantments
 	new(ModSite.Nexus, 16921), // More Random Edition
+	new(ModSite.Nexus, 19817), // Multiplayer for Mobile
 	new(ModSite.Nexus, 19291), // Night Owl Repacked
 	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
 	new(ModSite.Nexus, 10916), // Qi Exchanger
@@ -304,6 +306,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 8386),  // Save Anywhere
 	new(ModSite.Nexus, 9128),  // Shop Tile Framework
 	new(ModSite.Nexus, 1077),  // UI Mod Suite
+	new(ModSite.Nexus, 19879), // Virtual Keyboard
 
 	// files to drop into another mod's folder
 	new(ModSite.Nexus, 18729), // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
@@ -317,8 +320,9 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint (replaced by Sprint Sprint)
 
 	// other
-	new(ModSite.Nexus, 17262), // Stardrop Quick Start (not a mod itself, just has dependencies)
 	new(ModSite.Nexus, 19079), // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
+	new(ModSite.Nexus, 17262), // Stardrop Quick Start (not a mod itself, just has dependencies)
+	new(ModSite.Nexus, 19905), // XNB Archive (not a mod)
 	#endregion
 
 
@@ -329,7 +333,6 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// broken manifests
 	new(ModSite.Nexus, 1632, 10352),  // Birthstone Plants, missing comma
 	new(ModSite.Nexus, 4686, 19998),  // Clint Removes Apron
-	new(ModSite.Nexus, 19486, 79402), // Cool Cats, missing comma
 	new(ModSite.Nexus, 19007, 78060), // Cooler Inverted Emotes, missing quote
 	new(ModSite.Nexus, 4608, 22971),  // DC Burget Krobus for CP
 	new(ModSite.Nexus, 10800, 49796), // Dodo's Dwarf replacement
@@ -345,6 +348,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 10463, 48639), // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
 	new(ModSite.Nexus, 7600, 36539),  // Pink Tools Recolor, missing quotes in update keys
 	new(ModSite.Nexus, 19572, 79639), // Prettier Cherry Tree, empty file
+	new(ModSite.Nexus, 19824, 80426), // Roxullinar Cyanillar Fusionillar, various issues
 	new(ModSite.Nexus, 16448, 70244), // S
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
@@ -411,6 +415,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// downloads which replace files in other mods
 	new(ModSite.Nexus, 19236, 78568), // Anime Catboy Portrait Mod - Wizard SVE
 	new(ModSite.Nexus, 19426, 79169), // Bun's Dateable (and Marry) Caroline Portraits
+	new(ModSite.Nexus, 19698, 80076), // Vanilla Portrait Frame
 
 	// special cases
 	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // C# component uploaded to both #14928 and #15564, so link it to the first one

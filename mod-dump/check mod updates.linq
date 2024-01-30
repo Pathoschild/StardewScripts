@@ -192,6 +192,10 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["HorseWhistle_SMAPI"] = "Horse Whistle (Nabuma)",
 	["icepuente.HorseWhistle"] = "Horse Whistle (Icepuente)",
 	
+	["6135.ProfitCalculator"] = "Profit Calculator (6135)",
+	["6135.ProfitCalculatorDGA"] = "Profit Calculator (6135) → DGA Support",
+	["spacechase0.ProfitCalculator"] = "Profit Calculator (spacechase0)",
+	
 	["stokastic.SmartCursor"] = "Smart Cursor (Stokastic)",
 	["DecidedlyHuman.SmartCursor"] = "Smart Cursor (DecidedlyHuman)",
 
