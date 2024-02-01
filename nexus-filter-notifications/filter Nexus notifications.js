@@ -288,7 +288,7 @@ javascript:(function() {
             }
 
             /* extract mod text */
-            const row = element.find(".notification-row");
+            const row = element.find(".notification-content");
             const rowHtml = row.html();
             const rowMatch = rowHtml.match("<span[^<>]*>.+?</span> ([a-z ]+) <span[^<>]*>(.+?)</span>"); /* span for user or count, text for action, then span for mod name */
             this.modName = rowMatch?.[2] ?? null;
@@ -300,7 +300,7 @@ javascript:(function() {
 
         markAsRead() {
             this.isRead = true;
-            this.element.find(".notification-indicator-box button").click();
+            this.element.find(".notification-mark-as-read button").click();
         }
 
         highlight() {
