@@ -201,7 +201,7 @@ javascript:(function() {
 
     /**
      * A parsed representation of a notification element in the list.
-     * @property {jQuery} element The underlying HTML element.
+     * @property {object} element The underlying HTML element.
      * @property {boolean} isRead Whether the notification is marked as read.
      * @property {NotificationType} type The notification type.
      * @property {number | null} modId The Nexus mod ID, if this is a mod notification.
@@ -210,14 +210,19 @@ javascript:(function() {
     const NotificationRow = class {
         /**
          * Construct an instance.
-         * @param {jQuery} element The underlying HTML element.
+         * @param {object} element The underlying HTML element.
          */
         constructor(element) {
-            this.element = element = $(element);
-            this.isRead = element.is(".notification-read");
+            this.element = element;
+            this.isNext = element.classList.contains("group/notification"); // next.nexusmods.com changes the notification HTML structure
+            this.isRead = this.isNext
+                ? !element.querySelector("button.group\\/button")
+                : element.classList.contains("notification-read");
 
             /* parse notification URL */
-            const rawTarget = element.find(".notification-link:first").attr("href");
+            const rawTarget = this.isNext
+                ? element.href
+                : element.querySelector(".notification-link")?.href;
             if (rawTarget && rawTarget !== "null")
             {
                 const target = new URL(rawTarget);
@@ -225,12 +230,12 @@ javascript:(function() {
                 const path = target.pathname.replace(/^\/+|\/+$/g, "").split("/");
                 if (path[1] == "mods")
                 {
-                    // mod ID
+                    /* mod ID */
                     this.modId = parseInt(path[2]);
                     if (isNaN(this.modId))
                         this.modId = null;
 
-                    // type
+                    /* type */
                     switch (tab)
                     {
                         case "bugs":
@@ -278,41 +283,58 @@ javascript:(function() {
             else
                 this.type = NotificationType.Unknown;
 
+            /* extract mod text */
+            const row = element.querySelector(this.isNext ? ".text-font-primary" : ".notification-content");
+            const rowHtml = row.innerHTML;
+            const rowMatch = rowHtml.match("<span[^<>]*>.+?</span> ([a-z ]+) <span[^<>]*>(.+?)</span>"); /* span for user or count, text for action, then span for mod name */
+            this.modName = rowMatch?.[2] ?? null;
+
             /* get notification type from text if needed */
             if (this.type == NotificationType.Unknown) {
-                const text = element.find(".notification-row").text();
+                const text = row.textContent;
 
                 if (text.includes("mods are now available")) {
                     this.type = NotificationType.NewGames;
                 }
             }
 
-            /* extract mod text */
-            const row = element.find(".notification-content");
-            const rowHtml = row.html();
-            const rowMatch = rowHtml.match("<span[^<>]*>.+?</span> ([a-z ]+) <span[^<>]*>(.+?)</span>"); /* span for user or count, text for action, then span for mod name */
-            this.modName = rowMatch?.[2] ?? null;
         }
 
         hide() {
-            this.element.attr("style", "display: none");
+            this.element.style.display = "none";
         }
 
         markAsRead() {
             this.isRead = true;
-            this.element.find(".notification-mark-as-read button").click();
+            this
+                .element
+                .querySelector(this.isNext ? "button.group\\/button" : ".notification-mark-as-read button")
+                ?.click();
         }
 
         highlight() {
-            this.element.attr("style", "border: 3px solid red");
+            this.element.style.border = "border: 3px solid red";
         }
     }
 
+    /* get notification list (only handle one list to avoid incorrectly detecting duplicates) */
+    let notifElements = document.querySelectorAll(".notification-wrapper"); /* legacy dropdown */
+    if (!notifElements.length) {
+        notifElements = document.querySelectorAll("[data-headlessui-state=open] .group\\/notification"); /* Nexus Next dropdown */
+    }
+    if (!notifElements.length) {
+        notifElements = document.querySelectorAll(".group\\/notification"); /* Nexus Next notification page */
+    }
+
     /* clean notifications */
-    for (let notif of $(".notification-wrapper:visible"))
-    {
+    for (const notifElement of notifElements) {
+         /* skip hidden elements */
+        if (notifElement.offsetParent === null) {
+            continue;
+        }
+
         /* parse notification */
-        notif = new NotificationRow(notif);
+        const notif = new NotificationRow(notifElement);
         const duplicateKey = `${notif.type}:${notif.modId ?? notif.modName}`;
 
         /* hide if read */
@@ -326,6 +348,7 @@ javascript:(function() {
         if (notif.type == NotificationType.Unknown)
         {
             console.warn("Unknown notification type.", notif);
+            continue; /* don't mark unknown notifications read */
         }
 
         /* mark as read */
