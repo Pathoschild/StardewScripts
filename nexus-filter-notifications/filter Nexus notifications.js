@@ -231,7 +231,7 @@ javascript:(function() {
                 if (path[1] == "mods")
                 {
                     /* mod ID */
-                    this.modId = parseInt(path[2]);
+                    this.modId = parseInt(path[2]) || target.searchParams.get("id");
                     if (isNaN(this.modId))
                         this.modId = null;
 
@@ -267,6 +267,7 @@ javascript:(function() {
                             break;
 
                         case "news":
+                            this.newsId = path[1];
                             this.type = NotificationType.News;
                             break;
 
@@ -335,7 +336,7 @@ javascript:(function() {
 
         /* parse notification */
         const notif = new NotificationRow(notifElement);
-        const duplicateKey = `${notif.type}:${notif.modId ?? notif.modName}`;
+        const duplicateKey = `${notif.type}:${notif.modId ?? notif.modName ?? notif.newsId}`;
 
         /* hide if read */
         if (notif.isRead)
