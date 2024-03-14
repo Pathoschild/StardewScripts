@@ -68,6 +68,12 @@ javascript:(function() {
     const markAsRead = true;
 
     /**
+     * When viewing the main notification page, whether to fade out read notifications instead of
+     * hiding them.
+     */
+    const fadeOutReadInMainNotificationPage = true;
+
+    /**
      * Configures which notifications you want to ignore. These will be either marked as read &
      * hidden, or highlighted, depending on the 'markAsRead' setting.
      */
@@ -305,6 +311,10 @@ javascript:(function() {
             this.element.style.display = "none";
         }
 
+        fadeOut() {
+            this.element.style.opacity = "0.5";
+        }
+
         markAsRead() {
             this.isRead = true;
             this
@@ -320,10 +330,12 @@ javascript:(function() {
 
     /* get notification list (only handle one list to avoid incorrectly detecting duplicates) */
     let notifElements = document.querySelectorAll(".notification-wrapper"); /* legacy dropdown */
+    let isMainNotificationsPage = false;
     if (!notifElements.length) {
         notifElements = document.querySelectorAll("[data-headlessui-state=open] .group\\/notification"); /* Nexus Next dropdown */
     }
     if (!notifElements.length) {
+        isMainNotificationsPage = true;
         notifElements = document.querySelectorAll(".group\\/notification"); /* Nexus Next notification page */
     }
 
@@ -341,7 +353,10 @@ javascript:(function() {
         /* hide if read */
         if (notif.isRead)
         {
-            notif.hide();
+            if (isMainNotificationsPage && fadeOutReadInMainNotificationPage)
+                notif.fadeOut();
+            else
+                notif.hide();
             continue;
         }
 
