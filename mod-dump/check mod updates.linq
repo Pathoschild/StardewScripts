@@ -335,7 +335,7 @@ async Task Main()
 				Platform platform = EnvironmentUtility.DetectPlatform();
 				ModSearchEntryModel searchModel = new ModSearchEntryModel(id, apiVersion, mod.UpdateKeys, isBroken: true); // isBroken ensures unofficial updates always listed
 				string cacheKey = $"{id}|{string.Join(", ", mod.UpdateKeys)}|{this.ForBeta}";
-				ModEntryModel result = await this.CacheOrFetchAsync(cacheKey, async () => (await client.GetModInfoAsync(new[] { searchModel }, apiVersion, gameVersion: null, platform, includeExtendedMetadata: true)).Select(p => p.Value).FirstOrDefault());
+				ModEntryModel result = (await client.GetModInfoAsync(new[] { searchModel }, apiVersion, gameVersion: null, platform, includeExtendedMetadata: true)).Select(p => p.Value).FirstOrDefault();
 
 				// select latest version
 				mod.ApiRecord = result;
@@ -829,18 +829,6 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 			yield return new ReportEntry(mod, latestVersion, downloadUrl, forBeta, ignoreUpdate, this.GetReportLinks(mod.ApiRecord), (Func<string, string>)(p => this.TryFormatVersion(p)));
 		}
 	}
-}
-
-/// <summary>Read data from the cache, or fetch and cache it.</summary>
-/// <param name="key">The cache key.</param>
-/// <param name="fetch">The method which fetches fresh data.</param>
-async Task<T> CacheOrFetchAsync<T>(string key, Func<Task<T>> fetch)
-{
-	var jsonHelper = new JsonHelper();
-
-	T data = await fetch();
-	string json = jsonHelper.Serialize(data); // MonkeyCache handles string values weirdly, and will try to deserialize as JSON when we read it
-	return data;
 }
 
 /// <summary>Get a normalized representation of a version if it's parseable.</summary>
