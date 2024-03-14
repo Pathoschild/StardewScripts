@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 01, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 13), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -66,27 +66,34 @@ readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 readonly bool ResetUnpacked = false;
 
 /// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
-readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
-{
+readonly ModSearch[] IgnoreForAnalysis = [
 	/*********
 	** CurseForge mods
 	*********/
 	#region CurseForge mods
 	// mods marked abandoned
-	new(ModSite.CurseForge, 308067), // Custom Furniture
-	new(ModSite.CurseForge, 393984), // Easy Prairie King
-	new(ModSite.CurseForge, 309743), // Pelican TTS
-	new(ModSite.CurseForge, 308058), // Plan Importer
-	new(ModSite.CurseForge, 308062), // Portraiture
-	new(ModSite.CurseForge, 306738), // PyTK
-	new(ModSite.CurseForge, 310789), // Scale Up
-	new(ModSite.CurseForge, 307726), // Seed Bag
-	new(ModSite.CurseForge, 310737), // Ship From Inventory
-	new(ModSite.CurseForge, 307654), // The Harp of Yoba
-	new(ModSite.CurseForge, 306750), // TMXL Map Toolkit
+	..ModSearch.ForSiteIds(ModSite.CurseForge,
+		308067, // Custom Furniture
+		393984, // Easy Prairie King
+		309743, // Pelican TTS
+		308058, // Plan Importer
+		308062, // Portraiture
+		306738, // PyTK
+		310789, // Scale Up
+		307726, // Seed Bag
+		310737, // Ship From Inventory
+		307654, // The Harp of Yoba
+		306750  // TMXL Map Toolkit
+	),
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.CurseForge, 877227, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
+
+	// mod packs
+	..ModSearch.ForSiteIds(ModSite.CurseForge,
+		953780  // The First Modpack
+	),
+	
 	#endregion
 
 
@@ -95,30 +102,38 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	*********/
 	#region ModDrop mods
 	// mod translations
-	new(ModSite.ModDrop, 1264767), // Always Raining in the Valley (es)
-	new(ModSite.ModDrop, 1258337), // East Scarp (es)
-	new(ModSite.ModDrop, 1190770), // Extra Fish Information (es)
-	new(ModSite.ModDrop, 1258338), // Juliet and Jessie the Joja Clerks (es)
-	new(ModSite.ModDrop, 1258750), // Lavril (es)
-	new(ModSite.ModDrop, 1258746), // Mister Ginger Cat NPC (es)
-	new(ModSite.ModDrop, 1267948), // Nagito - Custom NPC (es)
-	new(ModSite.ModDrop, 1264764), // Ridgeside Village (es)
-	new(ModSite.ModDrop, 1190547), // Stardew Valley Expanded (es)
-	new(ModSite.ModDrop, 1264765), // The Ranch Expansion Marnie and Jas (es)
-	new(ModSite.ModDrop, 1264766), // The Robin Romance Mod (es)
-	new(ModSite.ModDrop, 1258745), // Tristan (es)
+	..ModSearch.ForSiteIds(ModSite.ModDrop,
+		1264767, // Always Raining in the Valley (es)
+		1258337, // East Scarp (es)
+		1190770, // Extra Fish Information (es)
+		1258338, // Juliet and Jessie the Joja Clerks (es)
+		1258750, // Lavril (es)
+		1258746, // Mister Ginger Cat NPC (es)
+		1267948, // Nagito - Custom NPC (es)
+		1264764, // Ridgeside Village (es)
+		1190547, // Stardew Valley Expanded (es)
+		1264765, // The Ranch Expansion Marnie and Jas (es)
+		1264766, // The Robin Romance Mod (es)
+		1258745  // Tristan (es)
+	),
 
 	// reposts
-	new(ModSite.ModDrop, 509776), // Object Progress Bars
-	new(ModSite.ModDrop, 509780), // Running Late
+	..ModSearch.ForSiteIds(ModSite.ModDrop,
+		509776, // Object Progress Bars
+		509780  // Running Late
+	),
 
 	// deleted mods (ModDrop keeps a readonly version of the deleted page)
-	new(ModSite.ModDrop, 1287339), // MARGO - Modular Gameplay Overhaul
+	..ModSearch.ForSiteIds(ModSite.ModDrop,
+		1287339 // MARGO - Modular Gameplay Overhaul
+	),
 
 	// special cases
-	new(ModSite.ModDrop, 580803), // PPJA Home of Abandoned Mods - CFR Conversions
-	new(ModSite.ModDrop, 624116), // Sprint Sprint Sprint, replaced by Sprint Sprint
-	new(ModSite.ModDrop, 1034925), // Better Tappers, duplicate mod page
+	..ModSearch.ForSiteIds(ModSite.ModDrop,
+		580803, // PPJA Home of Abandoned Mods - CFR Conversions
+		624116, // Sprint Sprint Sprint, replaced by Sprint Sprint
+		1034925 // Better Tappers, duplicate mod page
+	),
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.ModDrop, 1240025, manifestId: "Cherry.ExpandedPreconditionsUtility"), // Little Witch Academia Constanze NPC
@@ -151,178 +166,185 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	** Nexus mods
 	*********/
 	#region Nexus mods
-	// mod translations
-	new(ModSite.Nexus, 11463), // Always Raining in the Valley (es)
-	new(ModSite.Nexus, 18036), // Alternate Textures (fr)
-	new(ModSite.Nexus, 17337), // Ancient History - A Museum Expansion mod (es)
-	new(ModSite.Nexus, 7932),  // Animals Need Water (fr)
-	new(ModSite.Nexus, 16289), // Better Juninos (fr)
-	new(ModSite.Nexus, 18968), // Better Juninos (uk)
-	new(ModSite.Nexus, 19337), // Buff Framework - Better Together - SVE Spouse Buffs (vh)
-	new(ModSite.Nexus, 11417), // Bug Net (fr)
-	new(ModSite.Nexus, 14960), // Bus Locations (fr)
-	new(ModSite.Nexus, 15665), // Cape Stardew (es)
-	new(ModSite.Nexus, 14724), // Child Age Up (id)
-	new(ModSite.Nexus, 5879),  // Child Age Up (zh)
-	new(ModSite.Nexus, 18168), // Child to NPC (ru/uk)
-	new(ModSite.Nexus, 14119), // CJB Cheats Menu (es)
-	new(ModSite.Nexus, 17430), // CJB Cheats Menu (vi)
-	new(ModSite.Nexus, 17649), // CJB Cheats Menu (vi)
-	new(ModSite.Nexus, 17657), // CJB Cheats Menu (vi)
-	new(ModSite.Nexus, 4305),  // Climates of Ferngill (pt)
-	new(ModSite.Nexus, 4197),  // Companion NPCs (pt)
-	new(ModSite.Nexus, 15932), // Convenient Inventory (pt)
-	new(ModSite.Nexus, 14723), // Cooking Skill (ru)
-	new(ModSite.Nexus, 17789), // Crop Harvest Bubbles (pt)
-	new(ModSite.Nexus, 9920),  // Crop Regrowth and Perennial Crops (pt)
-	new(ModSite.Nexus, 18035), // Customize Anywhere (fr)
-	new(ModSite.Nexus, 12968), // Custom NPC Belos (id)
-	new(ModSite.Nexus, 5811),  // Custom NPC Riley (de)
-	new(ModSite.Nexus, 14548), // Custom NPC Riley (tr)
-	new(ModSite.Nexus, 11851), // Custom Spouse Patio Redux (zh)
-	new(ModSite.Nexus, 15007), // Deluxe Journal (fr)
-	new(ModSite.Nexus, 15908), // Downtown Zuzu (fr)
-	new(ModSite.Nexus, 18857), // Downtown Zuzu (id)
-	new(ModSite.Nexus, 11090), // Downtown Zuzu (it)
-	new(ModSite.Nexus, 9901),  // Downtown Zuzu (ru)
-	new(ModSite.Nexus, 18313), // Downtown Zuzu (th)
-	new(ModSite.Nexus, 5396),  // Dwarvish (pt)
-	new(ModSite.Nexus, 5428),  // Dwarvish (zh)
-	new(ModSite.Nexus, 10626), // East Scarp (es)
-	new(ModSite.Nexus, 8784),  // East Scarpe (pt)
-	new(ModSite.Nexus, 10967), // Extra Fish Information (fr)
-	new(ModSite.Nexus, 15717), // Extended Minecart (tr)
-	new(ModSite.Nexus, 17027), // Farm Helper (es)
-	new(ModSite.Nexus, 12045), // Farmer Helper (ru)
-	new(ModSite.Nexus, 12097), // Farmer Helper (tr)
-	new(ModSite.Nexus, 18034), // Fashion Sense (fr)
-	new(ModSite.Nexus, 13106), // Festival of the Mundane (zh)
-	new(ModSite.Nexus, 13165), // Fishing Trawler (vi)
-	new(ModSite.Nexus, 15286), // Fireworks Festival (zh)
-	new(ModSite.Nexus, 6157),  // Garden Village Shops (ru)
-	new(ModSite.Nexus, 6500),  // Garden Village Shops (ru)
-	new(ModSite.Nexus, 18721), // Generic Mod Config Menu (vi)
-	new(ModSite.Nexus, 18722), // Greenhouse Sprinklers (vi)
-	new(ModSite.Nexus, 9874),  // Happy Birthday (fr)
-	new(ModSite.Nexus, 4693),  // Happy Birthday (pt)
-	new(ModSite.Nexus, 6693),  // Happy Birthday (pt)
-	new(ModSite.Nexus, 9117),  // Happy Birthday (ru)
-	new(ModSite.Nexus, 6111),  // Immersive Characters - Shane (es)
-	new(ModSite.Nexus, 12399), // Instant Tool Upgrades (tr)
-	new(ModSite.Nexus, 17798), // Joys of Efficiency (vi)
-	new(ModSite.Nexus, 10685), // Juliet and Jessie the Joja Clerks (es)
-	new(ModSite.Nexus, 8946),  // Junimo Dialog (pt)
-	new(ModSite.Nexus, 11282), // Lavril (es)
-	new(ModSite.Nexus, 15624), // LewdDew Valley (zh)
-	new(ModSite.Nexus, 13866), // Line Sprinklers (fr)
-	new(ModSite.Nexus, 17797), // Loan Mod (vi)
-	new(ModSite.Nexus, 9143),  // Lookup Anything (id)
-	new(ModSite.Nexus, 18723), // Lookup Anything (vi)
-	new(ModSite.Nexus, 10720), // Loved Labels (pl)
-	new(ModSite.Nexus, 18253), // Love Festival (ru)
-	new(ModSite.Nexus, 18150), // Love Festival (tr)
-	new(ModSite.Nexus, 4339),  // Lunar Disturbances (pt)
-	new(ModSite.Nexus, 7082),  // Lunar Disturbances (pt)
-	new(ModSite.Nexus, 4265),  // Magic (pt)
-	new(ModSite.Nexus, 18747), // Magic (vi)
-	new(ModSite.Nexus, 18746), // Mana Bar (vi)
-	new(ModSite.Nexus, 15183), // Mermaid Island (es)
-	new(ModSite.Nexus, 10804), // Mister Ginger Cat NPC (es)
-	new(ModSite.Nexus, 16659), // Mobile Catalogues (vi)
-	new(ModSite.Nexus, 10307), // Mobile Phone (pt)
-	new(ModSite.Nexus, 16658), // Mobile Phone (vi)
-	new(ModSite.Nexus, 11844), // Mobile Phone (zh)
-	new(ModSite.Nexus, 15180), // More New Fish (es)
-	new(ModSite.Nexus, 16987), // More Rings (ru)
-	new(ModSite.Nexus, 18252), // Multiple Spouses (th)
-	new(ModSite.Nexus, 10224), // Multiple Spouses (zh)
-	new(ModSite.Nexus, 14478), // Never Ending Adventure - NPC Mateo (es)
-	new(ModSite.Nexus, 6295),  // Nice Messages (ru)
-	new(ModSite.Nexus, 8928),  // Multiple Spouse Dialogs (tr)
-	new(ModSite.Nexus, 15327), // New Years Eve (tr)
-	new(ModSite.Nexus, 5551),  // NPC Adventures (ru)
-	new(ModSite.Nexus, 8767),  // NPC Adventures (tr)
-	new(ModSite.Nexus, 13369), // NPC Map Locations (vi)
-	new(ModSite.Nexus, 17659), // NPC Map Locations (vi)
-	new(ModSite.Nexus, 14437), // NPC Map Locations (zh)
-	new(ModSite.Nexus, 14878), // Ornithologist's Guild (ru)
-	new(ModSite.Nexus, 8696),  // Personal Effects Redux (pt)
-	new(ModSite.Nexus, 14821), // Personal Effects Redux (pt)
-	new(ModSite.Nexus, 13244), // PPJA (vi)
-	new(ModSite.Nexus, 5329),  // Prismatic Tools (pt)
-	new(ModSite.Nexus, 11407), // Producer Framework Mod (fr)
-	new(ModSite.Nexus, 18010), // Resource Storage (pt)
-	new(ModSite.Nexus, 8030),  // Ridgeside Village (es)
-	new(ModSite.Nexus, 18829), // Ridgeside Village (vi)
-	new(ModSite.Nexus, 9942),  // Ridgeside Village (fr)
-	new(ModSite.Nexus, 8170),  // Riley (de)
-	new(ModSite.Nexus, 10349), // Robin Romance (es)
-	new(ModSite.Nexus, 16432), // Rodney - a new NPC for East Scarp
-	new(ModSite.Nexus, 6096),  // Sailor Moon Hairstyles Clothing and Kimono (zh)
-	new(ModSite.Nexus, 19647), // Season Affixes (vh)
-	new(ModSite.Nexus, 16399), // Self Service (pt)
-	new(ModSite.Nexus, 17658), // Self Service (vi)
-	new(ModSite.Nexus, 18378), // Shiko NPC (id)
-	new(ModSite.Nexus, 18662), // Shopping Show (vi)
-	new(ModSite.Nexus, 14373), // Socializing Skill (vi)
-	new(ModSite.Nexus, 19242), // Socializing Skill (vi)
-	new(ModSite.Nexus, 11140), // Spouses in Ginger Island (zh)
-	new(ModSite.Nexus, 5259),  // Stardew Valley Expanded (de)
-	new(ModSite.Nexus, 5272),  // Stardew Valley Expanded (es)
-	new(ModSite.Nexus, 5509),  // Stardew Valley Expanded (es)
-	new(ModSite.Nexus, 5901),  // Stardew Valley Expanded (fr)
-	new(ModSite.Nexus, 8411),  // Stardew Valley Expanded (fr)
-	new(ModSite.Nexus, 12867), // Stardew Valley Expanded (fr)
-	new(ModSite.Nexus, 5788),  // Stardew Valley Expanded (ja)
-	new(ModSite.Nexus, 4206),  // Stardew Valley Expanded (pt)
-	new(ModSite.Nexus, 6332),  // Stardew Valley Expanded (tr)
-	new(ModSite.Nexus, 8143),  // Stardew Valley Expanded (zh)
-	new(ModSite.Nexus, 19243), // Survivalist Skill (vi)
-	new(ModSite.Nexus, 10221), // The Ranch Expansion Marnie and Jas (es)
-	new(ModSite.Nexus, 8312),  // Town School Functions (tr)
-	new(ModSite.Nexus, 6356),  // Town School Functions (zh)
-	new(ModSite.Nexus, 17666), // Tree Transplant (vi)
-	new(ModSite.Nexus, 10785), // Tristan (es)
-	new(ModSite.Nexus, 7556),  // UI Info Suite (fr)
-	new(ModSite.Nexus, 15208), // UI Info Suite 2 (vi)
-	new(ModSite.Nexus, 13389), // UI Info Suite (vi)
-	new(ModSite.Nexus, 6637),  // Underground Secrets (ru)
-	new(ModSite.Nexus, 17727), // Time Before Harvest Enhanced (vi)
-	new(ModSite.Nexus, 14398), // Tristan (es)
-	new(ModSite.Nexus, 17684), // What Are You Missing (vi)
+	..ModSearch.ForSiteIds(ModSite.Nexus,
+		// mod translations
+		11463, // Always Raining in the Valley (es)
+		18036, // Alternate Textures (fr)
+		17337, // Ancient History - A Museum Expansion mod (es)
+		7932,  // Animals Need Water (fr)
+		16289, // Better Juninos (fr)
+		18968, // Better Juninos (uk)
+		20406, // Better Juninos (vh)
+		19337, // Buff Framework - Better Together - SVE Spouse Buffs (vh)
+		11417, // Bug Net (fr)
+		14960, // Bus Locations (fr)
+		15665, // Cape Stardew (es)
+		14724, // Child Age Up (id)
+		5879,  // Child Age Up (zh)
+		18168, // Child to NPC (ru/uk)
+		14119, // CJB Cheats Menu (es)
+		17430, // CJB Cheats Menu (vi)
+		17649, // CJB Cheats Menu (vi)
+		17657, // CJB Cheats Menu (vi)
+		4305,  // Climates of Ferngill (pt)
+		4197,  // Companion NPCs (pt)
+		15932, // Convenient Inventory (pt)
+		14723, // Cooking Skill (ru)
+		17789, // Crop Harvest Bubbles (pt)
+		9920,  // Crop Regrowth and Perennial Crops (pt)
+		18035, // Customize Anywhere (fr)
+		12968, // Custom NPC Belos (id)
+		5811,  // Custom NPC Riley (de)
+		14548, // Custom NPC Riley (tr)
+		11851, // Custom Spouse Patio Redux (zh)
+		20428, // Daily Tasks Report (ru)
+		15007, // Deluxe Journal (fr)
+		15908, // Downtown Zuzu (fr)
+		18857, // Downtown Zuzu (id)
+		11090, // Downtown Zuzu (it)
+		9901,  // Downtown Zuzu (ru)
+		18313, // Downtown Zuzu (th)
+		20532, // Dusty Overhaul - SVE (es)
+		5396,  // Dwarvish (pt)
+		5428,  // Dwarvish (zh)
+		10626, // East Scarp (es)
+		8784,  // East Scarpe (pt)
+		10967, // Extra Fish Information (fr)
+		15717, // Extended Minecart (tr)
+		17027, // Farm Helper (es)
+		12045, // Farmer Helper (ru)
+		12097, // Farmer Helper (tr)
+		18034, // Fashion Sense (fr)
+		13106, // Festival of the Mundane (zh)
+		13165, // Fishing Trawler (vi)
+		15286, // Fireworks Festival (zh)
+		6157,  // Garden Village Shops (ru)
+		6500,  // Garden Village Shops (ru)
+		18721, // Generic Mod Config Menu (vi)
+		18722, // Greenhouse Sprinklers (vi)
+		9874,  // Happy Birthday (fr)
+		4693,  // Happy Birthday (pt)
+		6693,  // Happy Birthday (pt)
+		9117,  // Happy Birthday (ru)
+		6111,  // Immersive Characters - Shane (es)
+		12399, // Instant Tool Upgrades (tr)
+		17798, // Joys of Efficiency (vi)
+		10685, // Juliet and Jessie the Joja Clerks (es)
+		8946,  // Junimo Dialog (pt)
+		11282, // Lavril (es)
+		15624, // LewdDew Valley (zh)
+		13866, // Line Sprinklers (fr)
+		17797, // Loan Mod (vi)
+		9143,  // Lookup Anything (id)
+		18723, // Lookup Anything (vi)
+		10720, // Loved Labels (pl)
+		18253, // Love Festival (ru)
+		18150, // Love Festival (tr)
+		4339,  // Lunar Disturbances (pt)
+		7082,  // Lunar Disturbances (pt)
+		4265,  // Magic (pt)
+		18747, // Magic (vi)
+		18746, // Mana Bar (vi)
+		15183, // Mermaid Island (es)
+		10804, // Mister Ginger Cat NPC (es)
+		16659, // Mobile Catalogues (vi)
+		10307, // Mobile Phone (pt)
+		16658, // Mobile Phone (vi)
+		11844, // Mobile Phone (zh)
+		20109, // More Lively Sewer Overhaul (ru)
+		15180, // More New Fish (es)
+		16987, // More Rings (ru)
+		18252, // Multiple Spouses (th)
+		10224, // Multiple Spouses (zh)
+		14478, // Never Ending Adventure - NPC Mateo (es)
+		6295,  // Nice Messages (ru)
+		8928,  // Multiple Spouse Dialogs (tr)
+		15327, // New Years Eve (tr)
+		5551,  // NPC Adventures (ru)
+		8767,  // NPC Adventures (tr)
+		13369, // NPC Map Locations (vi)
+		17659, // NPC Map Locations (vi)
+		14437, // NPC Map Locations (zh)
+		14878, // Ornithologist's Guild (ru)
+		8696,  // Personal Effects Redux (pt)
+		14821, // Personal Effects Redux (pt)
+		13244, // PPJA (vi)
+		5329,  // Prismatic Tools (pt)
+		20395, // Prismatic Tools (multiple languages)
+		11407, // Producer Framework Mod (fr)
+		18010, // Resource Storage (pt)
+		8030,  // Ridgeside Village (es)
+		18829, // Ridgeside Village (vi)
+		9942,  // Ridgeside Village (fr)
+		8170,  // Riley (de)
+		10349, // Robin Romance (es)
+		16432, // Rodney - a new NPC for East Scarp
+		6096,  // Sailor Moon Hairstyles Clothing and Kimono (zh)
+		16399, // Self Service (pt)
+		17658, // Self Service (vi)
+		18378, // Shiko NPC (id)
+		18662, // Shopping Show (vi)
+		14373, // Socializing Skill (vi)
+		19242, // Socializing Skill (vi)
+		11140, // Spouses in Ginger Island (zh)
+		20244, // Stardew Notifications (tr)
+		5259,  // Stardew Valley Expanded (de)
+		5272,  // Stardew Valley Expanded (es)
+		5509,  // Stardew Valley Expanded (es)
+		5901,  // Stardew Valley Expanded (fr)
+		8411,  // Stardew Valley Expanded (fr)
+		12867, // Stardew Valley Expanded (fr)
+		5788,  // Stardew Valley Expanded (ja)
+		4206,  // Stardew Valley Expanded (pt)
+		6332,  // Stardew Valley Expanded (tr)
+		8143,  // Stardew Valley Expanded (zh)
+		19243, // Survivalist Skill (vi)
+		10221, // The Ranch Expansion Marnie and Jas (es)
+		8312,  // Town School Functions (tr)
+		6356,  // Town School Functions (zh)
+		17666, // Tree Transplant (vi)
+		10785, // Tristan (es)
+		7556,  // UI Info Suite (fr)
+		15208, // UI Info Suite 2 (vi)
+		13389, // UI Info Suite (vi)
+		6637,  // Underground Secrets (ru)
+		17727, // Time Before Harvest Enhanced (vi)
+		14398, // Tristan (es)
+		17684, // What Are You Missing (vi)
 
-	// reposts
-	new(ModSite.Nexus, 12920), // Extra Map Layers (version for Android by original author, with same mod ID)
-	new(ModSite.Nexus, 11297), // Friends Forever
-	new(ModSite.Nexus, 12729), // Many Enchantments
-	new(ModSite.Nexus, 16921), // More Random Edition
-	new(ModSite.Nexus, 19817), // Multiplayer for Mobile
-	new(ModSite.Nexus, 19291), // Night Owl Repacked
-	new(ModSite.Nexus, 1427),  // Prairie King Made Easy
-	new(ModSite.Nexus, 10916), // Qi Exchanger
-	new(ModSite.Nexus, 887),   // Reseed
-	new(ModSite.Nexus, 9350),  // Reset Terrain Features
-	new(ModSite.Nexus, 1363),  // Save Anywhere
-	new(ModSite.Nexus, 8386),  // Save Anywhere
-	new(ModSite.Nexus, 9128),  // Shop Tile Framework
-	new(ModSite.Nexus, 1077),  // UI Mod Suite
-	new(ModSite.Nexus, 19879), // Virtual Keyboard
+		// reposts
+		12920, // Extra Map Layers (version for Android by original author, with same mod ID)
+		11297, // Friends Forever
+		12729, // Many Enchantments
+		16921, // More Random Edition
+		19817, // Multiplayer for Mobile
+		19291, // Night Owl Repacked
+		1427,  // Prairie King Made Easy
+		10916, // Qi Exchanger
+		887,   // Reseed
+		9350,  // Reset Terrain Features
+		1363,  // Save Anywhere
+		8386,  // Save Anywhere
+		9128,  // Shop Tile Framework
+		1077,  // UI Mod Suite
+		19879, // Virtual Keyboard
 
-	// files to drop into another mod's folder
-	new(ModSite.Nexus, 18729), // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
-	new(ModSite.Nexus, 14360), // Facelift for CC's Horse Plus (replaces files in CC's Horse Plus)
+		// files to drop into another mod's folder
+		18729, // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
+		14360, // Facelift for CC's Horse Plus (replaces files in CC's Horse Plus)
 
-	// newer versions uploaded to a new page for some reason
-	new(ModSite.Nexus, 3941),  // Daily Planner
-	new(ModSite.Nexus, 8876),  // Map Editor (replaced by Map Editor Extended with the same mod ID)
-	new(ModSite.Nexus, 2676),  // PokeMania
-	new(ModSite.Nexus, 444),   // Save Anywhere (replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID)
-	new(ModSite.Nexus, 3294),  // Sprint Sprint Sprint (replaced by Sprint Sprint)
+		// newer versions uploaded to a new page for some reason
+		3941,  // Daily Planner
+		8876,  // Map Editor (replaced by Map Editor Extended with the same mod ID)
+		2676,  // PokeMania
+		444,   // Save Anywhere (replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID)
+		3294,  // Sprint Sprint Sprint (replaced by Sprint Sprint)
 
-	// other
-	new(ModSite.Nexus, 19079), // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
-	new(ModSite.Nexus, 17262), // Stardrop Quick Start (not a mod itself, just has dependencies)
-	new(ModSite.Nexus, 19905), // XNB Archive (not a mod)
+		// other
+		19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
+		17262, // Stardrop Quick Start (not a mod itself, just has dependencies)
+		19905  // XNB Archive (not a mod)
+	),
 	#endregion
 
 
@@ -362,6 +384,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	new(ModSite.Nexus, 2364, 9477),  // Even More Secret Woods > Bush Reset
 	new(ModSite.Nexus, 1008, 3858),  // Hope's Farmer Customization Mods > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
 	new(ModSite.Nexus, 3355, 14167), // Village Map Mod > Village Console Commands
+	new(ModSite.Nexus, 20250, manifestId: "MindMeltMax.SAMLTest"), // demo for main mod
 
 	// legacy pre-standardization content packs (ALL = Advanced Location Loader, SI = Seasonal Immersion)
 	new(ModSite.Nexus, 3713, 15421), // BathHouse Apartment for ALL
@@ -388,11 +411,8 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
-	new(ModSite.Nexus, 4227, manifestId: "spacechase0.GenericModConfigMenu"),   // CATastrophic Hunger Crisis
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
-	new(ModSite.Nexus, 4130, manifestId: "spacechase0.GenericModConfigMenu"),   // Farming Made Easy Suite
-	new(ModSite.Nexus, 3623, manifestId: "spacechase0.GenericModConfigMenu"),   // Fishing Made Easy Suite
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
@@ -420,7 +440,7 @@ readonly ModSearch[] IgnoreForAnalysis = new ModSearch[]
 	// special cases
 	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // C# component uploaded to both #14928 and #15564, so link it to the first one
 	#endregion
-};
+];
 
 /// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
 private IDictionary<string, ModSearch[]> IgnoreForAnalysisBySiteId;
@@ -1773,6 +1793,14 @@ class ModSearch
 			&& this.SiteId == siteId
 			&& (this.FileId == null || this.FileId == fileId)
 			&& (this.ManifestId == null || this.ManifestId == manifestId);
+	}
+
+	/// <summary>Get a set of mod search models for the same site.</summary>
+	/// <param name="site">The mod site.</param>
+	/// <param name="siteIds">The mod IDs on the mod site.</param>
+	public static IEnumerable<ModSearch> ForSiteIds(ModSite site, params int[] siteIds)
+	{
+		return siteIds.Select(id => new ModSearch(site, id));
 	}
 }
 

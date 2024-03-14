@@ -110,6 +110,9 @@ javascript:(function() {
             2268: "Stardew Patcher",
             /*2275: "XNB Loader",*/
 
+            /* Jessebot */
+            3025: "Bigger Riverlands Farm",
+
             /* Jierishi */
             7194: "Pierre Sells Tree Fertilizer",
 
