@@ -386,6 +386,7 @@ async Task Main()
 				.Skip(PathUtilities.GetSegments(this.ModFolderPath).Length)
 				.First(); // the name of the folder immediately under Mods containing this mod
 			DirectoryInfo searchDir = new DirectoryInfo(Path.Combine(this.ModFolderPath, searchFolderName));
+			string relativePath = PathUtilities.GetRelativePath(this.ModFolderPath, actualDir.FullName);
 
 			// get page url
 			string url = mod.GetModPageUrl();
@@ -407,51 +408,58 @@ async Task Main()
 			);
 
 			// normalize
-			string newName = null;
-			try
+			if (!relativePath.StartsWith('%')) // convention for temporary folders (usually dependencies needed to load the mods being tested)
 			{
-				// get preferred name
-				newName = mod.GetRecommendedFolderName();
-				foreach (string id in mod.IDs)
+				string newName = null;
+				try
 				{
-					if (this.OverrideFolderNames.TryGetValue(id, out string @override))
+					// get preferred name
+					newName = mod.GetRecommendedFolderName();
+					foreach (string id in mod.IDs)
 					{
-						newName = @override;
-						break;
+						if (this.OverrideFolderNames.TryGetValue(id, out string @override))
+						{
+							newName = @override;
+							break;
+						}
+					}
+
+					// mark unofficial versions
+					if (mod.InstalledVersion.IsPrerelease() && (mod.InstalledVersion.PrereleaseTag.Contains("unofficial") || mod.InstalledVersion.PrereleaseTag.Contains("update")))
+						newName += $" [unofficial]";
+
+					// sanitize name
+					foreach (char ch in Path.GetInvalidFileNameChars())
+					{
+						char replacementChar = ch is '"' && !newName.Contains('\'')
+							? '\'' // special case: change " to ' for readability
+							: '_';
+
+						newName = newName.Replace(ch, replacementChar);
+					}
+
+					// move to new name
+					DirectoryInfo newDir = new DirectoryInfo(Path.Combine(this.ModFolderPath, newName));
+					newDir.Parent.Create();
+					if (actualDir.FullName != newDir.FullName)
+					{
+						string newRelativePath = PathUtilities.GetRelativePath(this.ModFolderPath, newDir.FullName);
+
+						Console.WriteLine($"   Moving {relativePath} to {newRelativePath}...");
+						if (newDir.Exists)
+						{
+							actualDir.MoveTo(newDir.FullName + "__TEMP");
+							FileUtilities.ForceDelete(newDir);
+						}
+						actualDir.MoveTo(newDir.FullName);
+
+						relativePath = newRelativePath;
 					}
 				}
-
-				// mark unofficial versions
-				if (mod.InstalledVersion.IsPrerelease() && (mod.InstalledVersion.PrereleaseTag.Contains("unofficial") || mod.InstalledVersion.PrereleaseTag.Contains("update")))
-					newName += $" [unofficial]";
-
-				// sanitize name
-				foreach (char ch in Path.GetInvalidFileNameChars())
+				catch (Exception error)
 				{
-					char replacementChar = ch is '"' && !newName.Contains('\'')
-						? '\'' // special case: change " to ' for readability
-						: '_';
-
-					newName = newName.Replace(ch, replacementChar);
+					new { error, newName, mod }.Dump("error normalising mod folder");
 				}
-
-				// move to new name
-				DirectoryInfo newDir = new DirectoryInfo(Path.Combine(this.ModFolderPath, newName));
-				newDir.Parent.Create();
-				if (actualDir.FullName != newDir.FullName)
-				{
-					Console.WriteLine($"   Moving {PathUtilities.GetRelativePath(this.ModFolderPath, actualDir.FullName)} to {PathUtilities.GetRelativePath(this.ModFolderPath, newDir.FullName)}...");
-					if (newDir.Exists)
-					{
-						actualDir.MoveTo(newDir.FullName + "__TEMP");
-						FileUtilities.ForceDelete(newDir);
-					}
-					actualDir.MoveTo(newDir.FullName);
-				}
-			}
-			catch (Exception error)
-			{
-				new { error, newName, mod }.Dump("error normalising mod folder");
 			}
 		}
 
