@@ -45,4 +45,14 @@ public class IncrementalProgressBar : Util.ProgressBar
 	{
 		this.Set(this.Current + 1);
 	}
+
+	/// <summary>Output the progress bar for LINQPad.</summary>
+	private object ToDump()
+	{
+		MethodInfo method =
+			typeof(Util.ProgressBar).GetMethod("ToDump", BindingFlags.Instance | BindingFlags.NonPublic)
+			?? throw new InvalidOperationException($"Can't find {nameof(Util.ProgressBar)}.ToDump method");
+		
+		return method.Invoke(this, Array.Empty<object>());
+	}
 }
