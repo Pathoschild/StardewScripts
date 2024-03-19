@@ -58,7 +58,7 @@ readonly string RootPath = @"C:\dev\mod-dump";
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 13), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 19), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -204,7 +204,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		11090, // Downtown Zuzu (it)
 		9901,  // Downtown Zuzu (ru)
 		18313, // Downtown Zuzu (th)
-		20532, // Dusty Overhaul - SVE (es)
+		20556, // Dusty Overhaul - SVE (es)
 		5396,  // Dwarvish (pt)
 		5428,  // Dwarvish (zh)
 		10626, // East Scarp (es)
@@ -238,6 +238,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		9143,  // Lookup Anything (id)
 		18723, // Lookup Anything (vi)
 		10720, // Loved Labels (pl)
+		20568, // Loved Labels (pt)
 		18253, // Love Festival (ru)
 		18150, // Love Festival (tr)
 		4339,  // Lunar Disturbances (pt)
@@ -426,6 +427,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 5384, manifestId: "Platonymous.PlatoUI"),                // Plato Warp Menu
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
+	new(ModSite.Nexus, 20593, manifestId: "Esca.FarmTypeManager"),              // Standard Farm Expanded
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch

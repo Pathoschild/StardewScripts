@@ -171,6 +171,9 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["TehPers.CoreMod"] = "@@TehCore",
 	["tylergibbs2.BattleRoyalleyYear2"] = "(2) Battle Royalley - Year 2",
 
+	// names for mods without a real ID
+	["FAKE.RainRandomizer"] = "Rain Randomizer",
+
 	// fix invalid names
 	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by wiki
 	["leclair.bcbuildings"] = "Better Crafting - Buildings", // : replaced with _
@@ -181,12 +184,21 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["Tofu.SlimeQOL"] = "Slime Mods - SlimeQoL Alt",
 
 	// fix ambiguous names
+	["cgifox.AutoAttack"] = "Auto-Attack (cgifox)",
+	["X3n0n182.AutoAttack"] = "Auto-Attack (X3n0n182)",
+	
+	["leclair.bettercrafting"] = "Better Crafting (Khloe Leclair)",
+	["RedstoneBoy.BetterCrafting"] = "Better Crafting (RedstoneBoy)",
+	
 	["ceruleandeep.bwdyworks"] = "Bwdyworks (ceruleandeep)",
 
 	["Vrakyas.CurrentLocation"] = "Current Location (Vrakyas)",
 	["CurrentLocation102120161203"] = "Current Location (Omegasis)",
 
 	["Thor.EnemyHealthBars"] = "Enemy Health Bars (TheThor59)",
+
+	["BlaDe.EventTester"] = "Event Tester (BlaDe)",
+	["sinZandAtravita.SinZsEventTester"] = "Event Tester (SinZ)",
 
 	["HappyBirthday"] = "Happy Birthday (Oxyligen)",
 	["Omegasis.HappyBirthday"] = "Happy Birthday (Omegasis)",
@@ -333,7 +345,6 @@ async Task Main()
 				// fetch data
 				Platform platform = EnvironmentUtility.DetectPlatform();
 				ModSearchEntryModel searchModel = new ModSearchEntryModel(id, apiVersion, mod.UpdateKeys, isBroken: true); // isBroken ensures unofficial updates always listed
-				string cacheKey = $"{id}|{string.Join(", ", mod.UpdateKeys)}|{this.ForBeta}";
 				ModEntryModel result = (await client.GetModInfoAsync(new[] { searchModel }, apiVersion, gameVersion: null, platform, includeExtendedMetadata: true)).Select(p => p.Value).FirstOrDefault();
 
 				// select latest version
