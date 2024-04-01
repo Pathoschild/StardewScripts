@@ -55,6 +55,9 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 /// <summary>The path in which to store cached data.</summary>
 readonly string RootPath = @"C:\dev\mod-dump";
 
+/// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
+readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
+
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
@@ -497,7 +500,7 @@ async Task Main()
 			// fetch mods
 			int[] imported = await this.ImportMods(modSite, modIds, rootPath: this.RootPath);
 			foreach (int id in imported)
-				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString(CultureInfo.InvariantCulture)));
+				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString()));
 		}
 	}
 
@@ -513,6 +516,15 @@ async Task Main()
 	// read mod data
 	ConsoleHelper.Print($"Reading mod folders...");
 	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
+
+	// add launch button
+	new Hyperlinq(
+		() => Process.Start(
+			fileName: Path.Combine(this.InstallModsToPath, "..", "StardewModdingAPI.exe"),
+			arguments: @$"--mods-path ""{Path.GetFileName(this.InstallModsToPath)}"""
+		),
+		"launch SMAPI"
+	).Dump("actions");
 
 	// run analyses
 	ConsoleHelper.Print($"Running analyses...");
@@ -574,6 +586,8 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 			? this.GetCustomSourceUrl(mod)
 			: null
 
+		let isModInstalled = Directory.Exists(Path.Combine(this.InstallModsToPath, folder.RawFolder.Directory.Name))
+
 		let missingLabels = (new[] { !wikiHasManifestId ? "manifest ID" : null, !wikiHasSiteId ? "site ID" : null }).Where(p => p is not null).ToArray()
 
 		select new
@@ -592,6 +606,18 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 				string.Join(", ", missingLabels),
 				missingLabels.Length == 1 ? "color: red" : "" // highlight mods that are partly missing, which usually means outdated info
 			),
+			Actions = isModInstalled
+				? "installed"
+				: (object)Util.OnDemand(
+					"install mod",
+					() => new object[] // returning an array allows collapsing the log in the LINQPad output
+					{
+						Util.WithStyle(
+							Util.VerticalRun(this.InstallMod(folder)),
+							"font-style: monospace; font-size: 0.9em;"
+						)
+					}
+				),
 			Metadata = Util.OnDemand("expand", () => new
 			{
 				FileId = folder.ID,
@@ -619,6 +645,37 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 		}
 	)
 	.ToArray();
+}
+
+/// <summary>Copy a mod into the mods folder indicated by <see cref="InstallModsToPath"/>.</summary>
+/// <param name="folder">The mod folder to install.</param>
+private IEnumerable<object> InstallMod(ParsedFile folder)
+{
+	const string traceStyle = "opacity: 0.5";
+	const string errorStyle = "color: red; font-weight: bold;";
+	const string successStyle = "color: green;";
+
+	// get paths
+	DirectoryInfo fromDir = folder.RawFolder.Directory;
+	DirectoryInfo toDir = new DirectoryInfo(Path.Combine(this.InstallModsToPath, fromDir.Name));
+	yield return Util.WithStyle($"Installing mod:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", traceStyle);
+	if (toDir.Exists)
+	{
+		yield return Util.WithStyle($"Target mod folder already exists.", errorStyle);
+		yield break;
+	}
+
+	// copy mod
+	foreach (FileInfo file in fromDir.GetFiles("*", SearchOption.AllDirectories))
+	{
+		string relativePath = Path.GetRelativePath(fromDir.FullName, file.FullName);
+		string toPath = Path.Combine(toDir.FullName, relativePath);
+
+		Directory.CreateDirectory(Path.GetDirectoryName(toPath));
+		File.Copy(file.FullName, toPath);
+	}
+
+	yield return Util.WithStyle("Done!", successStyle);
 }
 
 /// <summary>Get mods which the SMAPI toolkit marked as invalid or unparseable.</summary>
