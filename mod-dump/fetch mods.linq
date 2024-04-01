@@ -554,6 +554,8 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 	return (
 		from mod in mods
 		from folder in mod.ModFolders
+		orderby mod.Name
+
 		where
 			folder.ModType == ModType.Smapi
 			&& !string.IsNullOrWhiteSpace(folder.ModID)
@@ -578,41 +580,44 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 		{
 			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
 			SiteName = mod.Name,
-			SiteAuthor = mod.Author,
-			SiteAuthorLabel = mod.AuthorLabel,
+			SiteAuthor = mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
+				? $"{mod.Author}\n({mod.AuthorLabel})"
+				: mod.Author,
 			SiteVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : mod.Version,
-			FileID = folder.ID,
-			FileCategory = folder.Type,
 			FileName = folder.DisplayName,
-			FileType = folder.ModType,
+			FileCategory = folder.Type,
 			folder.ModID,
 			folder.ModVersion,
 			Missing = Util.WithStyle(
 				string.Join(", ", missingLabels),
 				missingLabels.Length == 1 ? "color: red" : "" // highlight mods that are partly missing, which usually means outdated info
 			),
-			UpdateKeys = new Lazy<string[]>(() => manifest.UpdateKeys),
-			Manifest = new Lazy<Manifest>(() => manifest),
-			Mod = new Lazy<ParsedMod>(() => mod),
-			Folder = new Lazy<ParsedFile>(() => folder),
-			WikiEntry = new Lazy<string>(() =>
-				"{{#invoke:SMAPI compatibility|entry\n"
-				+ $"  |name    = {string.Join(", ", names)}\n"
-				+ $"  |author  = {string.Join(", ", authorNames)}\n"
-				+ $"  |id      = {manifest?.UniqueID}\n"
-				+ (mod.Site == ModSite.CurseForge ? $"  |curse   = {mod.ID}\n" : "")
-				+ (mod.Site == ModSite.ModDrop ? $"  |moddrop = {mod.ID}\n" : "")
-				+ $"  |nexus   = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
-				+ $"  |github  = {githubRepo}\n"
-				+ (customSourceUrl != null
-					? $"  |source  = {customSourceUrl}\n"
-					: ""
+			Metadata = Util.OnDemand("expand", () => new
+			{
+				FileId = folder.ID,
+				FileType = folder.ModType,
+				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				Manifest = Util.OnDemand("expand", () => manifest),
+				Mod = Util.OnDemand("expand", () => mod),
+				Folder = Util.OnDemand("expand", () => folder),
+				WikiEntry = Util.OnDemand("expand", () =>
+					"{{#invoke:SMAPI compatibility|entry\n"
+					+ $"  |name    = {string.Join(", ", names)}\n"
+					+ $"  |author  = {string.Join(", ", authorNames)}\n"
+					+ $"  |id      = {manifest?.UniqueID}\n"
+					+ (mod.Site == ModSite.CurseForge ? $"  |curse   = {mod.ID}\n" : "")
+					+ (mod.Site == ModSite.ModDrop ? $"  |moddrop = {mod.ID}\n" : "")
+					+ $"  |nexus   = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
+					+ $"  |github  = {githubRepo}\n"
+					+ (customSourceUrl != null
+						? $"  |source  = {customSourceUrl}\n"
+						: ""
+					)
+					+ "}}"
 				)
-				+ "}}"
-			)
+			})
 		}
 	)
-	.OrderBy(p => p.SiteName)
 	.ToArray();
 }
 

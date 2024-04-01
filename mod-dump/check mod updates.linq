@@ -532,7 +532,7 @@ async Task Main()
 					}
 					: (object)Format("not on wiki", null),
 				UpdateKeys = string.Join(", ", mod.UpdateKeys),
-				Raw = new Lazy<ModData>(() => mod)
+				Raw = Util.OnDemand("raw data", () => mod)
 			}
 		);
 		if (result.Any())
@@ -564,9 +564,9 @@ async Task Main()
 				.Select(mod => new
 				{
 					FolderName = mod.Folder.Directory.Name,
-					Manifest = new Lazy<IManifest>(() => mod.Folder.Manifest),
-					RawManifest = new Lazy<string>(() => File.ReadAllText(Path.Combine(mod.Folder.Directory.FullName, "manifest.json"))),
-					ApiRecord = new Lazy<ModEntryModel>(() => mod.ApiRecord),
+					Manifest = Util.OnDemand("expand", () => mod.Folder.Manifest),
+					RawManifest = Util.OnDemand("expand", () => File.ReadAllText(Path.Combine(mod.Folder.Directory.FullName, "manifest.json"))),
+					ApiRecord = Util.OnDemand("expand", () => mod.ApiRecord),
 					IDs = mod.IDs,
 					UpdateKeys = mod.UpdateKeys,
 					Installed = mod.InstalledVersion.ToString(),
@@ -733,14 +733,18 @@ async Task Main()
 				Status = Util.WithStyle(mod.WikiStatus, $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
 				Summary = Util.WithStyle($"{mod.WikiSummary} {(!string.IsNullOrWhiteSpace(mod.WikiBrokeIn) ? $"[broke in {mod.WikiBrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
 				Issues = Util.RawHtml(issues),
-				UpdateKeys = new Lazy<string>(() => mod.UpdateKeys),
-				ManifestUpdateKeys = new Lazy<object>(() => mod.ManifestUpdateKeys != null ? mod.ManifestUpdateKeys : Util.WithStyle("none", errorStyle)),
-				NormalizedFolder = new Lazy<string>(() => mod.NormalizedFolder),
-				Manifest = new Lazy<Manifest>(() => mod.Manifest),
+				Type = mod.ModData.Folder.Type,
 				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
-				Links = new Lazy<object>(() => mod.Links),
+				Metadata = Util.OnDemand("expand", () => new
+				{
+					UpdateKeys = Util.OnDemand("expand", () => mod.UpdateKeys),
+					ManifestUpdateKeys = Util.OnDemand("expand", () => mod.ManifestUpdateKeys != null ? mod.ManifestUpdateKeys : Util.WithStyle("none", errorStyle)),
+					NormalizedFolder = Util.OnDemand("expand", () => mod.NormalizedFolder),
+					Manifest = Util.OnDemand("expand", () => mod.Manifest),
+					Links = Util.OnDemand("expand", () => mod.Links),
+				}),
 				Overrides = changeLocalVersion.HasChanges || changeRemoteVersion.HasChanges || changeUpdateKeys.HasChanges
-					? new Lazy<object>(() => new
+					? Util.OnDemand("expand", () => new
 					{
 						LocalVersion = changeLocalVersion?.ToString(),
 						RemoteVersion = changeRemoteVersion?.ToString(),
