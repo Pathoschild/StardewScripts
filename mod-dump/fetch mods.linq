@@ -2,23 +2,16 @@
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
   <NuGetReference>HtmlAgilityPack</NuGetReference>
-  <NuGetReference>Newtonsoft.Json</NuGetReference>
   <NuGetReference>Pathoschild.FluentNexus</NuGetReference>
-  <NuGetReference>Squid-Box.SevenZipSharp</NuGetReference>
   <Namespace>Newtonsoft.Json</Namespace>
-  <Namespace>Newtonsoft.Json.Converters</Namespace>
   <Namespace>Newtonsoft.Json.Linq</Namespace>
   <Namespace>Pathoschild.FluentNexus</Namespace>
   <Namespace>Pathoschild.FluentNexus.Models</Namespace>
   <Namespace>Pathoschild.Http.Client</Namespace>
-  <Namespace>SevenZip</Namespace>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.Wiki</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Serialization</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Serialization.Models</Namespace>
-  <Namespace>System.Globalization</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
 </Query>
@@ -31,6 +24,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 #load "Utilities/ConsoleHelper.linq"
 #load "Utilities/FileHelper.linq"
 #load "Utilities/IncrementalProgressBar.linq"
+#load "Utilities/ModDumpManager.linq"
 
 /*********
 ** Configuration
@@ -53,7 +47,10 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 };
 
 /// <summary>The path in which to store cached data.</summary>
-readonly string RootPath = @"C:\dev\mod-dump";
+readonly ModDumpManager ModDump = new(
+	rootPath: @"C:\dev\mod-dump",
+	resetUnpacked: false
+);
 
 /// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
 readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
@@ -64,9 +61,6 @@ readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 19), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
-
-/// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
-readonly bool ResetUnpacked = false;
 
 /// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
 readonly ModSearch[] IgnoreForAnalysis = [
@@ -450,17 +444,12 @@ readonly ModSearch[] IgnoreForAnalysis = [
 /// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
 private IDictionary<string, ModSearch[]> IgnoreForAnalysisBySiteId;
 
-/// <summary>The settings to use when writing JSON files.</summary>
-readonly JsonSerializerSettings JsonSettings = JsonHelper.CreateDefaultSettings();
-
 
 /*********
 ** Script
 *********/
 async Task Main()
 {
-	Directory.CreateDirectory(this.RootPath);
-
 	// build optimized mod search lookup
 	this.IgnoreForAnalysisBySiteId = this.IgnoreForAnalysis
 		.GroupBy(p => new { p.Site, p.SiteId })
@@ -498,7 +487,7 @@ async Task Main()
 			}
 
 			// fetch mods
-			int[] imported = await this.ImportMods(modSite, modIds, rootPath: this.RootPath);
+			int[] imported = await this.ImportMods(modSite, modIds);
 			foreach (int id in imported)
 				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString()));
 		}
@@ -506,16 +495,11 @@ async Task Main()
 
 	// unpack fetched files
 	ConsoleHelper.Print($"Unpacking mod folders...");
-	HashSet<string> modFoldersToUnpack = new HashSet<string>(this.GetModFoldersWithFilesNotUnpacked(this.RootPath), StringComparer.InvariantCultureIgnoreCase);
-	if (modFoldersToUnpack.Any())
-	{
-		this.DeleteCache();
-		this.UnpackMods(rootPath: this.RootPath, filter: folder => this.ResetUnpacked || unpackMods.Any(p => folder.FullName.EndsWith(p)) || modFoldersToUnpack.Any(p => folder.FullName.EndsWith(p)));
-	}
+	this.ModDump.UnpackModDownloads();
 
 	// read mod data
 	ConsoleHelper.Print($"Reading mod folders...");
-	ParsedMod[] mods = this.ReadMods(this.RootPath).ToArray();
+	ParsedMod[] mods = this.ModDump.ReadMods().ToArray();
 
 	// add launch button
 	new Hyperlinq(
@@ -953,9 +937,8 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 /// <summary>Import data for matching mods.</summary>
 /// <param name="modSite">The mod site API client.</param>
 /// <param name="modIds">The mod IDs to try fetching.</param>
-/// <param name="rootPath">The path in which to store cached data.</param>
 /// <returns>Returns the imported mod IDs.</returns>
-async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPath)
+async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds)
 {
 	Stopwatch timer = Stopwatch.StartNew();
 
@@ -972,19 +955,18 @@ async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds, string rootPa
 		progress.Caption = $"Fetching {modSite.SiteKey} > mod {id} ({progress.Percent}%)";
 
 		// fetch
-		await this.ImportMod(modSite, id, rootPath);
+		await this.ImportMod(modSite, id);
 	}
 
 	timer.Stop();
-	progress.Caption = $"Fetched {modIds.Length} updated mods from {modSite.SiteKey} ({progress.Percent}%) in {this.GetFormattedTime(timer.Elapsed)}";
+	progress.Caption = $"Fetched {modIds.Length} updated mods from {modSite.SiteKey} ({progress.Percent}%) in {ConsoleHelper.GetFormattedTime(timer.Elapsed)}";
 	return modIds;
 }
 
 /// <summary>Import data for a mod.</summary>
 /// <param name="modSite">The mod site API client.</param>
 /// <param name="id">The unique mod ID.</param>
-/// <param name="rootPath">The path in which to store cached data.</param>
-async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
+async Task ImportMod(IModSiteClient modSite, int id)
 {
 	while (true)
 	{
@@ -1016,7 +998,7 @@ async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 			{
 				try
 				{
-					await this.DownloadAndCacheModDataAsync(modSite.SiteKey, mod, rootPath, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
+					await this.DownloadAndCacheModDataAsync(modSite.SiteKey, mod, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
 					break;
 				}
 				catch (RateLimitedException ex)
@@ -1046,33 +1028,20 @@ async Task ImportMod(IModSiteClient modSite, int id, string rootPath)
 /// <summary>Write mod data to the cache directory and download the available files.</summary>
 /// <param name="siteKey">The mod site from which to fetch.</param>
 /// <param name="mod">The mod data to save.</param>
-/// <param name="rootPath">The path in which to store cached data.</param>
 /// <param name="getDownloadLinks">Get the download URLs for a specific file. If this returns multiple URLs, the first working one will be used.</param>
-async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string rootPath, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
+async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
 {
 	// reset cache folder
-	DirectoryInfo folder = new DirectoryInfo(Path.Combine(rootPath, siteKey.ToString(), mod.ID.ToString(CultureInfo.InvariantCulture)));
-	if (folder.Exists)
-	{
-		FileHelper.ForceDelete(folder);
-		folder.Refresh();
-	}
-	folder.Create();
-	folder.Refresh();
-
-	// save mod info
-	File.WriteAllText(Path.Combine(folder.FullName, "mod.json"), JsonConvert.SerializeObject(mod, this.JsonSettings));
+	this.ModDump.DeleteMod(siteKey, mod.ID.ToString());
+	this.ModDump.SaveModData(mod);
 
 	// save files
 	using (WebClient downloader = new WebClient())
 	{
 		foreach (GenericFile file in mod.Files)
 		{
-			// create folder
-			FileInfo localFile = new FileInfo(Path.Combine(folder.FullName, "files", $"{file.ID}{Path.GetExtension(file.FileName)}"));
-			localFile.Directory.Create();
-
 			// download file from first working CDN
+			FileInfo localFile = new FileInfo(this.ModDump.GetModDownloadPath(siteKey, mod.ID.ToString(), file));
 			Queue<Uri> sources = new Queue<Uri>(await getDownloadLinks(file));
 			while (true)
 			{
@@ -1119,244 +1088,6 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, string 
 			}
 		}
 	}
-}
-
-/// <summary>Get all mod folders which have files that haven't been unpacked.</summary>
-/// <param name="rootPath">The path containing mod folders.</param>
-IEnumerable<string> GetModFoldersWithFilesNotUnpacked(string rootPath)
-{
-	// unpack files
-	foreach (DirectoryInfo siteDir in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
-	{
-		foreach (DirectoryInfo modDir in this.GetSortedSubfolders(siteDir))
-		{
-			// get packed folder
-			string filesPath = Path.Combine(modDir.FullName, "files");
-			if (!Directory.Exists(filesPath))
-				continue;
-
-			// check for files that need unpacking
-			string unpackedDirPath = Path.Combine(modDir.FullName, "unpacked");
-			foreach (string archiveFilePath in Directory.GetFiles(filesPath))
-			{
-				string extension = Path.GetExtension(archiveFilePath);
-				if (extension == ".exe")
-					continue;
-
-				string id = Path.GetFileNameWithoutExtension(archiveFilePath);
-				string targetDirPath = Path.Combine(unpackedDirPath, id);
-				if (!Directory.Exists(targetDirPath))
-				{
-					yield return Path.Combine(siteDir.Name, modDir.Name);
-					break;
-				}
-			}
-		}
-	}
-}
-
-/// <summary>Unpack all mods in the given folder.</summary>
-/// <param name="rootPath">The path in which to store cached data.</param>
-/// <param name="filter">A filter which indicates whether a mod folder should be unpacked.</param>
-void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
-{
-	SevenZipBase.SetLibraryPath(Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess
-		? @"C:\Program Files (x86)\7-Zip\7z.dll"
-		: @"C:\Program Files\7-Zip\7z.dll"
-	);
-
-	foreach (DirectoryInfo siteDir in new DirectoryInfo(rootPath).EnumerateDirectories())
-	{
-		// get folders to unpack
-		DirectoryInfo[] modDirs = this
-			.GetSortedSubfolders(siteDir)
-			.Where(filter)
-			.ToArray();
-		if (!modDirs.Any())
-			continue;
-
-		// unpack files
-		Stopwatch timer = Stopwatch.StartNew();
-		var progress = new IncrementalProgressBar(modDirs.Count()).Dump();
-		foreach (DirectoryInfo modDir in modDirs)
-		{
-			progress.Increment();
-			progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} ({progress.Percent}%)...";
-
-			// get packed folder
-			DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
-			if (!packedDir.Exists)
-				continue;
-
-			// create/reset unpacked folder
-			DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
-			if (unpackedDir.Exists)
-			{
-				FileHelper.ForceDelete(unpackedDir);
-				unpackedDir.Refresh();
-			}
-			unpackedDir.Create();
-
-			// unzip each download
-			foreach (FileInfo archiveFile in packedDir.GetFiles())
-			{
-				ConsoleHelper.AutoRetry(() =>
-				{
-					progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} > {archiveFile.Name} ({progress.Percent}%)...";
-
-					// validate
-					if (archiveFile.Extension == ".exe")
-					{
-						ConsoleHelper.Print($"  Skipped {archiveFile.FullName} (not an archive).", Severity.Error);
-						return;
-					}
-
-					// unzip into temporary folder
-					string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
-					DirectoryInfo tempDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp", $"{archiveFile.Name}"));
-					if (tempDir.Exists)
-						FileHelper.ForceDelete(tempDir);
-					tempDir.Create();
-					tempDir.Refresh();
-
-					try
-					{
-						this.ExtractFile(archiveFile, tempDir);
-					}
-					catch (Exception ex)
-					{
-						ConsoleHelper.Print($"  Could not unpack {archiveFile.FullName}:\n{(ex is SevenZipArchiveException ? ex.Message : ex.ToString())}", Severity.Error);
-						Console.WriteLine();
-						FileHelper.ForceDelete(tempDir);
-						return;
-					}
-
-					// move into final location
-					if (tempDir.EnumerateFiles().Any() || tempDir.EnumerateDirectories().Count() > 1) // no root folder in zip
-					tempDir.Parent.MoveTo(Path.Combine(unpackedDir.FullName, id));
-					else
-					{
-						tempDir.MoveTo(Path.Combine(unpackedDir.FullName, id));
-						FileHelper.ForceDelete(new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp")));
-					}
-				});
-			}
-		}
-		timer.Stop();
-		progress.Caption = $"Unpacked {progress.Total} mods from {siteDir.Name} in {this.GetFormattedTime(timer.Elapsed)} (100%)";
-	}
-}
-
-/// <summary>Parse unpacked mod data in the given folder.</summary>
-/// <param name="rootPath">The full path to the folder containing unpacked mod files.</param>
-IEnumerable<ParsedMod> ReadMods(string rootPath)
-{
-	// get from cache
-	string cacheFilePath = this.GetCacheFilePath();
-	if (File.Exists(cacheFilePath))
-	{
-		Stopwatch timer = Stopwatch.StartNew();
-		string cachedJson = File.ReadAllText(cacheFilePath);
-		ParsedMod[] mods = JsonConvert.DeserializeObject<ParsedMod[]>(cachedJson, this.JsonSettings);
-		timer.Stop();
-
-		ConsoleHelper.Print($"Read {mods.Length} mods from cache in {this.GetFormattedTime(timer.Elapsed)}.");
-
-		return mods;
-	}
-
-	// read data from each mod's folder
-	List<ParsedMod> parsedMods = new();
-	ModToolkit toolkit = new ModToolkit();
-	foreach (DirectoryInfo siteFolder in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
-	{
-		Stopwatch timer = Stopwatch.StartNew();
-
-		var modFolders = this.GetSortedSubfolders(siteFolder).ToArray();
-		var progress = new IncrementalProgressBar(modFolders.Length).Dump();
-
-		foreach (DirectoryInfo modFolder in modFolders)
-		{
-			progress.Increment();
-			progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name}...";
-
-			// read metadata files
-			GenericMod metadata = JsonConvert.DeserializeObject<GenericMod>(File.ReadAllText(Path.Combine(modFolder.FullName, "mod.json")));
-			IDictionary<int, GenericFile> fileMap = metadata.Files.ToDictionary(p => p.ID);
-
-			// load mod folders
-			IDictionary<GenericFile, ModFolder[]> unpackedFileFolders = new Dictionary<GenericFile, ModFolder[]>();
-			DirectoryInfo unpackedFolder = new DirectoryInfo(Path.Combine(modFolder.FullName, "unpacked"));
-			if (unpackedFolder.Exists)
-			{
-				foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(unpackedFolder))
-				{
-					if (fileDir.Name == "_tmp")
-						continue;
-
-					progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name} > {fileDir.Name}...";
-
-					// get file data
-					GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
-
-					// get mod folders from toolkit
-					ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName, useCaseInsensitiveFilePaths: true).ToArray();
-					if (mods.Length == 0)
-					{
-						ConsoleHelper.Print($"   Ignored {fileDir.FullName}, folder is empty?");
-						continue;
-					}
-
-					// store metadata
-					unpackedFileFolders[fileData] = mods;
-				}
-			}
-
-			// yield mod
-			parsedMods.Add(new ParsedMod(metadata, unpackedFileFolders));
-		}
-
-		timer.Stop();
-		progress.Caption = $"Read {progress.Total} mods from {siteFolder.Name} (100%) in {this.GetFormattedTime(timer.Elapsed)}";
-	}
-
-	// write cache file
-	{
-		Stopwatch timer = Stopwatch.StartNew();
-		string json = JsonConvert.SerializeObject(parsedMods, this.JsonSettings);
-		File.WriteAllText(cacheFilePath, json);
-		timer.Stop();
-
-		ConsoleHelper.Print($"Created cache with {parsedMods.Count} mods in {this.GetFormattedTime(timer.Elapsed)}.");
-	}
-
-	return parsedMods.ToArray();
-}
-
-/// <summary>Get the absolute file path for the JSON file containing a cached representation of the <see cref="ReadMods" /> result.</summary>
-private string GetCacheFilePath()
-{
-	return Path.Combine(this.RootPath, "cache.json");
-}
-
-/// <summary>Delete the cache of mod file data, if it exists.</summary>
-private void DeleteCache()
-{
-	File.Delete(this.GetCacheFilePath());
-}
-
-/// <summary>Get the subfolders of a given folder sorted by numerical or alphabetical order.</summary>
-/// <param name="root">The folder whose subfolders to get.</param>
-private IEnumerable<DirectoryInfo> GetSortedSubfolders(DirectoryInfo root)
-{
-	return
-		(
-			from subfolder in root.GetDirectories()
-			let isNumeric = int.TryParse(subfolder.Name, out int _)
-			let numericName = isNumeric ? int.Parse(subfolder.Name) : int.MaxValue
-			orderby numericName, subfolder.Name
-			select subfolder
-		);
 }
 
 /// <summary>Get the human-readable mod names for the compatibility list.</summary>
@@ -1468,28 +1199,6 @@ private string TryGetModDescription(ParsedMod mod)
 	return null;
 }
 
-/// <summary>Extract an archive file to the given folder.</summary>
-/// <param name="file">The archive file to extract.</param>
-/// <param name="extractTo">The directory to extract into.</param>
-void ExtractFile(FileInfo file, DirectoryInfo extractTo)
-{
-	try
-	{
-		CancellationTokenSource cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-		Task
-			.Run(() =>
-			{
-				using (SevenZipExtractor unpacker = new SevenZipExtractor(file.FullName))
-					unpacker.ExtractArchive(extractTo.FullName);
-			}, cancellation.Token)
-			.Wait();
-	}
-	catch (AggregateException outerEx)
-	{
-		throw outerEx.InnerException;
-	}
-}
-
 /// <summary>Build a human-readable file list for a directory path.</summary>
 /// <param name="root">The directory for which to build a file list.</param>
 public string BuildFileList(DirectoryInfo root)
@@ -1526,33 +1235,6 @@ private bool ShouldIgnoreForAnalysis(ModSite site, int siteId, int fileId, strin
 		&& entries.Any(search => search.Matches(site: site, siteId: siteId, fileId: fileId, manifestId: manifestId));
 }
 
-/// <summary>Get a human-readable formatted time span.</summary>
-/// <param name="span">The time span to format.</param>
-private string GetFormattedTime(TimeSpan time)
-{
-	if (time.TotalSeconds < 1)
-		return $"{Math.Round(time.TotalMilliseconds, 0)} ms";
-
-	StringBuilder formatted = new();
-	void Format(int amount, string label)
-	{
-		if (amount > 0)
-		{
-			formatted.Append(" ");
-			formatted.Append(amount);
-			formatted.Append(" ");
-			formatted.Append(label);
-			if (amount != 1)
-				formatted.Append('s');
-		}
-	}
-	Format((int)time.TotalHours, "hour");
-	Format(time.Minutes, "minute");
-	Format(time.Seconds, "second");
-
-	return formatted.ToString().TrimStart();
-}
-
 /// <summary>Log a human-readable summary for a rate limit exception, and pause the thread until the rate limit is refreshed.</summary>
 /// <param name="ex">The rate limit exception.</param>
 /// <param name="site">The mod site whose rate limit was exceeded.</param>
@@ -1561,260 +1243,8 @@ private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
 	TimeSpan resumeDelay = ex.TimeUntilRetry;
 	DateTime resumeTime = DateTime.Now + resumeDelay;
 
-	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {this.GetFormattedTime(resumeDelay)} ({resumeTime:HH:mm:ss} local time).");
+	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {ConsoleHelper.GetFormattedTime(resumeDelay)} ({resumeTime:HH:mm:ss} local time).");
 	Thread.Sleep(resumeDelay);
-}
-
-/// <summary>Get a clone of the input as a raw data dictionary.</summary>
-/// <param name="data">The input data to clone.</param>
-public static Dictionary<string, object> CloneToDictionary(object data)
-{
-	switch (data)
-	{
-		case null:
-			return new Dictionary<string, object>();
-
-		case JObject obj:
-			return obj.DeepClone().ToObject<Dictionary<string, object>>();
-
-		default:
-			return JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(data));
-	}
-}
-
-/// <summary>Metadata for a mod from any mod site.</summary>
-class GenericMod
-{
-	/*********
-	** Accessors
-	*********/
-	/// <summary>The mod site which has the mod.</summary>
-	public ModSite Site { get; }
-
-	/// <summary>The mod ID within the site.</summary>
-	public int ID { get; }
-
-	/// <summary>The mod display name.</summary>
-	public string Name { get; }
-
-	/// <summary>The mod author name.</summary>
-	public string Author { get; }
-
-	/// <summary>Custom author text, if different from <see cref="Author" />.</summary>
-	public string AuthorLabel { get; }
-
-	/// <summary>The URL to the user-facing mod page.</summary>
-	public string PageUrl { get; }
-
-	/// <summary>The main mod version, if applicable.</summary>
-	public string Version { get; }
-
-	/// <summary>When the mod metadata or files were last updated.</summary>
-	public DateTimeOffset Updated { get; }
-
-	/// <summary>The original data from the mod site.</summary>
-	public Dictionary<string, object> RawData { get; }
-
-	/// <summary>The available mod downloads.</summary>
-	public GenericFile[] Files { get; }
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="site">The mod site which has the mod.</param>
-	/// <param name="id">The mod ID within the site.</param>
-	/// <param name="name">The mod display name.</param>
-	/// <param name="author">The mod author name.</param>
-	/// <param name="authorLabel">Custom author text, if different from <paramref name="author" />.</param>
-	/// <param name="pageUrl">The URL to the user-facing mod page.</param>
-	/// <param name="version">The main mod version, if applicable.</param>
-	/// <param name="updated">When the mod metadata or files were last updated.</param>
-	/// <param name="rawData">The original data from the mod site.</param>
-	/// <param name="files">The available mod downloads.</param>
-	public GenericMod(ModSite site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files)
-	{
-		this.Site = site;
-		this.ID = id;
-		this.Name = name;
-		this.Author = author;
-		this.AuthorLabel = authorLabel;
-		this.PageUrl = pageUrl;
-		this.Version = version;
-		this.Updated = updated;
-		this.RawData = UserQuery.CloneToDictionary(rawData);
-		this.Files = files;
-	}
-}
-
-/// <summary>Parsed data about a mod page.</summary>
-class ParsedMod : GenericMod
-{
-	/*********
-	** Accessors
-	*********/
-	/// <summary>The parsed mod folders.</summary>
-	public ParsedFile[] ModFolders { get; }
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="mod">The raw mod metadata.</param>
-	/// <param name="downloads">The raw mod download data.</param>
-	public ParsedMod(GenericMod mod, IDictionary<GenericFile, ModFolder[]> downloads)
-		: base(site: mod.Site, id: mod.ID, name: mod.Name, author: mod.Author, authorLabel: mod.AuthorLabel, pageUrl: mod.PageUrl, version: mod.Version, updated: mod.Updated, rawData: mod.RawData, files: mod.Files)
-	{
-		try
-		{
-			// set mod folders
-			this.ModFolders =
-				(
-					from entry in downloads
-					from folder in entry.Value
-					select new ParsedFile(entry.Key, folder)
-				)
-				.ToArray();
-		}
-		catch (Exception)
-		{
-			new { mod, downloads }.Dump("failed parsing mod data");
-			throw;
-		}
-	}
-
-	/// <inheritdoc />
-	/// <param name="modFolders">The parsed mod folders.</param>
-	[JsonConstructor]
-	public ParsedMod(ModSite site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files, ParsedFile[] modFolders)
-		: base(site, id, name, author, authorLabel, pageUrl, version, updated, rawData, files)
-	{
-		this.ModFolders = modFolders;
-	}
-}
-
-/// <summary>A file category on a mod site.</summary>
-public enum GenericFileType
-{
-	/// <summary>The primary download.</summary>
-	Main,
-
-	/// <summary>A secondary download, often for preview or beta versions.</summary>
-	Optional
-}
-
-/// <summary>Metadata for a mod download on any mod site.</summary>
-public class GenericFile
-{
-	/*********
-	** Accessors
-	*********/
-	/// <summary>The file ID.</summary>
-	public int ID { get; set; }
-
-	/// <summary>The file type.</summary.
-	public GenericFileType Type { get; set; }
-
-	/// <summary>The display name on the mod site.</summary>
-	public string DisplayName { get; set; }
-
-	/// <summary>The file name on the mod site.</summary>
-	public string FileName { get; set; }
-
-	/// <summary>The file version on the mod site.</summary>
-	public string Version { get; set; }
-
-	/// <summary>The original file data from the mod site.</summary>
-	public Dictionary<string, object> RawData { get; set; }
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	public GenericFile() { }
-
-	/// <summary>Construct an instance.</summary>
-	/// <param name="id">The file ID.</param>
-	/// <param name="type">The file type.</param>
-	/// <param name="displayName">The display name on the mod site.</param>
-	/// <param name="fileName">The filename on the mod site.</param>
-	/// <param name="version">The file version on the mod site.</param>
-	/// <param name="rawData">The original file data from the mod site.</param>
-	public GenericFile(int id, GenericFileType type, string displayName, string fileName, string version, object rawData)
-	{
-		this.ID = id;
-		this.Type = type;
-		this.DisplayName = displayName;
-		this.FileName = fileName;
-		this.Version = version;
-		this.RawData = UserQuery.CloneToDictionary(rawData);
-	}
-}
-
-/// <summary>Parsed data about a mod download.</summary>
-class ParsedFile : GenericFile
-{
-	/*********
-	** Accessors
-	*********/
-	/// <summary>The mod display name based on the manifest.</summary>
-	public string ModDisplayName { get; }
-
-	/// <summary>The mod type.</summary>
-	public ModType ModType { get; }
-
-	/// <summary>The mod parse error, if it could not be parsed.</summary>
-	public ModParseError? ModError { get; }
-
-	/// <summary>The mod ID from the manifest.</summary>
-	public string ModID { get; }
-
-	/// <summary>The mod version from the manifest.</summary>
-	public string ModVersion { get; }
-
-	/// <summary>The raw parsed mod folder.</summary>
-	public ModFolder RawFolder { get; }
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="download">The raw mod file.</param>
-	/// <param name="folder">The raw parsed mod folder.</param>
-	public ParsedFile(GenericFile download, ModFolder folder)
-		: base(id: download.ID, type: download.Type, displayName: download.DisplayName, fileName: download.FileName, version: download.Version, rawData: download.RawData)
-	{
-		this.RawFolder = folder;
-
-		this.ModDisplayName = folder.DisplayName;
-		this.ModType = folder.Type;
-		this.ModError = folder.ManifestParseError == ModParseError.None ? (ModParseError?)null : folder.ManifestParseError;
-		this.ModID = folder.Manifest?.UniqueID;
-		this.ModVersion = folder.Manifest?.Version?.ToString();
-	}
-
-	/// <inheritdoc />
-	/// <param name="modDisplayName">The mod display name based on the manifest.</param>
-	/// <param name="modType">The mod type.</param>
-	/// <param name="modError">The mod parse error, if it could not be parsed.</param>
-	/// <param name="modId">The mod ID from the manifest.</param>
-	/// <param name="modVersion">The mod version from the manifest.</param>
-	/// <param name="rawFolder">The raw parsed mod folder.</param>
-	[JsonConstructor]
-	public ParsedFile(int id, GenericFileType type, string displayName, string fileName, string version, object rawData, string modDisplayName, ModType modType, ModParseError? modError, string modId, string modVersion, ModFolder rawFolder)
-		: base(id, type, displayName, fileName, version, rawData)
-	{
-		this.ModDisplayName = modDisplayName;
-		this.ModType = modType;
-		this.ModError = modError;
-		this.ModID = modId;
-		this.ModVersion = modVersion;
-		this.RawFolder = rawFolder;
-	}
 }
 
 /// <summary>Matches a mod which should be ignored when validating mod data or compiling statistics.</summary>
@@ -1890,19 +1320,6 @@ class RateLimitedException : Exception
 		this.TimeUntilRetry = timeUntilRetry;
 		this.RateLimitSummary = rateLimitSummary;
 	}
-}
-
-/// <summary>The identifier for a mod site used in update keys.</summary>
-enum ModSite
-{
-	/// <summary>The CurseForge site.</summary>
-	CurseForge,
-
-	/// <summary>The CurseForge site.</summary>
-	ModDrop,
-
-	/// <summary>The Nexus Mods site.</summary>
-	Nexus
 }
 
 /// <summary>A client which fetches mods from a particular mod site.</summary>
@@ -2600,7 +2017,7 @@ class NexusApiClient : IModSiteClient
 	/// <param name="meta">The current rate limits.</param>
 	private string GetRateLimitSummary(IRateLimitManager meta)
 	{
-		return $"{meta.DailyRemaining}/{meta.DailyLimit} daily resetting in {this.GetFormattedTime(meta.DailyReset - DateTimeOffset.UtcNow)}, {meta.HourlyRemaining}/{meta.HourlyLimit} hourly resetting in {this.GetFormattedTime(meta.HourlyReset - DateTimeOffset.UtcNow)}";
+		return $"{meta.DailyRemaining}/{meta.DailyLimit} daily resetting in {ConsoleHelper.GetFormattedTime(meta.DailyReset - DateTimeOffset.UtcNow)}, {meta.HourlyRemaining}/{meta.HourlyLimit} hourly resetting in {ConsoleHelper.GetFormattedTime(meta.HourlyReset - DateTimeOffset.UtcNow)}";
 	}
 
 	/// <summary>Get a human-readable formatted time span.</summary>

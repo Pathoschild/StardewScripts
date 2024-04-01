@@ -9,6 +9,33 @@ public static class ConsoleHelper
 	/*********
 	** Public methods
 	*********/
+	/// <summary>Get a human-readable formatted time span.</summary>
+	/// <param name="span">The time span to format.</param>
+	public static string GetFormattedTime(TimeSpan time)
+	{
+		if (time.TotalSeconds < 1)
+			return $"{Math.Round(time.TotalMilliseconds, 0)} ms";
+
+		StringBuilder formatted = new();
+		void Format(int amount, string label)
+		{
+			if (amount > 0)
+			{
+				formatted.Append(" ");
+				formatted.Append(amount);
+				formatted.Append(" ");
+				formatted.Append(label);
+				if (amount != 1)
+					formatted.Append('s');
+			}
+		}
+		Format((int)time.TotalHours, "hour");
+		Format(time.Minutes, "minute");
+		Format(time.Seconds, "second");
+
+		return formatted.ToString().TrimStart();
+	}
+
 	/// <summary>Get input from the user until the specify a valid option.</summary>
 	/// <param name="options">The valid inputs (case insensitive).</summary>
 	public static string GetChoice(string prompt, params string[] options)
