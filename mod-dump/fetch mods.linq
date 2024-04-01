@@ -58,7 +58,7 @@ readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\com
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 19), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 31), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -88,7 +88,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 
 	// mod packs
 	..ModSearch.ForSiteIds(ModSite.CurseForge,
-		953780  // The First Modpack
+		953780, // The First Modpack
+		987052  // Morning Dew
 	),
 	
 	#endregion
@@ -172,6 +173,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		16289, // Better Juninos (fr)
 		18968, // Better Juninos (uk)
 		20406, // Better Juninos (vh)
+		20767, // Bigger Backpack (es)
 		19337, // Buff Framework - Better Together - SVE Spouse Buffs (vh)
 		11417, // Bug Net (fr)
 		14960, // Bus Locations (fr)
@@ -195,6 +197,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		14548, // Custom NPC Riley (tr)
 		11851, // Custom Spouse Patio Redux (zh)
 		20428, // Daily Tasks Report (ru)
+		21168, // Deluxe Grabber Redux (zh)
 		15007, // Deluxe Journal (fr)
 		15908, // Downtown Zuzu (fr)
 		18857, // Downtown Zuzu (id)
@@ -272,20 +275,25 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		11407, // Producer Framework Mod (fr)
 		18010, // Resource Storage (pt)
 		8030,  // Ridgeside Village (es)
-		18829, // Ridgeside Village (vi)
 		9942,  // Ridgeside Village (fr)
+		19377, // Ridgeside Village (th)
+		18829, // Ridgeside Village (vi)
 		8170,  // Riley (de)
 		10349, // Robin Romance (es)
 		16432, // Rodney - a new NPC for East Scarp
 		6096,  // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		16399, // Self Service (pt)
 		17658, // Self Service (vi)
+		20993, // Self Service for 1.6 (pt)
+		21102, // Self Service for 1.6 (tr)
 		18378, // Shiko NPC (id)
 		18662, // Shopping Show (vi)
+		18453, // Show Birthday (pt)
 		14373, // Socializing Skill (vi)
 		19242, // Socializing Skill (vi)
 		11140, // Spouses in Ginger Island (zh)
 		20244, // Stardew Notifications (tr)
+		18691, // Stardew Realty (pt)
 		5259,  // Stardew Valley Expanded (de)
 		5272,  // Stardew Valley Expanded (es)
 		5509,  // Stardew Valley Expanded (es)
@@ -311,12 +319,25 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		17684, // What Are You Missing (vi)
 
 		// reposts
+		20781, // Crop Harvest Bubbles
+		20783, // Crop Variation
+		21428, // Crop Watering Bubbles
 		12920, // Extra Map Layers (version for Android by original author, with same mod ID)
+		20910, // Farm Cave Framework
+		20726, // Fish Spot Bait
 		11297, // Friends Forever
+		20702, // Friends Forever
+		20723, // Gift Rejection
+		21286, // Informant
+		21285, // Like a Duck to Water
+		21068, // Mailbox Menu
 		12729, // Many Enchantments
 		16921, // More Random Edition
 		19817, // Multiplayer for Mobile
+		12369, // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
 		19291, // Night Owl Repacked
+		20869, // No Fence Decay
+		20706, // Plant and Fertilize All
 		1427,  // Prairie King Made Easy
 		10916, // Qi Exchanger
 		887,   // Reseed
@@ -326,6 +347,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		9128,  // Shop Tile Framework
 		1077,  // UI Mod Suite
 		19879, // Virtual Keyboard
+		21054, // Yet Another Jump Mod
 
 		// files to drop into another mod's folder
 		18729, // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
@@ -364,7 +386,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
-	new(ModSite.Nexus, 5401, 24009),  // Open Greenhouse, missing quote
 	new(ModSite.Nexus, 10463, 48639), // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
 	new(ModSite.Nexus, 7600, 36539),  // Pink Tools Recolor, missing quotes in update keys
 	new(ModSite.Nexus, 19572, 79639), // Prettier Cherry Tree, empty file
@@ -413,6 +434,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
+	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment2"),      // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
 	new(ModSite.Nexus, 16426, manifestId: "alja.CCCB"),                         // Little Harder Community Center Bundles
 	new(ModSite.Nexus, 13248, manifestId: "Stashek.FishingRodRecolor"),         // Main Questline Redux (PMC CCJ)
@@ -423,9 +445,11 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
 	new(ModSite.Nexus, 5384, manifestId: "Platonymous.PlatoUI"),                // Plato Warp Menu
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
+	new(ModSite.Nexus, 16904, manifestId: "RukaBravo.portrait.mod.vanilla"),    // RukaBravo's portrait mod (actually loads Portraiture.dll)
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
 	new(ModSite.Nexus, 20593, manifestId: "Esca.FarmTypeManager"),              // Standard Farm Expanded
-	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew Valley for Babies
+	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew VallEasy - Easy Gold Everywhere
+	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment2"),      // Stardew VallEasy - Easy Gold Everywhere
 	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
@@ -433,6 +457,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 
 	// downloads which replace files in other mods
 	new(ModSite.Nexus, 19236, 78568), // Anime Catboy Portrait Mod - Wizard SVE
+	new(ModSite.Nexus, 21191, 86404), // Auto Fish - Deutsch
 	new(ModSite.Nexus, 19426, 79169), // Bun's Dateable (and Marry) Caroline Portraits
 	new(ModSite.Nexus, 19698, 80076), // Vanilla Portrait Frame
 
@@ -609,23 +634,23 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
 				Manifest = Util.OnDemand("expand", () => manifest),
 				Mod = Util.OnDemand("expand", () => mod),
-				Folder = Util.OnDemand("expand", () => folder),
-				WikiEntry = Util.OnDemand("expand", () =>
-					"{{#invoke:SMAPI compatibility|entry\n"
-					+ $"  |name    = {string.Join(", ", names)}\n"
-					+ $"  |author  = {string.Join(", ", authorNames)}\n"
-					+ $"  |id      = {manifest?.UniqueID}\n"
-					+ (mod.Site == ModSite.CurseForge ? $"  |curse   = {mod.ID}\n" : "")
-					+ (mod.Site == ModSite.ModDrop ? $"  |moddrop = {mod.ID}\n" : "")
-					+ $"  |nexus   = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
-					+ $"  |github  = {githubRepo}\n"
-					+ (customSourceUrl != null
-						? $"  |source  = {customSourceUrl}\n"
-						: ""
-					)
-					+ "}}"
+				Folder = Util.OnDemand("expand", () => folder)
+			}),
+			WikiEntry = new Lazy<string>(() => // can't be in Metadata since it's accessed by the main script
+				"{{#invoke:SMAPI compatibility|entry\n"
+				+ $"  |name    = {string.Join(", ", names)}\n"
+				+ $"  |author  = {string.Join(", ", authorNames)}\n"
+				+ $"  |id      = {manifest?.UniqueID}\n"
+				+ (mod.Site == ModSite.CurseForge ? $"  |curse   = {mod.ID}\n" : "")
+				+ (mod.Site == ModSite.ModDrop ? $"  |moddrop = {mod.ID}\n" : "")
+				+ $"  |nexus   = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
+				+ $"  |github  = {githubRepo}\n"
+				+ (customSourceUrl != null
+					? $"  |source  = {customSourceUrl}\n"
+					: ""
 				)
-			})
+				+ "}}"
+			)
 		}
 	)
 	.ToArray();

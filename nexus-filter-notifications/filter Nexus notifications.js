@@ -97,7 +97,10 @@ javascript:(function() {
          * The mod IDs to ignore. The values are just for reference, the code will only use the keys.
          */
         mods: {
-            /* entoarox */
+            /* Denifia */
+            1126: "Buy Cooking Recipes",
+
+            /* Entoarox */
             2270: "Advanced Location Loader",
             2272: "Custom Paths",
             2269: "Entoarox Framework",
@@ -112,6 +115,10 @@ javascript:(function() {
 
             /* Jessebot */
             3025: "Bigger Riverlands Farm",
+            2816: "Bigger Sheds",
+            3207: "Health and Stamina Regeneration",
+            3561: "Immersive Farm 2 Fix",
+            4778: "Sprint Sprint",
 
             /* Jierishi */
             7194: "Pierre Sells Tree Fertilizer",
@@ -119,7 +126,10 @@ javascript:(function() {
             /* omegasis */
             435: "Advanced Save Backup",
             492: "Billboard Anywhere",
+            445: "Build Endurance",
+            486: "Fall 28 Snow Day",
             520: "Happy Birthday",
+            441: "More Rain",
             433: "Night Owl",
             444: "Save Anywhere",
             425: "Stardew Symphony",
@@ -139,7 +149,7 @@ javascript:(function() {
             1333: "Carry Chest",
             3905: "Combat Level Damage Scaler",
             3101: "Console Code",
-            /*10545: "Content Code", */
+            10545: "Content Code",
             3853: "Content Patcher Animations",
             522: "Cooking Skill",
             12801: "Controller Radial Keybindings",
@@ -153,7 +163,7 @@ javascript:(function() {
             1493: "Extended Reach",
             1229: "Flower Color Picker",
             6131: "Flower Rain",
-            /*5098: "Generic Mod Config Menu",*/
+            5098: "Generic Mod Config Menu",
             6577: "Hybrid Crop Engine",
             1720: "Json Assets",
             1844: "Jump Over",
@@ -181,6 +191,7 @@ javascript:(function() {
             12029: "Responsive MP Knockback",
             605: "Rush Orders",
             9386: "Realtime Minimap",
+            20625: "Satchels",
             14263: "Sharing is Caring",
             14267: "Sizable Fish",
             14452: "Skill Training",

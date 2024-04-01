@@ -193,13 +193,22 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["Tofu.SlimeQOL"] = "Slime Mods - SlimeQoL Alt",
 
 	// fix ambiguous names
+	["pempi.addMoney"] = "Add Money (Pempi)",
+	["StephHoel.AddMoney"] = "Add Money (StephHoel)",
+
 	["cgifox.AutoAttack"] = "Auto-Attack (cgifox)",
 	["X3n0n182.AutoAttack"] = "Auto-Attack (X3n0n182)",
+	
+	["pickle.autowater"] = "Auto Water (Pickle)",
+	["StephHoel.AutoWater"] = "Auto Water (StephHoel)",
 	
 	["leclair.bettercrafting"] = "Better Crafting (Khloe Leclair)",
 	["RedstoneBoy.BetterCrafting"] = "Better Crafting (RedstoneBoy)",
 	
 	["ceruleandeep.bwdyworks"] = "Bwdyworks (ceruleandeep)",
+
+	["BayesianBandit.ConfigureMachineSpeed"] = "Configure Machine Speed (BayesianBandit)",
+	["StephHoel.ConfigureMachineSpeed"] = "Configure Machine Speed (StephHoel)",
 
 	["Vrakyas.CurrentLocation"] = "Current Location (Vrakyas)",
 	["CurrentLocation102120161203"] = "Current Location (Omegasis)",
@@ -310,7 +319,7 @@ async Task Main()
 				// validate
 				if (fetchQueue.ContainsKey(id))
 				{
-					issues[mod] = $"can't fetch API data (same ID as {fetchQueue[id].GetDisplayName()})";
+					issues[mod] = $"can't fetch API data: same ID as {fetchQueue[id].GetDisplayName()} (in '{fetchQueue[id].Folder.Directory.Name}' folder)";
 					continue;
 				}
 
@@ -342,7 +351,7 @@ async Task Main()
 		{
 			IncrementalProgressBar progress = new IncrementalProgressBar(fetchQueue.Count) { HideWhenCompleted = true }.Dump();
 
-			ISemanticVersion apiVersion = new SemanticVersion("3.5");
+			ISemanticVersion apiVersion = new SemanticVersion("4.0.0");
 			WebApiClient client = new WebApiClient("https://smapi.io/api/", apiVersion);
 			foreach (var pair in fetchQueue)
 			{
@@ -671,8 +680,8 @@ async Task Main()
 
 				select new
 				{
-					Framework = Util.VerticalRun(requiredName, Util.WithStyle(requiredId, "color: gray; font-size: 0.9em;")),
-					Mods = "- " + string.Join("\n- ", modGroup.Select(p => p.GetDisplayName()).Order())
+					MissingFramework = Util.VerticalRun(requiredName, Util.WithStyle(requiredId, "color: gray; font-size: 0.9em;")),
+					NeededForMods = "- " + string.Join("\n- ", modGroup.Select(p => p.GetDisplayName()).Order())
 				}
 			)
 			.ToArray();
@@ -766,7 +775,8 @@ async Task Main()
 					ManifestUpdateKeys = Util.OnDemand("expand", () => mod.ManifestUpdateKeys != null ? mod.ManifestUpdateKeys : Util.WithStyle("none", errorStyle)),
 					NormalizedFolder = Util.OnDemand("expand", () => mod.NormalizedFolder),
 					Manifest = Util.OnDemand("expand", () => mod.Manifest),
-					Links = Util.OnDemand("expand", () => mod.Links),
+					Nexus = mod.Links.Nexus,
+					OtherLinks = Util.OnDemand("expand", () => mod.Links),
 				}),
 				Overrides = changeLocalVersion.HasChanges || changeRemoteVersion.HasChanges || changeUpdateKeys.HasChanges
 					? Util.OnDemand("expand", () => new
