@@ -26,7 +26,10 @@
 See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
+#load "Utilities/ConsoleHelper.linq"
+#load "Utilities/FileHelper.linq"
 #load "Utilities/IncrementalProgressBar.linq"
+#load "Utilities/ModDumpManager.linq"
 
 /*********
 ** Configuration
@@ -43,6 +46,12 @@ private string ModFolderPath => Path.Combine(this.GameFolderPath, "Mods (test)")
 /// <summary>The absolute path for the file which, if present, indicates mod folders should not be normalized.</summary>
 private string ModFolderPathDoNotNormalizeToken => Path.Combine(this.ModFolderPath, "DO_NOT_NORMALIZE.txt");
 
+/// <summary>The mod dump from which to install mod updates, if they're fetched.</summary>
+private Lazy<ILookup<string, ParsedMod>> ModDump = new(() =>
+{
+	ModDumpManager modDump = new(rootPath: @"C:\dev\mod-dump", resetUnpacked: false);
+	return modDump.ReadMods().ToLookup(mod => $"{mod.Site}:{mod.ID}");
+});
 
 /****
 ** Common settings
@@ -707,11 +716,15 @@ async Task Main()
 			ChangeDescriptor changeUpdateKeys = ChangeDescriptor.Parse(apiMetadata?.ChangeUpdateKeys, out var changeUpdateKeysErrors);
 
 			// format version
+			bool hasUpdate = false;
 			string versionHtml;
 			if (mod.Latest == null)
 				versionHtml = $"<span style='{smallStyle} {errorStyle}'>not found</span>";
 			else if (mod.HasUpdate)
+			{
+				hasUpdate = true;
 				versionHtml = $"<a href='{mod.DownloadUrl}' style='{smallStyle}'>{mod.Latest}</a>";
+			}
 			else
 				versionHtml = $"<span style='{smallStyle} {fadedStyle}'>{mod.Latest}</span>";
 
@@ -735,6 +748,18 @@ async Task Main()
 				Issues = Util.RawHtml(issues),
 				Type = mod.ModData.Folder.Type,
 				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
+				Actions = hasUpdate
+					? (object)Util.OnDemand(
+						"install update from mod dump",
+						() => new object[] // returning an array allows collapsing the log in the LINQPad output
+						{
+							Util.WithStyle(
+								Util.VerticalRun(this.TryUpdateFromModDump(mod.ModData)),
+								"font-style: monospace; font-size: 0.9em;"
+							)
+						}
+					)
+					: "",
 				Metadata = Util.OnDemand("expand", () => new
 				{
 					UpdateKeys = Util.OnDemand("expand", () => mod.UpdateKeys),
@@ -759,6 +784,110 @@ async Task Main()
 /*********
 ** Helpers
 *********/
+/// <summary>If a newer version of a mod exists in the mod dump folder, replace the installed version with those newer files.</summary>
+/// <param name="mod">The mod to update if possible.</param>
+private IEnumerable<object> TryUpdateFromModDump(ModData mod)
+{
+	const string traceStyle = "opacity: 0.5";
+	const string errorStyle = "color: red; font-weight: bold;";
+	const string successStyle = "color: green;";
+
+	// validate
+	if (mod.InstalledVersion is null)
+	{
+		yield return Util.WithStyle("Can't auto-update because the installed version is unknown.", errorStyle);
+		yield break;
+	}
+
+	// get latest version from mod dump
+	ParsedFile latestUpdate = null;
+	{
+		if (!this.ModDump.IsValueCreated)
+			yield return Util.WithStyle("Reading mod dump...", traceStyle);
+		ILookup<string, ParsedMod> modDump = this.ModDump.Value;
+
+		HashSet<string> modIds = new(mod.IDs, StringComparer.OrdinalIgnoreCase);
+		ISemanticVersion latestVersion = mod.InstalledVersion;
+
+		yield return Util.WithStyle($"Checking update keys:", traceStyle);
+		foreach (string rawUpdateKey in mod.UpdateKeys)
+		{
+			if (!UpdateKey.TryParse(rawUpdateKey, out UpdateKey updateKey))
+			{
+				yield return Util.WithStyle($"   {rawUpdateKey} — skipped (invalid update key).", traceStyle);
+				continue;
+			}
+
+			string lookupKey = $"{updateKey.Site}:{updateKey.ID}";
+			ParsedMod[] candidates = modDump[lookupKey].ToArray();
+			if (candidates.Length == 0)
+			{
+				yield return Util.WithStyle($"   {lookupKey} — skipped (no match found in the mod dump).", traceStyle);
+				continue;
+			}
+
+			foreach (ParsedMod candidate in candidates)
+			{
+				foreach (ParsedFile modFolder in candidate.ModFolders)
+				{
+					string logPrefix = candidate.ModFolders.Length > 1
+						? $"'{lookupKey}' > file {modFolder.ID}"
+						: $"'{lookupKey}'";
+
+					if (!modIds.Contains(modFolder.ModID))
+					{
+						yield return Util.WithStyle($"   {logPrefix} — skipped (different mod ID '{modFolder.ModID}').", traceStyle);
+						continue;
+					}
+
+					if (!SemanticVersion.TryParse(modFolder.Version, out ISemanticVersion candidateVersion))
+					{
+						yield return Util.WithStyle($"    {logPrefix} — skipped (its version '{modFolder.Version}' couldn't be parsed).", traceStyle);
+						continue;
+					}
+
+					if (!latestVersion.IsOlderThan(candidateVersion))
+					{
+						yield return Util.WithStyle($"   {logPrefix} — skipped (its version '{candidate.Version}' is older than {latestVersion}).", traceStyle);
+						continue;
+					}
+
+					yield return Util.WithStyle($"   {logPrefix} — matched for newer version '{candidate.Version}'.", traceStyle);
+					latestUpdate = modFolder;
+					latestVersion = candidateVersion;
+				}
+			}
+		}
+	}
+	if (latestUpdate is null)
+	{
+		yield return Util.WithStyle("Can't auto-update because no newer version was found in the mod dump.", errorStyle);
+		yield break;
+	}
+
+	// get paths
+	DirectoryInfo fromDir = latestUpdate.RawFolder.Directory;
+	DirectoryInfo toDir = mod.Folder.Directory;
+	yield return Util.WithStyle($"Updating to version {latestUpdate.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", traceStyle);
+	if (toDir.Exists)
+	{
+		FileHelper.ForceDelete(toDir);
+		toDir.Create();
+	}
+
+	// copy mod
+	foreach (FileInfo file in fromDir.GetFiles("*", SearchOption.AllDirectories))
+	{
+		string relativePath = Path.GetRelativePath(fromDir.FullName, file.FullName);
+		string toPath = Path.Combine(toDir.FullName, relativePath);
+
+		Directory.CreateDirectory(Path.GetDirectoryName(toPath));
+		File.Copy(file.FullName, toPath);
+	}
+
+	yield return Util.WithStyle("Done!", successStyle);
+}
+
 /// <summary>Get links for a mod.</summary>
 /// <param name="mod">The wiki entry for the mod.</param>
 private dynamic GetReportLinks(WikiModEntry mod)
