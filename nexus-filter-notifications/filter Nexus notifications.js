@@ -133,6 +133,7 @@ javascript:(function() {
             433: "Night Owl",
             444: "Save Anywhere",
             425: "Stardew Symphony",
+            973: "Time Freeze",
 
             /* spacechase0 */
             3283: "Animal Social Menu",
@@ -166,6 +167,7 @@ javascript:(function() {
             5098: "Generic Mod Config Menu",
             6577: "Hybrid Crop Engine",
             1720: "Json Assets",
+            21513: "Json Shuffle",
             1844: "Jump Over",
             7437: "Junimos Accept Cash",
             14262: "Literally Can't Even",
@@ -201,7 +203,7 @@ javascript:(function() {
             14984: "Spenny Deluxe",
             17326: "Spennying Wheel",
             7532: "Statue of Generosity",
-            /*9418: "Super Hopper",*/
+            9418: "Super Hopper",
             6688: "Surfing Festival",
             5062: "Theft of the Winter Star",
             500: "Three-Heart Dance Partner",

@@ -58,7 +58,7 @@ readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\com
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 03, 31), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 04, 25), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -142,6 +142,11 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.ModDrop, 1163121, manifestId: "Cherry.ShopTileFramework"),            // Little Witch Academia Constanze NPC - (SVE)
 	new(ModSite.ModDrop, 1163121, manifestId: "Pathoschild.ContentPatcher"),          // Little Witch Academia Constanze NPC - (SVE)
 	new(ModSite.ModDrop, 1163121, manifestId: "Platonymous.CustomMusic"),             // Little Witch Academia Constanze NPC - (SVE)
+	new(ModSite.ModDrop, 1565408, manifestId: "CJBok.CheatsMenu"),                    // "Stardew Valley Expanded Pro" mod pack
+	new(ModSite.ModDrop, 1565408, manifestId: "Pathoschild.ContentPatcher"),          // "Stardew Valley Expanded Pro" mod pack
+	new(ModSite.ModDrop, 1565408, manifestId: "Esca.FarmTypeManager"),                // "Stardew Valley Expanded Pro" mod pack
+	new(ModSite.ModDrop, 1565408, manifestId: "CaptainSully.InfiniteWateringCan"),    // "Stardew Valley Expanded Pro" mod pack
+	new(ModSite.ModDrop, 1565408, manifestId: "FlashShifter.SVECode"),                // "Stardew Valley Expanded Pro" mod pack
 	#endregion
 
 
@@ -174,6 +179,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		18968, // Better Juninos (uk)
 		20406, // Better Juninos (vh)
 		20767, // Bigger Backpack (es)
+		21548, // Bigger Backpack (vh)
 		19337, // Buff Framework - Better Together - SVE Spouse Buffs (vh)
 		11417, // Bug Net (fr)
 		14960, // Bus Locations (fr)
@@ -199,6 +205,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		20428, // Daily Tasks Report (ru)
 		21168, // Deluxe Grabber Redux (zh)
 		15007, // Deluxe Journal (fr)
+		22509, // Distant Lands - A Small Witch Swamp Expansion (es)
 		15908, // Downtown Zuzu (fr)
 		18857, // Downtown Zuzu (id)
 		11090, // Downtown Zuzu (it)
@@ -236,10 +243,12 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		13866, // Line Sprinklers (fr)
 		17797, // Loan Mod (vi)
 		9143,  // Lookup Anything (id)
+		22518, // Lookup Anything (id)
 		18723, // Lookup Anything (vi)
 		10720, // Loved Labels (pl)
 		20568, // Loved Labels (pt)
 		18253, // Love Festival (ru)
+		22788, // Love Festival (th)
 		18150, // Love Festival (tr)
 		4339,  // Lunar Disturbances (pt)
 		7082,  // Lunar Disturbances (pt)
@@ -306,34 +315,40 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		8143,  // Stardew Valley Expanded (zh)
 		19243, // Survivalist Skill (vi)
 		10221, // The Ranch Expansion Marnie and Jas (es)
+		17727, // Time Before Harvest Enhanced (vi)
 		8312,  // Town School Functions (tr)
 		6356,  // Town School Functions (zh)
 		17666, // Tree Transplant (vi)
 		10785, // Tristan (es)
+		14398, // Tristan (es)
 		7556,  // UI Info Suite (fr)
 		15208, // UI Info Suite 2 (vi)
 		13389, // UI Info Suite (vi)
 		6637,  // Underground Secrets (ru)
-		17727, // Time Before Harvest Enhanced (vi)
-		14398, // Tristan (es)
+		22366, // Visit Mount Vapius (es)
 		17684, // What Are You Missing (vi)
 
 		// reposts
+		22479, // Auto-Eat
 		20781, // Crop Harvest Bubbles
 		20783, // Crop Variation
 		21428, // Crop Watering Bubbles
+		22678, // Dialogue Display Framework
 		12920, // Extra Map Layers (version for Android by original author, with same mod ID)
 		20910, // Farm Cave Framework
 		20726, // Fish Spot Bait
 		11297, // Friends Forever
 		20702, // Friends Forever
 		20723, // Gift Rejection
+		21766, // Help Wanted
 		21286, // Informant
+		21635, // Junimos Accept Cash
 		21285, // Like a Duck to Water
 		21068, // Mailbox Menu
 		12729, // Many Enchantments
 		16921, // More Random Edition
 		19817, // Multiplayer for Mobile
+		22257, // Napalm Mummies
 		12369, // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
 		19291, // Night Owl Repacked
 		20869, // No Fence Decay
@@ -345,6 +360,9 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		1363,  // Save Anywhere
 		8386,  // Save Anywhere
 		9128,  // Shop Tile Framework
+		22275, // Show Item Quality
+		22167, // Sprinkler Mod
+		22763, // Tilemap Challenge
 		1077,  // UI Mod Suite
 		19879, // Virtual Keyboard
 		21054, // Yet Another Jump Mod
@@ -438,6 +456,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
 	new(ModSite.Nexus, 16426, manifestId: "alja.CCCB"),                         // Little Harder Community Center Bundles
 	new(ModSite.Nexus, 13248, manifestId: "Stashek.FishingRodRecolor"),         // Main Questline Redux (PMC CCJ)
+	new(ModSite.Nexus, 21954, manifestId: "alja.CCCB"),                         // Moonshine's Moderate Community Center Challange
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
@@ -462,7 +481,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 19698, 80076), // Vanilla Portrait Frame
 
 	// special cases
-	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // C# component uploaded to both #14928 and #15564, so link it to the first one
+	new(ModSite.Nexus, 12824, fileId: 79850),                             // Marry Morris (pre-1.6 version is C#, but newer versions are content packs)
+	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // Redraw Pelican Town (C# component uploaded to both #14928 and #15564, so link it to the first one)
 	#endregion
 ];
 
