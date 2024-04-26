@@ -250,6 +250,14 @@ public IDictionary<string, Tuple<string, string>> EquivalentModVersions = new Di
 	["ElectroCrumpet.PelicanPostalService"] = Tuple.Create("1.0.5-beta", "1.0.6") // Pelican Postal Service
 };
 
+/****
+** Internal constants
+****/
+const string TraceStyle = "opacity: 0.5";
+const string ErrorStyle = "color: red; font-weight: bold;";
+const string SuccessStyle = "color: green;";
+
+
 /*********
 ** Script
 *********/
@@ -681,7 +689,17 @@ async Task Main()
 				select new
 				{
 					MissingFramework = Util.VerticalRun(requiredName, Util.WithStyle(requiredId, "color: gray; font-size: 0.9em;")),
-					NeededForMods = "- " + string.Join("\n- ", modGroup.Select(p => p.GetDisplayName()).Order())
+					NeededForMods = "- " + string.Join("\n- ", modGroup.Select(p => p.GetDisplayName()).Order()),
+					Actions = (object)Util.OnDemand(
+						"install from mod dump",
+						() => new object[] // returning an array allows collapsing the log in the LINQPad output
+						{
+							Util.WithStyle(
+								Util.VerticalRun(this.TryInstallDependency(requiredId)),
+								"font-style: monospace; font-size: 0.9em;"
+							)
+						}
+					)
 				}
 			)
 			.ToArray();
@@ -798,14 +816,10 @@ async Task Main()
 /// <param name="mod">The mod to update if possible.</param>
 private IEnumerable<object> TryUpdateFromModDump(ModData mod)
 {
-	const string traceStyle = "opacity: 0.5";
-	const string errorStyle = "color: red; font-weight: bold;";
-	const string successStyle = "color: green;";
-
 	// validate
 	if (mod.InstalledVersion is null)
 	{
-		yield return Util.WithStyle("Can't auto-update because the installed version is unknown.", errorStyle);
+		yield return Util.WithStyle("Can't auto-update because the installed version is unknown.", ErrorStyle);
 		yield break;
 	}
 
@@ -813,18 +827,18 @@ private IEnumerable<object> TryUpdateFromModDump(ModData mod)
 	ParsedFile latestUpdate = null;
 	{
 		if (!this.ModDump.IsValueCreated)
-			yield return Util.WithStyle("Reading mod dump...", traceStyle);
+			yield return Util.WithStyle("Reading mod dump...", TraceStyle);
 		ILookup<string, ParsedMod> modDump = this.ModDump.Value;
 
 		HashSet<string> modIds = new(mod.IDs, StringComparer.OrdinalIgnoreCase);
 		ISemanticVersion latestVersion = mod.InstalledVersion;
 
-		yield return Util.WithStyle($"Checking update keys:", traceStyle);
+		yield return Util.WithStyle($"Checking update keys:", TraceStyle);
 		foreach (string rawUpdateKey in mod.UpdateKeys)
 		{
 			if (!UpdateKey.TryParse(rawUpdateKey, out UpdateKey updateKey))
 			{
-				yield return Util.WithStyle($"   {rawUpdateKey} — skipped (invalid update key).", traceStyle);
+				yield return Util.WithStyle($"   {rawUpdateKey} — skipped (invalid update key).", TraceStyle);
 				continue;
 			}
 
@@ -832,7 +846,7 @@ private IEnumerable<object> TryUpdateFromModDump(ModData mod)
 			ParsedMod[] candidates = modDump[lookupKey].ToArray();
 			if (candidates.Length == 0)
 			{
-				yield return Util.WithStyle($"   {lookupKey} — skipped (no match found in the mod dump).", traceStyle);
+				yield return Util.WithStyle($"   {lookupKey} — skipped (no match found in the mod dump).", TraceStyle);
 				continue;
 			}
 
@@ -846,23 +860,23 @@ private IEnumerable<object> TryUpdateFromModDump(ModData mod)
 
 					if (!modIds.Contains(modFolder.ModID))
 					{
-						yield return Util.WithStyle($"   {logPrefix} — skipped (different mod ID '{modFolder.ModID}').", traceStyle);
+						yield return Util.WithStyle($"   {logPrefix} — skipped (different mod ID '{modFolder.ModID}').", TraceStyle);
 						continue;
 					}
 
 					if (!SemanticVersion.TryParse(modFolder.Version, out ISemanticVersion candidateVersion))
 					{
-						yield return Util.WithStyle($"    {logPrefix} — skipped (its version '{modFolder.Version}' couldn't be parsed).", traceStyle);
+						yield return Util.WithStyle($"    {logPrefix} — skipped (its version '{modFolder.Version}' couldn't be parsed).", TraceStyle);
 						continue;
 					}
 
 					if (!latestVersion.IsOlderThan(candidateVersion))
 					{
-						yield return Util.WithStyle($"   {logPrefix} — skipped (its version '{candidate.Version}' is older than {latestVersion}).", traceStyle);
+						yield return Util.WithStyle($"   {logPrefix} — skipped (its version '{candidate.Version}' is older than {latestVersion}).", TraceStyle);
 						continue;
 					}
 
-					yield return Util.WithStyle($"   {logPrefix} — matched for newer version '{candidate.Version}'.", traceStyle);
+					yield return Util.WithStyle($"   {logPrefix} — matched for newer version '{candidate.Version}'.", TraceStyle);
 					latestUpdate = modFolder;
 					latestVersion = candidateVersion;
 				}
@@ -871,14 +885,14 @@ private IEnumerable<object> TryUpdateFromModDump(ModData mod)
 	}
 	if (latestUpdate is null)
 	{
-		yield return Util.WithStyle("Can't auto-update because no newer version was found in the mod dump.", errorStyle);
+		yield return Util.WithStyle("Can't auto-update because no newer version was found in the mod dump.", ErrorStyle);
 		yield break;
 	}
 
 	// get paths
 	DirectoryInfo fromDir = latestUpdate.RawFolder.Directory;
 	DirectoryInfo toDir = mod.Folder.Directory;
-	yield return Util.WithStyle($"Updating to version {latestUpdate.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", traceStyle);
+	yield return Util.WithStyle($"Updating to version {latestUpdate.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", TraceStyle);
 	if (toDir.Exists)
 	{
 		FileHelper.ForceDelete(toDir);
@@ -895,7 +909,65 @@ private IEnumerable<object> TryUpdateFromModDump(ModData mod)
 		File.Copy(file.FullName, toPath);
 	}
 
-	yield return Util.WithStyle("Done!", successStyle);
+	yield return Util.WithStyle("Done!", SuccessStyle);
+}
+
+/// <summary>Install a dependency referenced by another mod.</summary>
+/// <param name="mod">The mod ID to install.</param>
+private IEnumerable<object> TryInstallDependency(string id)
+{
+	// get latest version from mod dump
+	ParsedFile selectedMod = null;
+	{
+		if (!this.ModDump.IsValueCreated)
+			yield return Util.WithStyle("Reading mod dump...", TraceStyle);
+		ILookup<string, ParsedMod> modDump = this.ModDump.Value;
+
+		// find latest version of the target mod
+		yield return Util.WithStyle($"Scanning for ID '{id}'...", TraceStyle);
+		ISemanticVersion latestVersion = null;
+		foreach (ParsedMod modPage in modDump.SelectMany(p => p))
+		{
+			foreach (ParsedFile modFolder in modPage.ModFolders)
+			{
+				if (!string.Equals(modFolder.ModID, id, StringComparison.OrdinalIgnoreCase) || !SemanticVersion.TryParse(modFolder.Version, out ISemanticVersion curVersion))
+					continue;
+
+				if (latestVersion?.IsOlderThan(curVersion) is false)
+					continue;
+
+				latestVersion = curVersion;
+				selectedMod = modFolder;
+			}
+		}
+		if (selectedMod is null)
+		{
+			yield return Util.WithStyle($"No matching mod found in the mod dump.", ErrorStyle);
+			yield break;
+		}
+	}
+
+	// get paths
+	DirectoryInfo fromDir = selectedMod.RawFolder.Directory;
+	DirectoryInfo toDir = new DirectoryInfo(Path.Combine(this.ModFolderPath, '%' + selectedMod.RawFolder.Directory.Name));
+	yield return Util.WithStyle($"Installing '{selectedMod.DisplayName}' version {selectedMod.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", TraceStyle);
+	if (toDir.Exists)
+	{
+		FileHelper.ForceDelete(toDir);
+		toDir.Create();
+	}
+
+	// copy mod
+	foreach (FileInfo file in fromDir.GetFiles("*", SearchOption.AllDirectories))
+	{
+		string relativePath = Path.GetRelativePath(fromDir.FullName, file.FullName);
+		string toPath = Path.Combine(toDir.FullName, relativePath);
+
+		Directory.CreateDirectory(Path.GetDirectoryName(toPath));
+		File.Copy(file.FullName, toPath);
+	}
+
+	yield return Util.WithStyle("Done!", SuccessStyle);
 }
 
 /// <summary>Get links for a mod.</summary>
