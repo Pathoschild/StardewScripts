@@ -71,7 +71,7 @@ javascript:(function() {
      * When viewing the main notification page, whether to fade out read notifications instead of
      * hiding them.
      */
-    const fadeOutReadInMainNotificationPage = true;
+    const fadeOutReadInMainNotificationPage = false;
 
     /**
      * Configures which notifications you want to ignore. These will be either marked as read &
@@ -307,7 +307,7 @@ javascript:(function() {
                 this.type = NotificationType.Unknown;
 
             /* extract mod text */
-            const row = element.querySelector(this.isNext ? ".text-font-primary" : ".notification-content");
+            const row = element.querySelector(this.isNext ? "p" : ".notification-content");
             const rowHtml = row.innerHTML;
             const rowMatch = rowHtml.match("<span[^<>]*>.+?</span> ([a-z ]+) <span[^<>]*>(.+?)</span>"); /* span for user or count, text for action, then span for mod name */
             this.modName = rowMatch?.[2] ?? null;
@@ -324,11 +324,16 @@ javascript:(function() {
         }
 
         hide() {
-            this.element.style.display = "none";
+            /* setting styles can cause browser lag with many notifications even if we're setting it to the same value */
+            if (this.element.style.display != "none") {
+                this.element.style.display = "none";
+            }
         }
 
         fadeOut() {
-            this.element.style.opacity = "0.5";
+            if (this.element.style.opacity != "0.5") {
+                this.element.style.opacity = "0.5";
+            }
         }
 
         markAsRead() {
@@ -340,7 +345,9 @@ javascript:(function() {
         }
 
         highlight() {
-            this.element.style.border = "border: 3px solid red";
+            if (this.element.style.border != "border: 3px solid red") {
+                this.element.style.border = "border: 3px solid red";
+            }
         }
     }
 
@@ -408,7 +415,11 @@ javascript:(function() {
         /* hide read */
         if (notif.isRead)
         {
-            notif.hide();
+            if (isMainNotificationsPage && fadeOutReadInMainNotificationPage)
+                notif.fadeOut();
+            else
+                notif.hide();
+            continue;
         }
     }
 })();void(0);
