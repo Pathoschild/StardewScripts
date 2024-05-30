@@ -58,7 +58,7 @@ readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\com
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 04, 25), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 05, 29), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -171,10 +171,12 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	#region Nexus mods
 	..ModSearch.ForSiteIds(ModSite.Nexus,
 		// mod translations
+		23597, // Adventurer's Guild Expanded (es)
 		11463, // Always Raining in the Valley (es)
 		18036, // Alternate Textures (fr)
 		17337, // Ancient History - A Museum Expansion mod (es)
 		7932,  // Animals Need Water (fr)
+		23323, // Better Crafting (id)
 		16289, // Better Juninos (fr)
 		18968, // Better Juninos (uk)
 		20406, // Better Juninos (vh)
@@ -187,6 +189,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		14724, // Child Age Up (id)
 		5879,  // Child Age Up (zh)
 		18168, // Child to NPC (ru/uk)
+		22514, // Chocobo Valley (es)
 		14119, // CJB Cheats Menu (es)
 		17430, // CJB Cheats Menu (vi)
 		17649, // CJB Cheats Menu (vi)
@@ -205,6 +208,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		20428, // Daily Tasks Report (ru)
 		21168, // Deluxe Grabber Redux (zh)
 		15007, // Deluxe Journal (fr)
+		23825, // Deluxe Journal (ko)
 		22509, // Distant Lands - A Small Witch Swamp Expansion (es)
 		15908, // Downtown Zuzu (fr)
 		18857, // Downtown Zuzu (id)
@@ -221,6 +225,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		17027, // Farm Helper (es)
 		12045, // Farmer Helper (ru)
 		12097, // Farmer Helper (tr)
+		23394, // Fashion Sense (es)
 		18034, // Fashion Sense (fr)
 		13106, // Festival of the Mundane (zh)
 		13165, // Fishing Trawler (vi)
@@ -268,13 +273,16 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		10224, // Multiple Spouses (zh)
 		14478, // Never Ending Adventure - NPC Mateo (es)
 		6295,  // Nice Messages (ru)
+		24505, // Multiplayer Info (de)
 		8928,  // Multiple Spouse Dialogs (tr)
 		15327, // New Years Eve (tr)
 		5551,  // NPC Adventures (ru)
 		8767,  // NPC Adventures (tr)
+		23305, // NPC Map Locations (id)
 		13369, // NPC Map Locations (vi)
 		17659, // NPC Map Locations (vi)
 		14437, // NPC Map Locations (zh)
+		24624, // Nuclear Valley (zh)
 		14878, // Ornithologist's Guild (ru)
 		8696,  // Personal Effects Redux (pt)
 		14821, // Personal Effects Redux (pt)
@@ -306,7 +314,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		5259,  // Stardew Valley Expanded (de)
 		5272,  // Stardew Valley Expanded (es)
 		5509,  // Stardew Valley Expanded (es)
-		5901,  // Stardew Valley Expanded (fr)
 		8411,  // Stardew Valley Expanded (fr)
 		12867, // Stardew Valley Expanded (fr)
 		5788,  // Stardew Valley Expanded (ja)
@@ -316,8 +323,10 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		19243, // Survivalist Skill (vi)
 		10221, // The Ranch Expansion Marnie and Jas (es)
 		17727, // Time Before Harvest Enhanced (vi)
+		23498, // To-Dew (id)
 		8312,  // Town School Functions (tr)
 		6356,  // Town School Functions (zh)
+		23455, // Tractor Mod (id)
 		17666, // Tree Transplant (vi)
 		10785, // Tristan (es)
 		14398, // Tristan (es)
@@ -379,6 +388,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		3294,  // Sprint Sprint Sprint (replaced by Sprint Sprint)
 
 		// other
+		10622, // Bulk Staircases (author created a new account to post newer versions)
 		19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
 		17262, // Stardrop Quick Start (not a mod itself, just has dependencies)
 		19905  // XNB Archive (not a mod)
@@ -415,6 +425,13 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 18388, 76292), // Van NPC
 	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
 	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
+
+	// reposts
+	new(ModSite.Nexus, 23271, manifestId: "ChelseaBingiel.LuckyRabbitsFoot"),   // Actually Lucky Rabbit's Foot
+	new(ModSite.Nexus, 24374, manifestId: "aedenthorn.AdvancedMeleeFramework"), // Advanced Melee Framework
+	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),            // Survivalist - Hunger and Thirst
+	new(ModSite.Nexus, 23570, manifestId: "TyoAtrosa.Treeshaker"),              // Tree Shaker
+	new(ModSite.Nexus, 24119, manifestId: "aedenthorn.WikiLinks"),              // Wiki Links
 
 	// utility mods that are part of a larger mod
 	new(ModSite.Nexus, 2677, 14752), // Always On Server for Multiplayer > Server Connection Reset
@@ -473,11 +490,13 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
 	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments"), // Unofficial Balance Patch
+	new(ModSite.Nexus, 23344, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Boutique
+	new(ModSite.Nexus, 23518, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Gourmand
+	new(ModSite.Nexus, 23517, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Sweet Tooth
 
 	// downloads which replace files in other mods
 	new(ModSite.Nexus, 19236, 78568), // Anime Catboy Portrait Mod - Wizard SVE
 	new(ModSite.Nexus, 21191, 86404), // Auto Fish - Deutsch
-	new(ModSite.Nexus, 19426, 79169), // Bun's Dateable (and Marry) Caroline Portraits
 	new(ModSite.Nexus, 19698, 80076), // Vanilla Portrait Frame
 
 	// special cases
