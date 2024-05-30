@@ -35,6 +35,10 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
                 total++;
                 break;
 
+            case "abandoned":
+            case "obsolete":
+                break; // abandoned/obsolete mods don't count towards stats
+
             default:
                 console.log(`ignored mod '${name}', invalid status '${status}'.`);
                 break;
