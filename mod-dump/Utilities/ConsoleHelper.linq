@@ -1,4 +1,6 @@
-<Query Kind="Program" />
+<Query Kind="Program">
+  <Namespace>System.Threading.Tasks</Namespace>
+</Query>
 
 /// <summary>Represents a log severity.</summary>
 public enum Severity { Trace, Info, Warning, Error }
@@ -48,20 +50,40 @@ public static class ConsoleHelper
 		}
 	}
 
+	/// <summary>Get input from the user until the specify a valid option.</summary>
+	/// <param name="options">The valid inputs (case insensitive).</summary>
+	/// <param name="cancelToken">A cancellation token which can end the input.</param>
+	public static async Task<string> GetChoiceAsync(string prompt, string[] options, CancellationToken cancelToken)
+	{
+		while (true)
+		{
+			string input = (await Util.ReadLineAsync(prompt, "", options, cancelToken)).Trim();
+			if (options.Contains(input))
+				return input;
+		}
+	}
+
 	/// <summary>Print a formatted message to the console.</summary>
 	/// <param name="message">The message to print.</param>
 	/// <param name="severity">The message severity.</param>
 	public static void Print(string message, Severity severity = Severity.Info)
 	{
-		string style = new Dictionary<Severity, string>
-		{
-			[Severity.Trace] = "color:gray",
-			[Severity.Info] = "",
-			[Severity.Warning] = "color:orange",
-			[Severity.Error] = "color:red"
-		}[severity];
+		object formatted = ConsoleHelper.FormatMessage(message, severity);
+		Console.WriteLine(formatted);
+	}
 
-		Console.WriteLine(Util.WithStyle(message, style));
+	/// <summary>Format a message before it's printed to the console.</summary>
+	/// <param name="message">The message to print.</param>
+	/// <param name="severity">The message severity.</param>
+	public static object FormatMessage(string message, Severity severity)
+	{
+		return severity switch
+		{
+			Severity.Trace => Util.WithStyle(message, "color: gray"),
+			Severity.Warning => Util.WithStyle(message, "color: orange"),
+			Severity.Error => Util.WithStyle(message, "color: red"),
+			_ => message
+		};
 	}
 
 	/// <summary>Try to run a block of code, and let the user retry if it fails.</summary>

@@ -55,6 +55,9 @@ readonly ModDumpManager ModDump = new(
 /// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
 readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
 
+/// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
+readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
+
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
@@ -1113,22 +1116,57 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<Ge
 				{
 					ConsoleHelper.Print($"File {mod.ID} > {file.ID} has no download sources available.", Severity.Error);
 					ConsoleHelper.Print("You can optionally download it yourself:", Severity.Error);
-					ConsoleHelper.Print($"   download from: {mod.PageUrl}", Severity.Error);
-					ConsoleHelper.Print($"   download to:   {localFile.FullName}", Severity.Error);
+
+					Util.HorizontalRun(
+						true,
+						ConsoleHelper.FormatMessage($"   download from:", Severity.Error),
+						new Hyperlinq(mod.Site switch
+						{
+							ModSite.CurseForge => $"{mod.PageUrl}/download/{file.ID}",
+							_ => mod.PageUrl
+						})
+					).Dump();
+					
+					CancellationTokenSource inputCancelToken = new();
+
+					Util.HorizontalRun(
+						true,
+						ConsoleHelper.FormatMessage($"   download to:  {localFile.FullName}", Severity.Error),
+						new Hyperlinq(
+							() =>
+							{
+								if (this.MoveDownloadedFile(file, localFile.FullName))
+									inputCancelToken.Cancel();
+							},
+							"[move download automatically]"
+						)
+					).Dump();
+
 					while (true)
 					{
-						if (ConsoleHelper.GetChoice("Do you want to [u]se a manually downloaded file or [s]kip this file?", "u", "s") == "u")
+						try
+						{
+							if (await ConsoleHelper.GetChoiceAsync("Do you want to [u]se a manually downloaded file or [s]kip this file?", ["u", "s"], inputCancelToken.Token) == "u")
+							{
+								if (!File.Exists(localFile.FullName))
+								{
+									ConsoleHelper.Print($"No file found at {localFile.FullName}.", Severity.Error);
+									continue;
+								}
+
+								ConsoleHelper.Print($"Using manually downloaded file.", Severity.Info);
+							}
+							else
+								ConsoleHelper.Print($"Skipped file.", Severity.Info);
+						}
+						catch (OperationCanceledException) // input cancelled due to [move download automatically]
 						{
 							if (!File.Exists(localFile.FullName))
 							{
 								ConsoleHelper.Print($"No file found at {localFile.FullName}.", Severity.Error);
 								continue;
 							}
-
-							ConsoleHelper.Print($"Using manually downloaded file.", Severity.Info);
 						}
-						else
-							ConsoleHelper.Print($"Skipped file.", Severity.Info);
 						break;
 					}
 					break;
@@ -1152,6 +1190,24 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<Ge
 			}
 		}
 	}
+}
+
+/// <summary>If a file was downloaded manually, move the downloaded file to the target path automatically.</summary>
+/// <param name="file">The file info from the mod site.</param>
+/// <param name="targetPath">The absolute file path to which to move it.</param>
+/// <returns>Returns whether it was moved successfully.</returns>
+private bool MoveDownloadedFile(GenericFile file, string targetPath)
+{
+	FileInfo fromFile = new(Path.Combine(DownloadsPath, file.FileName));
+	if (!fromFile.Exists)
+	{
+		ConsoleHelper.Print($"   No file found at {fromFile.FullName}.");
+		return false;
+	}
+
+	fromFile.MoveTo(targetPath);
+	ConsoleHelper.Print($"  Download moved to {targetPath}.");
+	return true;
 }
 
 /// <summary>Get the human-readable mod names for the compatibility list.</summary>
