@@ -66,7 +66,8 @@ readonly Dictionary<string, ModLanguage> Languages = new(StringComparer.OrdinalI
 	// optional custom languages (only listed if repo has translations for them)
 	["pl"] = new ModLanguage("Polish", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/3616"),
 	["th"] = new ModLanguage("Thai", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/7052"),
-	["uk"] = new ModLanguage("Ukrainian", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/8427")
+	["uk"] = new ModLanguage("Ukrainian", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/8427"),
+	["vi"] = new ModLanguage("Vietnamese", Required: false, Url: "https://www.nexusmods.com/stardewvalley/mods/24371")
 };
 
 /// <summary>A hidden comment to add just under the section header. You can set it to null to disable it.</summary>
