@@ -61,7 +61,7 @@ readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable(
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 05, 29), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 06, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -278,6 +278,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		6295,  // Nice Messages (ru)
 		24505, // Multiplayer Info (de)
 		8928,  // Multiple Spouse Dialogs (tr)
+		25212, // Mutant Rings (X-Men) (vh)
 		15327, // New Years Eve (tr)
 		5551,  // NPC Adventures (ru)
 		8767,  // NPC Adventures (tr)
@@ -432,6 +433,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	// reposts
 	new(ModSite.Nexus, 23271, manifestId: "ChelseaBingiel.LuckyRabbitsFoot"),   // Actually Lucky Rabbit's Foot
 	new(ModSite.Nexus, 24374, manifestId: "aedenthorn.AdvancedMeleeFramework"), // Advanced Melee Framework
+	new(ModSite.Nexus, 24806, manifestId: "MiphasGrace.SurpriseBaby1"),         // Surprise Pregnancy
 	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),            // Survivalist - Hunger and Thirst
 	new(ModSite.Nexus, 23570, manifestId: "TyoAtrosa.Treeshaker"),              // Tree Shaker
 	new(ModSite.Nexus, 24119, manifestId: "aedenthorn.WikiLinks"),              // Wiki Links
@@ -483,6 +485,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomNPC"),              // New NPC Alec
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
 	new(ModSite.Nexus, 5384, manifestId: "Platonymous.PlatoUI"),                // Plato Warp Menu
+	new(ModSite.Nexus, 19225, manifestId: "Platonymous.Portraiture"),           // Portraiture
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
 	new(ModSite.Nexus, 16904, manifestId: "RukaBravo.portrait.mod.vanilla"),    // RukaBravo's portrait mod (actually loads Portraiture.dll)
 	new(ModSite.Nexus, 12069, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Nude Farmer and Swimsuits
@@ -503,6 +506,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 19698, 80076), // Vanilla Portrait Frame
 
 	// special cases
+	new(ModSite.Nexus, 23235, fileId: 95378),                             // Daily Item Randomizer (blocked by Nexus antivirus check)
+	new(ModSite.Nexus, 23235, fileId: 95390),                             // Daily Item Randomizer (blocked by Nexus antivirus check)
 	new(ModSite.Nexus, 12824, fileId: 79850),                             // Marry Morris (pre-1.6 version is C#, but newer versions are content packs)
 	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // Redraw Pelican Town (C# component uploaded to both #14928 and #15564, so link it to the first one)
 	#endregion
