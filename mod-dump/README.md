@@ -53,7 +53,5 @@ Usage:
 * `wiki compat - highlight workaround links to a broken mod.js` can be run while editing [the mod
   compatibility page](https://stardewvalleywiki.com/Modding:Mod_compatibility)
   to highlight any 'use X instead' links which point to a mod which is marked broken, abandoned, or bsolete.
-* `wiki compat - sort table.js` can be run on [the mod compatibility page]
-  (https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3) to list mods that
-  aren't sorted in the expected order (i.e. alphabetical ignoring case and non-alphanumeric
-  characters).
+* `wiki compat - get stats.linq` lets you paste the [mod compatibility section](https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3)
+  into the script (at the bottom), then run it to output the sorted table.
