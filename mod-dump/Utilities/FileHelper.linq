@@ -47,4 +47,29 @@ public static class FileHelper
 			throw new InvalidOperationException($"Failed deleting {(entry is DirectoryInfo ? "folder" : "file")} {entry.FullName}", ex);
 		}
 	}
+
+	/// <summary>Recursively copy a directory or file.</summary>
+	/// <param name="source">The file or folder to copy.</param>
+	/// <param name="targetFolder">The folder to copy into.</param>
+	public static void RecursiveCopy(FileSystemInfo source, DirectoryInfo targetFolder)
+	{
+		if (!targetFolder.Exists)
+			targetFolder.Create();
+
+		switch (source)
+		{
+			case FileInfo sourceFile:
+				sourceFile.CopyTo(Path.Combine(targetFolder.FullName, sourceFile.Name));
+				break;
+
+			case DirectoryInfo sourceDir:
+				DirectoryInfo targetSubfolder = new(Path.Combine(targetFolder.FullName, sourceDir.Name));
+				foreach (FileSystemInfo entry in sourceDir.EnumerateFileSystemInfos())
+					FileHelper.RecursiveCopy(entry, targetSubfolder);
+				break;
+
+			default:
+				throw new NotSupportedException($"Unknown filesystem info type '{source.GetType().FullName}'.");
+		}
+	}
 }
