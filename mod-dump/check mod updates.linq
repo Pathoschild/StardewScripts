@@ -766,6 +766,8 @@ async Task Main()
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {warnStyle}"), $"⚠ {warning}"));
 			foreach (var issue in mod.MinorIssues)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {fadedStyle}"), $"⚠ {issue}"));
+			if (mod.Manifest.ExtraFields.TryGetValue("@modDump", out object rawNotes) && rawNotes is string notes)
+				issues.Add(new XElement("div", $"ⓘ {notes}"));
 
 			// build name column
 			object nameCol = Util.WithStyle(mod.Name, smallStyle);
