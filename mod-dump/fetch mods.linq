@@ -61,7 +61,7 @@ readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable(
 /// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
 readonly Func<IModSiteClient, Task<int[]>> FetchMods =
 	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 06, 30), TimeSpan.Zero)); // since last run
+	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 07, 30), TimeSpan.Zero)); // since last run
 	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
 	//site => site.GetPossibleModIdsAsync(startFrom: null);
 
@@ -174,6 +174,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	#region Nexus mods
 	..ModSearch.ForSiteIds(ModSite.Nexus,
 		// mod translations
+		25959, // Advanced Fishing Treasure (zh)
 		23597, // Adventurer's Guild Expanded (es)
 		11463, // Always Raining in the Valley (es)
 		18036, // Alternate Textures (fr)
@@ -212,7 +213,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		21168, // Deluxe Grabber Redux (zh)
 		15007, // Deluxe Journal (fr)
 		23825, // Deluxe Journal (ko)
-		22509, // Distant Lands - A Small Witch Swamp Expansion (es)
+		25825, // Distant Lands (de)
+		22509, // Distant Lands (es)
 		15908, // Downtown Zuzu (fr)
 		18857, // Downtown Zuzu (id)
 		11090, // Downtown Zuzu (it)
@@ -223,6 +225,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		5428,  // Dwarvish (zh)
 		10626, // East Scarp (es)
 		8784,  // East Scarpe (pt)
+		25952, // EXP Control (zh)
 		10967, // Extra Fish Information (fr)
 		15717, // Extended Minecart (tr)
 		17027, // Farm Helper (es)
@@ -243,6 +246,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		9117,  // Happy Birthday (ru)
 		6111,  // Immersive Characters - Shane (es)
 		12399, // Instant Tool Upgrades (tr)
+		26451, // Iridium Tools Patch (fr)
 		17798, // Joys of Efficiency (vi)
 		10685, // Juliet and Jessie the Joja Clerks (es)
 		8946,  // Junimo Dialog (pt)
@@ -290,7 +294,9 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		14878, // Ornithologist's Guild (ru)
 		8696,  // Personal Effects Redux (pt)
 		14821, // Personal Effects Redux (pt)
+		26441, // Polyamory Sweet (fr)
 		13244, // PPJA (vi)
+		25965, // Predictor (zh)
 		5329,  // Prismatic Tools (pt)
 		20395, // Prismatic Tools (multiple languages)
 		11407, // Producer Framework Mod (fr)
@@ -340,6 +346,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		6637,  // Underground Secrets (ru)
 		22366, // Visit Mount Vapius (es)
 		17684, // What Are You Missing (vi)
+		25953, // XP Display (zh)
 
 		// reposts
 		22479, // Auto-Eat
@@ -501,9 +508,10 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 23517, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Sweet Tooth
 
 	// downloads which replace files in other mods
-	new(ModSite.Nexus, 19236, 78568), // Anime Catboy Portrait Mod - Wizard SVE
-	new(ModSite.Nexus, 21191, 86404), // Auto Fish - Deutsch
-	new(ModSite.Nexus, 19698, 80076), // Vanilla Portrait Frame
+	new(ModSite.Nexus, 22703, 104961), // BBBoong's Ridgeside Village Seasonal Portraits
+	new(ModSite.Nexus, 19236, 78568),  // Anime Catboy Portrait Mod - Wizard SVE
+	new(ModSite.Nexus, 21191, 86404),  // Auto Fish - Deutsch
+	new(ModSite.Nexus, 19698, 80076),  // Vanilla Portrait Frame
 
 	// special cases
 	new(ModSite.Nexus, 23235, fileId: 95378),                             // Daily Item Randomizer (blocked by Nexus antivirus check)

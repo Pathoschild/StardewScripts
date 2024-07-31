@@ -136,6 +136,7 @@ javascript:(function() {
             973: "Time Freeze",
 
             /* spacechase0 */
+            26121: "Angry Seagulls",
             3283: "Animal Social Menu",
             3379: "Another Hunger Mod",
             14448: "A Quality Mod",
