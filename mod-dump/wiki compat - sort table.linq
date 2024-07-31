@@ -27,9 +27,10 @@ void Main()
 		var parsedTemplates =
 			(
 				from template in extractedTemplates
-				let name = Regex.Match(template, @"\|\s*name\s*=\s*(.+)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract name field from template.\nRaw text: {template}")
-				let comparableName = new string(name.ToLower().Where(ch => ch is not (' ') && !Char.IsPunctuation(ch) && !Char.IsSymbol(ch)).ToArray())
-				select (comparableName, template)
+				let comparableName = ToComparable(Regex.Match(template, @"\|\s*name\s*=\s*(.+)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract name field from template.\nRaw text: {template}"))
+				let nexusId = Regex.Match(template, @"\|\s*nexus\s*=\s*(.*)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract nexus field from template.\nRaw text: {template}")
+				let comparableAuthor = ToComparable(Regex.Match(template, @"\|\s*author\s*=\s*(.+)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract author field from template.\nRaw text: {template}"))
+				select new { comparableName, comparableAuthor, nexusId, template }
 			).ToList();
 
 		parsedTemplates.Sort((a, b) =>
@@ -37,8 +38,14 @@ void Main()
 			string nameA = a.comparableName;
 			string nameB = b.comparableName;
 
+			// same name, sort by age and then author
 			if (nameA == nameB)
-				return 0;
+			{
+				if (int.TryParse(a.nexusId, out int nexusA) && int.TryParse(b.nexusId, out int nexusB))
+					return nexusA.CompareTo(nexusB);
+				
+				return string.Compare(a.comparableAuthor, b.comparableAuthor);
+			}
 			
 			// special case: if they have a common prefix, list shorter one first
 			if (nameA.StartsWith(nameB))
@@ -73,6 +80,13 @@ void Main()
 
 	// sort
 	modified.Dump();
+}
+
+/// <summary>Get a comparable representation of a string value which ignores case, spaces, punctuation, and symbols.</summary>
+/// <param name="value">The string value to represent.</param>
+string ToComparable(string value)
+{
+	return new string(value.ToLower().Where(ch => ch is not (' ') && !Char.IsPunctuation(ch) && !Char.IsSymbol(ch)).ToArray());
 }
 
 #region data
