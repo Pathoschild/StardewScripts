@@ -767,6 +767,13 @@ async Task Main()
 			foreach (var issue in mod.MinorIssues)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {fadedStyle}"), $"⚠ {issue}"));
 
+			// build name column
+			object nameCol = Util.WithStyle(mod.Name, smallStyle);
+			if (!string.Equals(mod.NormalizedFolder.Replace(" ", ""), mod.Name.Replace(" ", "", StringComparison.OrdinalIgnoreCase)))
+				nameCol = Util.VerticalRun(nameCol, Util.WithStyle("  in " + mod.NormalizedFolder, smallStyle + "opacity:0.7;"));
+			if (mod.Author != null)
+				nameCol = Util.VerticalRun(nameCol, Util.WithStyle($"  by {mod.Author}", smallStyle));
+
 			// get actions
 			object actions = Util.OnDemand(
 				"→dump",
@@ -799,7 +806,7 @@ async Task Main()
 			// get report
 			return new
 			{
-				Name = Util.WithStyle(mod.Author != null ? $"{mod.Name}\n  by {mod.Author}" : mod.Name, smallStyle),
+				Name = nameCol,
 				Installed = Util.WithStyle(mod.Installed, smallStyle),
 				Latest = Util.RawHtml(versionHtml),
 				Status = Util.WithStyle(mod.WikiStatus, $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
