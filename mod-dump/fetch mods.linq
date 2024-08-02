@@ -1954,6 +1954,23 @@ class NexusApiClient : IModSiteClient
 				lastUpdated = uploadedAt;
 		}
 
+		// special case: if a mod has zero main/optional files, get files from any non-archived/deleted/old category
+		if (files.Count == 0)
+		{
+			foreach ((uint fileId, NexusFileExport file) in mod.Files)
+			{
+				if (file.CategoryId is (int)FileCategory.Archived or (int)FileCategory.Deleted or (int)FileCategory.Old)
+					continue;
+
+				files.Add(new GenericFile(id: fileId, type: GenericFileType.Optional, displayName: file.Name, fileName: file.FileName, version: file.Version, rawData: file));
+
+				// track last update
+				DateTimeOffset uploadedAt = DateTimeOffset.FromUnixTimeSeconds(file.UploadedAt);
+				if (uploadedAt > lastUpdated)
+					lastUpdated = uploadedAt;
+			}
+		}
+
 		// get model
 		return new GenericMod(
 			site: ModSite.Nexus,
