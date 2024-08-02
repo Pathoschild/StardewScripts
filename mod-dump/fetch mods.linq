@@ -597,6 +597,7 @@ async Task Main()
 		else
 			"none".Dump("SMAPI mods not on the wiki");
 	}
+	this.GetWikiModsNotInCache(modDump, compatList).Dump("Mods on the wiki which weren't found on the modding sites");
 	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
 	this.GetModTypes(mods).Dump("mod types");
@@ -704,6 +705,48 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 		}
 	)
 	.ToArray();
+}
+
+/// <summary>Get SMAPI mods listed on the wiki compatibility list which don't exist in the mod dump, so they were probably hidden or deleted. This excludes mods marked abandoned on the wiki.</summary>
+/// <param name="modDump">The mod dump to search.</param>
+/// <param name="compatList">The mod data from the wiki compatibility list.</param>
+IEnumerable<dynamic> GetWikiModsNotInCache(ModCache modDump, WikiModList compatList)
+{
+	ModToolkit toolkit = new();
+
+	HashSet<string> missingPages = new(StringComparer.OrdinalIgnoreCase);
+	foreach (WikiModEntry mod in compatList.Mods)
+	{
+		if (mod.Compatibility.Status is WikiCompatibilityStatus.Abandoned or WikiCompatibilityStatus.Obsolete)
+			continue;
+
+		missingPages.Clear();
+		if (mod.CurseForgeID.HasValue && modDump.GetMod(ModSite.CurseForge, mod.CurseForgeID.Value) is null)
+			missingPages.Add($"{ModSite.CurseForge}:{mod.CurseForgeID}");
+		if (mod.ModDropID.HasValue && modDump.GetMod(ModSite.ModDrop, mod.ModDropID.Value) is null)
+			missingPages.Add($"{ModSite.ModDrop}:{mod.ModDropID}");
+		if (mod.NexusID.HasValue && modDump.GetMod(ModSite.Nexus, mod.NexusID.Value) is null)
+			missingPages.Add($"{ModSite.Nexus}:{mod.NexusID}");
+
+		if (missingPages.Count > 0)
+		{
+			yield return new
+			{
+				Name = mod.Name.FirstOrDefault(),
+				ID = mod.ID.FirstOrDefault(),
+				InvalidPages = Util.HorizontalRun(
+					true,
+					missingPages.Select(page =>
+					{
+						string url = toolkit.GetUpdateUrl(page);
+						return url != null
+							? (object)new Hyperlinq(url, page)
+							: page;
+					})
+				)
+			};
+		}
+	}
 }
 
 /// <summary>Copy a mod into the mods folder indicated by <see cref="InstallModsToPath"/>.</summary>
