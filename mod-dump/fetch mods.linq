@@ -10,6 +10,12 @@
   <Namespace>Pathoschild.Http.Client</Namespace>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CurseForgeExport</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CurseForgeExport.ResponseModels</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.ModDropExport</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.ModDropExport.ResponseModels</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.NexusExport</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.NexusExport.ResponseModels</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.Wiki</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
   <Namespace>System.Net</Namespace>
@@ -29,28 +35,33 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 /*********
 ** Configuration
 *********/
+/// <summary>The user agent sent to the mod site APIs.</summary>
+const string UserAgent = "PathoschildModDump/20240801 (+https://github.com/Pathoschild/StardewScripts)";
+
 /// <summary>The mod site clients from which to fetch mods.</summary>
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
 {
 	new CurseForgeApiClient(
-		apiKey: null
+		exportApiUrl: null,
+		userAgent: UserAgent
 	),
 	new ModDropApiClient(
+		exportApiUrl: null,
+		userAgent: UserAgent,
 		username: null,
 		password: null
 	),
 	new NexusApiClient(
-		apiKey: "",
+		exportApiUrl: null,
+		userAgent: UserAgent,
+		apiKey: null,
 		appName: "Pathoschild",
 		appVersion: "1.0.0"
 	)
 };
 
-/// <summary>The path in which to store cached data.</summary>
-readonly ModDumpManager ModDump = new(
-	rootPath: @"C:\dev\mod-dump",
-	resetUnpacked: false
-);
+/// <summary>The directory path in which to store cached mod data and downloads.</summary>
+readonly string ModDumpPath = @"C:\dev\mod-dump";
 
 /// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
 readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
@@ -58,12 +69,11 @@ readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\com
 /// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
 readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
 
-/// <summary>Which mods to refetch from the mod sites (or <c>null</c> to not refetch any).</summary>
-readonly Func<IModSiteClient, Task<int[]>> FetchMods =
-	null;
-	//site => site.GetModsUpdatedSinceAsync(new DateTimeOffset(new DateTime(2024, 07, 30), TimeSpan.Zero)); // since last run
-	//site => site.GetModsUpdatedSinceAsync(DateTimeOffset.UtcNow - TimeSpan.FromDays(14));
-	//site => site.GetPossibleModIdsAsync(startFrom: null);
+/// <summary>Whether to fetch any updated mods from the remote mod sites. If false, the script will skip to analysis with the last cached mods.</summary>
+readonly bool FetchMods = false;
+
+/// <summary>Whether to delete mods which no longer exist on the mod sites. If false, they'll show warnings instead.</summary>
+readonly bool DeleteRemovedMods = false; // NOTE: this can instantly delete many mods, which may take a long time to refetch. Consider only enabling it after you double-check the list it prints with it off.
 
 /// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
 readonly ModSearch[] IgnoreForAnalysis = [
@@ -521,6 +531,12 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	#endregion
 ];
 
+/// <summary>The maximum age in hours for which a mod export is considered valid.</summary>
+const int MaxExportAge = 5;
+
+/// <summary>The number of mods to fetch from a mod site before the mod cache is written to disk to allow for incremental updates.</summary>
+readonly int ModFetchesPerSave = 10;
+
 /// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
 private IDictionary<string, ModSearch[]> IgnoreForAnalysisBySiteId;
 
@@ -532,54 +548,33 @@ async Task Main()
 {
 	// build optimized mod search lookup
 	this.IgnoreForAnalysisBySiteId = this.IgnoreForAnalysis
-		.GroupBy(p => new { p.Site, p.SiteId })
-		.ToDictionary(p => $"{p.Key.Site}:{p.Key.SiteId}", p => p.ToArray());
+		.GroupBy(p => $"{p.Site}:{p.SiteId}")
+		.ToDictionary(p => p.Key, p => p.ToArray());
 
 	// fetch compatibility list
 	ConsoleHelper.Print("Fetching wiki compatibility list...");
 	WikiModList compatList = await new ModToolkit().GetWikiCompatibilityListAsync();
 
-	// fetch mods
-	HashSet<string> unpackMods = new HashSet<string>();
-	if (this.FetchMods != null)
+	// read cache
+	ConsoleHelper.Print($"Reading mod cache...");
+	ModCache modDump = new(this.ModDumpPath);
+
+	// sync cache to mod sites
+	if (this.FetchMods)
 	{
 		ConsoleHelper.Print("Initializing clients...");
 		foreach (var site in this.ModSites)
 			await site.AuthenticateAsync();
 
-		ConsoleHelper.Print("Fetching mods...");
+		ConsoleHelper.Print("Syncing cache with mod sites...");
+
 		foreach (IModSiteClient modSite in this.ModSites)
-		{
-			// get mod IDs
-			int[] modIds;
-			while (true)
-			{
-				try
-				{
-					modIds = await this.FetchMods(modSite);
-					break;
-				}
-				catch (RateLimitedException ex)
-				{
-					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
-					continue;
-				}
-			}
-
-			// fetch mods
-			int[] imported = await this.ImportMods(modSite, modIds);
-			foreach (int id in imported)
-				unpackMods.Add(Path.Combine(modSite.SiteKey.ToString(), id.ToString()));
-		}
+			await this.DownloadAndCacheSiteAsync(modDump, modSite);
 	}
-
-	// unpack fetched files
-	ConsoleHelper.Print($"Unpacking mod folders...");
-	this.ModDump.UnpackModDownloads();
 
 	// read mod data
 	ConsoleHelper.Print($"Reading mod folders...");
-	ParsedMod[] mods = this.ModDump.ReadMods().ToArray();
+	ParsedMod[] mods = modDump.ReadUnpackedModFolders().ToArray();
 
 	// add launch button
 	new Hyperlinq(
@@ -619,11 +614,11 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 {
 	// fetch mods on the wiki
 	ISet<string> manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
-	IDictionary<ModSite, ISet<int>> siteIDs = new Dictionary<ModSite, ISet<int>>
+	IDictionary<ModSite, ISet<long>> siteIDs = new Dictionary<ModSite, ISet<long>>
 	{
-		[ModSite.CurseForge] = new HashSet<int>(compatList.Mods.Where(p => p.CurseForgeID.HasValue).Select(p => p.CurseForgeID.Value)),
-		[ModSite.ModDrop] = new HashSet<int>(compatList.Mods.Where(p => p.ModDropID.HasValue).Select(p => p.ModDropID.Value)),
-		[ModSite.Nexus] = new HashSet<int>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => p.NexusID.Value))
+		[ModSite.CurseForge] = new HashSet<long>(compatList.Mods.Where(p => p.CurseForgeID.HasValue).Select(p => (long)p.CurseForgeID.Value)),
+		[ModSite.ModDrop] = new HashSet<long>(compatList.Mods.Where(p => p.ModDropID.HasValue).Select(p => (long)p.ModDropID.Value)),
+		[ModSite.Nexus] = new HashSet<long>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => (long)p.NexusID.Value))
 	};
 
 	// fetch report
@@ -796,7 +791,7 @@ IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
 IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 {
 	// index known mods
-	IDictionary<string, ParsedMod> modsByKey = mods.ToDictionary(mod =>$"{mod.Site}:{mod.ID}", StringComparer.OrdinalIgnoreCase);
+	IDictionary<string, ParsedMod> modsByKey = mods.ToDictionary(mod => $"{mod.Site}:{mod.ID}", StringComparer.OrdinalIgnoreCase);
 
 	// show unknown entries
 	var invalid = new List<(ModSearch Entry, string Reason, ParsedMod Mod)>();
@@ -813,7 +808,7 @@ IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 		}
 
 		// match against mod folders
-		HashSet<int> fileIds = new(mod.Files.Select(p => p.ID));
+		HashSet<long> fileIds = new(mod.Files.Select(p => p.ID));
 		foreach (var entry in entries)
 		{
 			if (entry.FileId.HasValue && !fileIds.Contains(entry.FileId.Value))
@@ -1014,115 +1009,162 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 /*********
 ** Implementation
 *********/
-/// <summary>Import data for matching mods.</summary>
-/// <param name="modSite">The mod site API client.</param>
-/// <param name="modIds">The mod IDs to try fetching.</param>
-/// <returns>Returns the imported mod IDs.</returns>
-async Task<int[]> ImportMods(IModSiteClient modSite, int[] modIds)
+/// <summary>Fetch and cache all mods and mod files from a mod site.</summary>
+/// <param name="modDump">The mod dump to update.</param>
+/// <param name="modSite">The mod site from which to fetch mods.</param>
+async Task DownloadAndCacheSiteAsync(ModCache modDump, IModSiteClient modSite)
 {
-	Stopwatch timer = Stopwatch.StartNew();
-
-	// get mod IDs
-	if (!modIds.Any())
-		return modIds;
-
-	// fetch mods
-	var progress = new IncrementalProgressBar(modIds.Length).Dump();
-	foreach (int id in modIds)
-	{
-		// update progress
-		progress.Increment();
-		progress.Caption = $"Fetching {modSite.SiteKey} > mod {id} ({progress.Percent}%)";
-
-		// fetch
-		await this.ImportMod(modSite, id);
-	}
-
-	timer.Stop();
-	progress.Caption = $"Fetched {modIds.Length} updated mods from {modSite.SiteKey} ({progress.Percent}%) in {ConsoleHelper.GetFormattedTime(timer.Elapsed)}";
-	return modIds;
-}
-
-/// <summary>Import data for a mod.</summary>
-/// <param name="modSite">The mod site API client.</param>
-/// <param name="id">The unique mod ID.</param>
-async Task ImportMod(IModSiteClient modSite, int id)
-{
+	// fetch all mods
+	ConsoleHelper.Print($"   Fetching mods from {modSite.SiteKey}...");
+	Dictionary<long, GenericMod> remoteMods;
 	while (true)
 	{
 		try
 		{
-			// fetch mod data
-			GenericMod mod;
-			while (true)
-			{
-				try
-				{
-					mod = await modSite.GetModAsync(id);
-					break;
-				}
-				catch (KeyNotFoundException)
-				{
-					ConsoleHelper.Print($"Skipped mod {id} (HTTP 404).", Severity.Warning);
-					return;
-				}
-				catch (RateLimitedException ex)
-				{
-					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
-					continue;
-				}
-			}
-
-			// save to cache
-			while (true)
-			{
-				try
-				{
-					await this.DownloadAndCacheModDataAsync(modSite.SiteKey, mod, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
-					break;
-				}
-				catch (RateLimitedException ex)
-				{
-					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
-					continue;
-				}
-			}
+			remoteMods = (await modSite.GetAllModsAsync()).ToDictionary(p => p.ID);
+			break;
 		}
 		catch (Exception ex)
 		{
-			new { error = ex, response = ex is ApiException apiEx ? await apiEx.Response.AsString() : null }.Dump("error occurred");
-			string choice = ConsoleHelper.GetChoice("What do you want to do? [r]etry, [s]kip, [a]bort", "r", "s", "a");
-			if (choice == "r")
-				continue; // retry
-			else if (choice == "s")
-				return; // skip
-			else if (choice == "a")
-				throw; // abort
-			else
-				throw new NotSupportedException($"Invalid choice: '{choice}'", ex);
+			ex.Dump();
+			string choice = ConsoleHelper.GetChoice("Do you want to [r]etry or [s]kip this site?", ["r", "s"]);
+			if (choice == "s")
+				return;
 		}
-		break;
+	}
+
+	// remove deleted/hidden mods
+	foreach (GenericMod mod in modDump.GetModsFor(modSite.SiteKey))
+	{
+		if (!remoteMods.ContainsKey(mod.ID))
+		{
+			if (DeleteRemovedMods)
+			{
+				modDump.DeleteMod(modSite.SiteKey, mod.ID);
+				ConsoleHelper.Print($"      Deleted mod {mod.ID} ('{mod.Name}' by {mod.Author}) which is no longer accessible.");
+			}
+			else
+				ConsoleHelper.Print($"      Ignored mod {mod.ID} ('{mod.Name}' by {mod.Author}) which is no longer accessible. Enable {nameof(DeleteRemovedMods)} to delete it.");
+		}
+	}
+
+	// get new/updated mods
+	List<(GenericMod mod, bool isNew)> queue = new();
+	foreach ((long modId, GenericMod mod) in remoteMods)
+	{
+		GenericMod cachedMod = modDump.GetMod(mod.Site, mod.ID);
+
+		bool isNew = true;
+		if (cachedMod != null)
+		{
+			if (this.IsCacheUpToDate(cachedMod, mod))
+				continue;
+
+			isNew = false;
+		}
+
+		queue.Add((mod, isNew));
+	}
+
+	// save updated mods
+	if (queue.Count > 0)
+	{
+		var progress = new IncrementalProgressBar(queue.Count).Dump();
+		int fetchesSinceSave = 0;
+		int i = 0;
+		foreach ((GenericMod mod, bool isNew) in queue)
+		{
+			// update progress
+			progress.Increment();
+			progress.Caption = $"Fetching {(isNew ? "new" : "updated")} mod {mod.ID} \"{mod.Name}\" ({++i} of {queue.Count})...";
+
+			// fetch & save
+			while (true)
+			{
+				try
+				{
+					await this.DownloadAndCacheModDataAsync(modDump, mod, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
+					break;
+				}
+				catch (RateLimitedException ex)
+				{
+					if (fetchesSinceSave > 0)
+					{
+						modDump.SaveCache();
+						fetchesSinceSave = 0;
+					}
+
+					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
+					continue;
+				}
+			}
+			fetchesSinceSave++;
+
+			// update cache
+			if (fetchesSinceSave >= this.ModFetchesPerSave)
+			{
+				progress.Caption = $"Saving mod cache...";
+				modDump.SaveCache();
+				fetchesSinceSave = 0;
+			}
+		}
+
+		if (fetchesSinceSave > 0)
+			modDump.SaveCache();
 	}
 }
 
+/// <summary>Get whether a cached mod is already up-to-date with the latest fetched data.</summary>
+/// <param name="cached">The cached mod data.</param>
+/// <param name="fetched">The fetched mod data.</param>
+private bool IsCacheUpToDate(GenericMod cached, GenericMod fetched)
+{
+	// basic mod info
+	if (
+		cached.Name != fetched.Name
+		|| cached.Author != fetched.Author
+		|| cached.AuthorLabel != fetched.AuthorLabel
+		|| cached.Updated != fetched.Updated
+		|| cached.Version != fetched.Version
+		|| cached.Files.Length != fetched.Files.Length
+	)
+		return false;
+
+	// basic file info
+	Dictionary<long, GenericFile> fetchedFiles = fetched.Files.ToDictionary(p => p.ID);
+	foreach (GenericFile cachedFile in cached.Files)
+	{
+		if (
+			!fetchedFiles.TryGetValue(cachedFile.ID, out GenericFile fetchedFile)
+			|| cachedFile.DisplayName != fetchedFile.DisplayName
+			|| cachedFile.FileName != fetchedFile.FileName
+			|| cachedFile.Version != fetchedFile.Version
+		)
+			return false;
+	}
+
+	return true;
+}
+
 /// <summary>Write mod data to the cache directory and download the available files.</summary>
-/// <param name="siteKey">The mod site from which to fetch.</param>
-/// <param name="mod">The mod data to save.</param>
+/// <param name="modDump">The mod dump to update.</param>
+/// <param name="mod">The mod whose data to save.</param>
 /// <param name="getDownloadLinks">Get the download URLs for a specific file. If this returns multiple URLs, the first working one will be used.</param>
-async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
+async Task DownloadAndCacheModDataAsync(ModCache modDump, GenericMod mod, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
 {
 	// reset cache folder
-	this.ModDump.DeleteMod(siteKey, mod.ID.ToString());
-	this.ModDump.SaveModData(mod);
+	modDump.DeleteMod(mod.Site, mod.ID);
+	modDump.AddMod(mod);
 
-	// save files
+	// download files
 	using (WebClient downloader = new WebClient())
 	{
 		foreach (GenericFile file in mod.Files)
 		{
 			// download file from first working CDN
-			FileInfo localFile = new FileInfo(this.ModDump.GetModDownloadPath(siteKey, mod.ID.ToString(), file));
+			FileInfo localFile = new FileInfo(modDump.GetModFilePath(mod.Site, mod.ID, file));
 			Queue<Uri> sources = new Queue<Uri>(await getDownloadLinks(file));
+			bool skipped = false;
 			while (true)
 			{
 				if (!sources.Any())
@@ -1139,7 +1181,7 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<Ge
 							_ => mod.PageUrl
 						})
 					).Dump();
-					
+
 					CancellationTokenSource inputCancelToken = new();
 
 					Util.HorizontalRun(
@@ -1170,7 +1212,10 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<Ge
 								ConsoleHelper.Print($"Using manually downloaded file.", Severity.Info);
 							}
 							else
+							{
 								ConsoleHelper.Print($"Skipped file.", Severity.Info);
+								skipped = true;
+							}
 						}
 						catch (OperationCanceledException) // input cancelled due to [move download automatically]
 						{
@@ -1201,6 +1246,10 @@ async Task DownloadAndCacheModDataAsync(ModSite siteKey, GenericMod mod, Func<Ge
 					Console.WriteLine();
 				}
 			}
+
+			// unpack file
+			if (!skipped && !modDump.TryUnpackFile(mod.Site, mod.ID, file, out string error))
+				ConsoleHelper.Print($"Failed unpacking mod {mod.ID} > file {file.ID}: {error}.", Severity.Warning);
 		}
 	}
 }
@@ -1243,7 +1292,7 @@ private string[] GetModNames(ParsedFile folder, ParsedMod mod)
 			.Take(1)
 			.ToArray();
 	}
-	
+
 	return names;
 }
 
@@ -1361,7 +1410,7 @@ public string BuildFileList(DirectoryInfo root)
 /// <param name="siteId">The mod ID on the mod site.</param>
 /// <param name="fileId">The file ID on the mod site.</param>
 /// <param name="manifestId">The mod's manifest ID, if available.</param>
-private bool ShouldIgnoreForAnalysis(ModSite site, int siteId, int fileId, string manifestId)
+private bool ShouldIgnoreForAnalysis(ModSite site, long siteId, long fileId, string manifestId)
 {
 	return
 		this.IgnoreForAnalysisBySiteId.TryGetValue($"{site}:{siteId}", out ModSearch[] entries)
@@ -1387,10 +1436,10 @@ class ModSearch
 	public ModSite Site { get; }
 
 	/// <summary>The mod's page ID in the site.</summary>
-	public int SiteId { get; }
+	public long SiteId { get; }
 
 	/// <summary>The uploaded file ID, or <c>null</c> for any value.</summary>
-	public int? FileId { get; }
+	public long? FileId { get; }
 
 	/// <summary>The mod's manifest ID, or <c>null</c> for any value.</summary>
 	public string ManifestId { get; }
@@ -1400,7 +1449,7 @@ class ModSearch
 	/// <param name="siteId">The mod's page ID in the site.</param>
 	/// <param name="fileId">The uploaded file ID, or <c>null</c> for any value.</param>
 	/// <param name="manifestId">The mod's manifest ID, or <c>null</c> for any value.</param>
-	public ModSearch(ModSite site, int siteId, int? fileId = null, string manifestId = null)
+	public ModSearch(ModSite site, long siteId, long? fileId = null, string manifestId = null)
 	{
 		this.Site = site;
 		this.SiteId = siteId;
@@ -1413,7 +1462,7 @@ class ModSearch
 	/// <param name="siteId">The mod ID on the mod site.</param>
 	/// <param name="fileId">The file ID on the mod site.</param>
 	/// <param name="manifestId">The mod's manifest ID, if available.</param>
-	public bool Matches(ModSite site, int siteId, int fileId, string manifestId)
+	public bool Matches(ModSite site, long siteId, long fileId, string manifestId)
 	{
 		return
 			this.Site == site
@@ -1425,7 +1474,7 @@ class ModSearch
 	/// <summary>Get a set of mod search models for the same site.</summary>
 	/// <param name="site">The mod site.</param>
 	/// <param name="siteIds">The mod IDs on the mod site.</param>
-	public static IEnumerable<ModSearch> ForSiteIds(ModSite site, params int[] siteIds)
+	public static IEnumerable<ModSearch> ForSiteIds(ModSite site, params long[] siteIds)
 	{
 		return siteIds.Select(id => new ModSearch(site, id));
 	}
@@ -1471,22 +1520,8 @@ interface IModSiteClient
 	/// <summary>Authenticate with the mod site if needed.</summary>
 	Task AuthenticateAsync();
 
-	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
-	/// <param name="startFrom">The minimum mod ID to include.</param>
-	/// <param name="endWith">The maximum mod ID to include.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null);
-
-	/// <summary>Get all mod IDs updated since the given date.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom);
-
-	/// <summary>Get a mod from the mod site API.</summary>
-	/// <param name="id">The mod ID to fetch.</param>
-	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<GenericMod> GetModAsync(int id);
+	/// <summary>Get every mod currently available on this site.</summary>
+	Task<GenericMod[]> GetAllModsAsync();
 
 	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
 	/// <param name="mod">The mod for which to get download URLs.</param>
@@ -1495,29 +1530,23 @@ interface IModSiteClient
 	Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file);
 }
 
-/// <summary>A client which fetches mods from the CurseForge API.</summary>
+/// <summary>A client which fetches mods from the CurseForge export API.</summary>
 class CurseForgeApiClient : IModSiteClient
 {
 	/*********
 	** Fields
 	*********/
-	/// <summary>The CurseForge game ID for Stardew Valley.</summary>
-	private int GameId = 669;
-
 	/// <summary>A regex pattern which matches a version number in a CurseForge mod file name.</summary>
 	private readonly Regex VersionInNamePattern = new Regex(@"^(?:.+? | *)v?(\d+\.\d+(?:\.\d+)?(?:-.+?)?) *(?:\.(?:zip|rar|7z))?$", RegexOptions.Compiled);
 
-	/// <summary>The mod data fetched as part of a previous call.</summary>
-	private readonly IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
-
-	/// <summary>The CurseForge API client.</summary>
-	private readonly IClient CurseForge;
+	/// <summary>The CurseForge export API client.</summary>
+	private readonly CurseForgeExportApiClient CurseForge;
 
 
 	/*********
 	** Accessors
 	*********/
-	/// <summary>The identifier for this mod site used in update keys.</summary>
+	/// <inheritdoc />
 	public ModSite SiteKey { get; } = ModSite.CurseForge;
 
 
@@ -1525,105 +1554,33 @@ class CurseForgeApiClient : IModSiteClient
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
-	/// <param name="apiKey">The API key with which to authenticate.</param>
-	public CurseForgeApiClient(string apiKey)
+	/// <param name="exportApiUrl">The base URL for the CurseForge export API.</param>
+	/// <param name="userAgent">The user agent sent to the mod site API.</param>
+	public CurseForgeApiClient(string exportApiUrl, string userAgent)
 	{
-		this.CurseForge = new FluentClient("https://api.curseforge.com/v1")
-			.AddDefault(req => req.WithHeader("x-api-key", apiKey));
+		this.CurseForge = new CurseForgeExportApiClient(userAgent, exportApiUrl);
 	}
 
-	/// <summary>Authenticate with the mod site if needed.</summary>
+	/// <inheritdoc/>
 	public Task AuthenticateAsync()
 	{
 		return Task.CompletedTask;
 	}
 
-	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
-	/// <param name="startFrom">The minimum mod ID to include.</param>
-	/// <param name="endWith">The maximum mod ID to include.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null)
+	/// <inheritdoc/>
+	public async Task<GenericMod[]> GetAllModsAsync()
 	{
-		return this.GetModsUpdatedSinceAsync(DateTimeOffset.MinValue);
+		CurseForgeFullExport export = await this.CurseForge.FetchExportAsync();
+
+		if (export.CacheHeaders.LastModified < DateTimeOffset.UtcNow.AddHours(-MaxExportAge))
+			throw new InvalidOperationException($"Can't fetch export from CurseForge export API: the export was last updated {Math.Round((DateTimeOffset.UtcNow - export.CacheHeaders.LastModified).TotalHours, 2)} hours ago.");
+
+		return export.Mods.Values
+			.Select(this.Parse)
+			.ToArray();
 	}
 
-	/// <summary>Get all mod IDs updated since the given date.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
-	{
-		ISet<int> modIds = new HashSet<int>();
-
-		const int pageSize = 50; // max page size allowed by CurseForge
-		int page = 0;
-		while (true)
-		{
-			// fetch data
-			JObject response = await this.CurseForge
-				.GetAsync("mods/search")
-				.WithArguments(new
-				{
-					gameId = this.GameId,
-					index = page,
-					pageSize = pageSize,
-					sortField = 3, // Last Updated
-					sortOrder = "desc"
-				})
-				.AsRawJsonObject();
-
-			// handle results
-			bool reachedEnd = response.Count < pageSize;
-			foreach (JObject rawMod in response["data"])
-			{
-				// parse mod
-				GenericMod mod = this.Parse(rawMod);
-
-				// check if we found all the mods we need
-				if (modIds.Contains(mod.ID))
-				{
-					reachedEnd = true; // CurseForge starts repeating mods if we go past the end
-					break;
-				}
-				if (mod.Updated < startFrom)
-				{
-					reachedEnd = true;
-					break;
-				}
-
-				// add to list
-				this.Cache[mod.ID] = mod;
-				modIds.Add(mod.ID);
-			}
-
-			// handle pagination
-			if (reachedEnd)
-				break;
-			page++;
-		}
-
-		return modIds.OrderBy(id => id).ToArray();
-	}
-
-	/// <summary>Get a mod from the mod site API.</summary>
-	/// <param name="id">The mod ID to fetch.</param>
-	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<GenericMod> GetModAsync(int id)
-	{
-		if (this.Cache.TryGetValue(id, out GenericMod mod))
-			return mod;
-
-		JObject rawMod = await this.CurseForge
-			.GetAsync($"addon/{id}")
-			.AsRawJsonObject();
-
-		return this.Cache[id] = this.Parse(rawMod);
-	}
-
-	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get download URLs.</param>
-	/// <param name="file">The file for which to get download URLs.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
+	/// <inheritdoc />
 	public Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
 		return Task.FromResult(
@@ -1640,9 +1597,8 @@ class CurseForgeApiClient : IModSiteClient
 	private IEnumerable<string> GetDownloadUrls(GenericFile file)
 	{
 		// API download URL
-		string apiDownload = (string)file.RawData["downloadUrl"];
-		if (apiDownload is not null)
-			yield return apiDownload;
+		if (file.RawData.GetValueOrDefault("downloadUrl") is string apiDownloadUrl)
+			yield return apiDownloadUrl;
 
 		// build CDN URL manually
 		// The API doesn't always return a download URL.
@@ -1652,55 +1608,49 @@ class CurseForgeApiClient : IModSiteClient
 
 	/// <summary>Parse raw mod data from the CurseForge API.</summary>
 	/// <param name="rawMod">The raw mod data.</param>
-	private GenericMod Parse(JObject rawMod)
+	private GenericMod Parse(CurseForgeModExport mod)
 	{
 		// get author names
-		string[] authorNames = rawMod["authors"].AsEnumerable().Select(p => p["name"].Value<string>()).ToArray();
+		string[] authorNames = mod.Authors.Select(p => p.Name).ToArray();
 
 		// get last updated
 		DateTimeOffset lastUpdated;
 		{
-			DateTime created = rawMod["dateCreated"].Value<DateTime>();
-			DateTime modified = rawMod["dateModified"].Value<DateTime>();
-			DateTime released = rawMod["dateReleased"].Value<DateTime>();
-
-			DateTime latest = created;
-			if (modified > latest)
-				latest = modified;
-			if (released > latest)
-				latest = released;
-
-			lastUpdated = new DateTimeOffset(latest, TimeSpan.Zero);
+			lastUpdated = mod.DateCreated;
+			if (mod.DateModified > lastUpdated)
+				lastUpdated = mod.DateModified;
+			if (mod.DateReleased > lastUpdated)
+				lastUpdated = mod.DateReleased;
 		}
 
 		// get files
 		List<GenericFile> files = new List<GenericFile>();
-		foreach (JObject rawFile in rawMod["latestFiles"].AsEnumerable())
+		foreach (CurseForgeFileExport file in mod.Files)
 		{
-			string displayName = rawFile["displayName"].Value<string>();
-			string fileName = rawFile["fileName"].Value<string>();
-
 			files.Add(new GenericFile(
-				id: rawFile["id"].Value<int>(),
-				type: rawFile["releaseType"].Value<int>() == 1 ? GenericFileType.Main : GenericFileType.Optional, // FileReleaseType: 1=release, 2=beta, 3=alpha
-				displayName: displayName,
-				fileName: fileName,
-				version: this.GetFileVersion(displayName, fileName),
-				rawData: rawFile
+				id: file.Id,
+				type: file.ReleaseType == 1 ? GenericFileType.Main : GenericFileType.Optional, // FileReleaseType: 1=release, 2=beta, 3=alpha
+				displayName: file.DisplayName,
+				fileName: file.FileName,
+				version: this.GetFileVersion(file.DisplayName, file.FileName),
+				rawData: file
 			));
+
+			if (file.FileDate > lastUpdated)
+				lastUpdated = file.FileDate;
 		}
 
 		// get model
-		JObject rawModWithoutFiles = (JObject)rawMod.DeepClone();
-		rawModWithoutFiles.Property("latestFiles").Remove();
+		CurseForgeModExport rawModWithoutFiles = JsonConvert.DeserializeObject<CurseForgeModExport>(JsonConvert.SerializeObject(mod));
+		rawModWithoutFiles.Files = Array.Empty<CurseForgeFileExport>();
 
 		return new GenericMod(
 			site: ModSite.CurseForge,
-			id: rawMod["id"].Value<int>(),
-			name: rawMod["name"].Value<string>(),
+			id: mod.Id,
+			name: mod.Name,
 			author: authorNames.FirstOrDefault(),
 			authorLabel: authorNames.Length > 1 ? string.Join(", ", authorNames) : null,
-			pageUrl: rawMod["links"]["websiteUrl"].Value<string>(),
+			pageUrl: mod.ModPageUrl,
 			version: null,
 			updated: lastUpdated,
 			rawData: rawModWithoutFiles,
@@ -1723,32 +1673,29 @@ class CurseForgeApiClient : IModSiteClient
 	}
 }
 
-/// <summary>A client which fetches mods from the ModDrop API.</summary>
+/// <summary>A client which fetches mods from the ModDrop export API.</summary>
 class ModDropApiClient : IModSiteClient
 {
 	/*********
 	** Fields
 	*********/
-	/// <summary>The ModDrop game ID for Stardew Valley.</summary>
-	private int GameId = 27;
-
-	/// <summary>The mod data fetched as part of a previous call.</summary>
-	private IDictionary<int, GenericMod> Cache = new Dictionary<int, GenericMod>();
-
-	/// <summary>The ModDrop API client.</summary>
-	private IClient ModDrop = new FluentClient("https://www.moddrop.com/api");
-
-	/// <summary>The username with which to log in, if any.</summary>
+	/// <summary>The username with which to log in to the main API, if any.</summary>
 	private readonly string Username;
 
-	/// <summary>The password with which to log in, if any.</summary>
+	/// <summary>The password with which to log in to the main API, if any.</summary>
 	private readonly string Password;
+
+	/// <summary>The ModDrop API client.</summary>
+	private IClient MainApi = new FluentClient("https://www.moddrop.com/api");
+
+	/// <summary>The ModDrop export API client.</summary>
+	private readonly ModDropExportApiClient ExportApi;
 
 
 	/*********
 	** Accessors
 	*********/
-	/// <summary>The identifier for this mod site used in update keys.</summary>
+	/// <inheritdoc />
 	public ModSite SiteKey { get; } = ModSite.ModDrop;
 
 
@@ -1756,10 +1703,13 @@ class ModDropApiClient : IModSiteClient
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
+	/// <param name="exportApiUrl">The base URL for the ModDrop export API.</param>
+	/// <param name="userAgent">The user agent sent to the mod site API.</param>
 	/// <param name="username">The username with which to log in, if any.</param>
 	/// <param name="password">The password with which to log in, if any.</param>
-	public ModDropApiClient(string username, string password)
+	public ModDropApiClient(string exportApiUrl, string userAgent, string username, string password)
 	{
+		this.ExportApi = new ModDropExportApiClient(userAgent, exportApiUrl);
 		this.Username = username;
 		this.Password = password;
 	}
@@ -1770,7 +1720,7 @@ class ModDropApiClient : IModSiteClient
 		if (this.Username == null || this.Password == null)
 			return;
 
-		var response = await this.ModDrop
+		var response = await this.MainApi
 			.PostAsync("v1/auth/login")
 			.WithBasicAuthentication(this.Username, this.Password)
 			.AsRawJsonObject();
@@ -1779,85 +1729,21 @@ class ModDropApiClient : IModSiteClient
 		if (string.IsNullOrEmpty(apiToken))
 			throw new InvalidOperationException($"Authentication with the ModDrop API failed:\n{response.ToString()}");
 
-		this.ModDrop.AddDefault(p => p.WithHeader("Authorization", apiToken));
+		this.MainApi.AddDefault(p => p.WithHeader("Authorization", apiToken));
 	}
 
-	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
-	/// <param name="startFrom">The minimum mod ID to include.</param>
-	/// <param name="endWith">The maximum mod ID to include.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null)
+	/// <inheritdoc/>
+	public async Task<GenericMod[]> GetAllModsAsync()
 	{
-		return this.GetModsUpdatedSinceAsync(DateTimeOffset.MinValue);
-	}
+		ModDropFullExport export = await this.ExportApi.FetchExportAsync();
 
-	/// <summary>Get all mod IDs updated since the given date.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
-	{
-		ISet<int> modIds = new HashSet<int>();
+		if (export.CacheHeaders.LastModified < DateTimeOffset.UtcNow.AddHours(-MaxExportAge))
+			throw new InvalidOperationException($"Can't fetch export from ModDrop export API: the export was last updated {Math.Round((DateTimeOffset.UtcNow - export.CacheHeaders.LastModified).TotalHours, 2)} hours ago.");
 
-		int offset = 0;
-		while (true)
-		{
-			// fetch data
-			JObject response = await this.ModDrop
-				.GetAsync("v1/mods/search")
-				.WithArguments(new
-				{
-					gameid = this.GameId,
-					start = offset,
-					order = "updated", // 'updated' or 'published'
-					includeFiles = true
-				})
-				.AsRawJsonObject();
-
-			// handle results
-			int total = response["total"].Value<int>();
-			JObject[] mods = response["mods"].Values<JObject>().ToArray();
-			bool reachedEnd = mods.Length == 0 || offset + mods.Length >= total;
-
-			foreach (JObject rawMod in mods)
-			{
-				// parse mod
-				GenericMod mod = this.Parse(rawMod);
-
-				// check if we found all the mods we need
-				if (mod.Updated < startFrom)
-				{
-					reachedEnd = true;
-					break;
-				}
-
-				// add to list
-				this.Cache[mod.ID] = mod;
-				modIds.Add(mod.ID);
-			}
-
-			// handle pagination
-			if (reachedEnd)
-				break;
-			offset += mods.Length;
-		}
-
-		return modIds.OrderBy(id => id).ToArray();
-	}
-
-	/// <summary>Get a mod from the mod site API.</summary>
-	/// <param name="id">The mod ID to fetch.</param>
-	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<GenericMod> GetModAsync(int id)
-	{
-		if (this.Cache.TryGetValue(id, out GenericMod mod))
-			return mod;
-
-		JObject rawMod = await this.ModDrop
-			.GetAsync($"mods/data/{id}")
-			.AsRawJsonObject();
-
-		return this.Cache[id] = this.Parse(rawMod["mods"][$"{id}"].Value<JObject>());
+		return export.Mods.Values
+			.Where(p => !p.IsDeleted && p.IsPublished)
+			.Select(this.Parse)
+			.ToArray();
 	}
 
 	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
@@ -1868,7 +1754,7 @@ class ModDropApiClient : IModSiteClient
 	{
 		try
 		{
-			var response = await this.ModDrop
+			var response = await this.MainApi
 				.PostAsync($"v1/mod-{mod.ID}/file-{file.ID}/download")
 				.AsRawJsonObject();
 
@@ -1893,54 +1779,51 @@ class ModDropApiClient : IModSiteClient
 	/*********
 	** Private methods
 	*********/
-	/// <summary>Parse raw mod data from the ModDrop API.</summary>
+	/// <summary>Parse raw mod data from the ModDrop export API.</summary>
 	/// <param name="rawMod">The raw mod data.</param>
-	private GenericMod Parse(JObject rawEntry)
+	private GenericMod Parse(ModDropModExport rawMod)
 	{
-		JObject rawMod = rawEntry["mod"].Value<JObject>();
-		JObject[] rawFiles = rawEntry["files"].Values<JObject>().ToArray();
-
 		// get author names
-		string author = rawMod["userName"].Value<string>()?.Trim();
-		string authorLabel = rawMod["authorName"].Value<string>()?.Trim();
+		string author = rawMod.UserName?.Trim();
+		string authorLabel = rawMod.AuthorName?.Trim();
 		if (author.Equals(authorLabel, StringComparison.InvariantCultureIgnoreCase))
 			authorLabel = null;
 
 		// get last updated
-		DateTimeOffset lastUpdated = DateTimeOffset.FromUnixTimeMilliseconds(rawMod["dateUpdated"].Value<long>());
+		DateTimeOffset lastUpdated = DateTimeOffset.FromUnixTimeMilliseconds(rawMod.DateUpdated);
 		{
-			DateTimeOffset published = DateTimeOffset.FromUnixTimeMilliseconds(rawMod["datePublished"].Value<long>());
+			DateTimeOffset published = DateTimeOffset.FromUnixTimeMilliseconds(rawMod.DatePublished);
 			if (published > lastUpdated)
 				lastUpdated = published;
 		}
 
 		// get files
 		List<GenericFile> files = new List<GenericFile>();
-		foreach (JObject rawFile in rawFiles)
+		foreach (ModDropFileExport file in rawMod.Files)
 		{
 			try
 			{
-				if (rawFile["isOld"].Value<bool>() || rawFile["isDeleted"].Value<bool>() || rawFile["isHidden"].Value<bool>())
+				if (file.IsOld || file.IsDeleted || file.IsHidden)
 					continue;
 
-				int id = rawFile["id"].Value<int>();
-				string title = rawFile["title"]?.Value<string>();
-				string version = rawFile["version"]?.Value<string>();
-				string fileName = rawFile["fileName"].Value<string>();
-				bool isMain = !rawFile["isPreRelease"].Value<bool>() && !rawFile["isAlternative"].Value<bool>();
-
 				files.Add(new GenericFile(
-					id: id,
-					type: isMain ? GenericFileType.Main : GenericFileType.Optional,
-					displayName: title,
-					fileName: fileName,
-					version: version,
-					rawData: rawFile
+					id: file.Id,
+					type: !file.IsPreRelease && !file.IsAlternative
+						? GenericFileType.Main
+						: GenericFileType.Optional,
+					displayName: file.Name,
+					fileName: file.FileName,
+					version: file.Version,
+					rawData: file
 				));
+
+				DateTimeOffset dateCreated = DateTimeOffset.FromUnixTimeMilliseconds(file.DateCreated);
+				if (dateCreated > lastUpdated)
+					lastUpdated = dateCreated;
 			}
-			catch (Exception ex)
+			catch
 			{
-				new { mod = new Lazy<JObject>(() => rawMod), files = new Lazy<JObject[]>(() => rawFiles), file = new Lazy<JObject>(() => rawFile) }.Dump();
+				new { mod = new Lazy<ModDropModExport>(() => rawMod), file = new Lazy<ModDropFileExport>(() => file) }.Dump();
 				throw;
 			}
 		}
@@ -1948,11 +1831,11 @@ class ModDropApiClient : IModSiteClient
 		// get model
 		return new GenericMod(
 			site: ModSite.ModDrop,
-			id: rawMod["id"].Value<int>(),
-			name: rawMod["title"].Value<string>(),
+			id: rawMod.Id,
+			name: rawMod.Title,
 			author: author,
 			authorLabel: authorLabel,
-			pageUrl: rawMod["pageUrl"].Value<string>(),
+			pageUrl: rawMod.PageUrl,
 			version: null,
 			updated: lastUpdated,
 			rawData: rawMod,
@@ -1970,14 +1853,17 @@ class NexusApiClient : IModSiteClient
 	/// <summary>The Nexus Mods game key for Stardew Valley.</summary>
 	private readonly string GameKey = "stardewvalley";
 
-	/// <summary>The underlying FluentNexus API client.</summary>
-	private NexusClient Nexus;
+	/// <summary>The API client for the main Nexus API.</summary>
+	private NexusClient MainApi;
+
+	/// <summary>The Nexus export API client.</summary>
+	private readonly NexusExportApiClient ExportApi;
 
 
 	/*********
 	** Accessors
 	*********/
-	/// <summary>The identifier for this mod site used in update keys.</summary>
+	/// <inheritdoc/>
 	public ModSite SiteKey { get; } = ModSite.Nexus;
 
 
@@ -1985,147 +1871,43 @@ class NexusApiClient : IModSiteClient
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
+	/// <param name="exportApiUrl">The base URL for the ModDrop export API.</param>
+	/// <param name="userAgent">The user agent sent to the mod site API.</param>
 	/// <param name="apiKey">The Nexus API key with which to authenticate.</param>
 	/// <param name="appName">An arbitrary name for the app/script using the client, reported to the Nexus Mods API and used in the user agent.</param>
 	/// <param name="appVersion">An arbitrary version number for the <paramref name="appName" /> (ideally a semantic version).</param>
-	public NexusApiClient(string apiKey, string appName, string appVersion)
+	public NexusApiClient(string exportApiUrl, string userAgent, string apiKey, string appName, string appVersion)
 	{
-		this.Nexus = new NexusClient(apiKey, appName, appVersion);
+		this.MainApi = new NexusClient(apiKey, appName, appVersion);
+		this.ExportApi = new NexusExportApiClient(userAgent, exportApiUrl);
 	}
 
-	/// <summary>Authenticate with the mod site if needed.</summary>
+	/// <inheritdoc/>
 	public Task AuthenticateAsync()
 	{
 		return Task.CompletedTask;
 	}
 
-	/// <summary>Get all mod IDs likely to exist. This may return IDs for mods which don't exist, but should return the most accurate possible range to reduce API queries.</summary>
-	/// <param name="startFrom">The minimum mod ID to include.</param>
-	/// <param name="endWith">The maximum mod ID to include.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<int[]> GetPossibleModIdsAsync(int? startFrom = null, int? endWith = null)
+	/// <inheritdoc/>
+	public async Task<GenericMod[]> GetAllModsAsync()
 	{
-		try
-		{
-			int minID = Math.Max(1, startFrom ?? 1);
-			int maxID = endWith ?? (await this.Nexus.Mods.GetLatestAdded(this.GameKey)).Max(p => p.ModID);
+		NexusFullExport export = await this.ExportApi.FetchExportAsync();
 
-			if (minID > maxID)
-				return new int[0];
+		if (export.CacheHeaders.LastModified < DateTimeOffset.UtcNow.AddHours(-MaxExportAge))
+			throw new InvalidOperationException($"Can't fetch export from Nexus export API: the export was last updated {Math.Round((DateTimeOffset.UtcNow - export.CacheHeaders.LastModified).TotalHours, 2)} hours ago.");
 
-			return Enumerable.Range(minID, maxID - minID + 1).ToArray();
-		}
-		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
-		{
-			throw await this.GetRateLimitExceptionAsync();
-		}
+		return export.Data
+			.Where(p => p.Value.Published && p.Value.AllowView && !p.Value.Moderated)
+			.Select(p => this.Parse(p.Key, p.Value))
+			.ToArray();
 	}
 
-	/// <summary>Get all mod IDs updated since the given date.</summary>
-	/// <param name="startFrom">The minimum date from which to start fetching.</param>
-	public async Task<int[]> GetModsUpdatedSinceAsync(DateTimeOffset startFrom)
-	{
-		// calculate update period
-		string updatePeriod = null;
-		{
-			DateTimeOffset now = DateTimeOffset.UtcNow;
-			TimeSpan duration = now - startFrom;
-
-			if (duration.TotalDays <= 1)
-				updatePeriod = "1d";
-			else if (duration.TotalDays <= 7)
-				updatePeriod = "1w";
-			else if (startFrom >= now.AddMonths(-1))
-				updatePeriod = "1m";
-			else
-				throw new NotSupportedException($"The given date ({startFrom}) can't be used with {this.GetType().Name} because it exceeds the maximum update period of 28 days for the Nexus API.");
-		}
-
-		List<int> modIDs = new List<int>();
-		foreach (ModUpdate mod in await this.Nexus.Mods.GetUpdated(this.GameKey, updatePeriod))
-		{
-			if (mod.LatestFileUpdate >= startFrom)
-				modIDs.Add(mod.ModID);
-		}
-		return modIDs.ToArray();
-	}
-
-	/// <summary>Get a mod from the mod site API.</summary>
-	/// <param name="id">The mod ID to fetch.</param>
-	/// <exception cref="KeyNotFoundException">The mod site has no mod with that ID.</exception>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<GenericMod> GetModAsync(int id)
-	{
-		try
-		{
-			// fetch mod data
-			Mod nexusMod;
-			try
-			{
-				nexusMod = await this.Nexus.Mods.GetMod(this.GameKey, id);
-			}
-			catch (ApiException ex) when (ex.Status == HttpStatusCode.NotFound)
-			{
-				throw new KeyNotFoundException($"There is no Nexus mod with ID {id}");
-			}
-
-			// fetch file data
-			ModFile[] nexusFiles = nexusMod.Status == ModStatus.Published
-				? (await this.Nexus.ModFiles.GetModFiles(this.GameKey, id, FileCategory.Main, FileCategory.Optional)).Files
-				: new ModFile[0];
-
-			// create file models
-			GenericFile[] files = nexusFiles
-				.Select(file =>
-				{
-					GenericFileType type = file.Category switch
-					{
-						FileCategory.Main => GenericFileType.Main,
-						FileCategory.Optional => GenericFileType.Optional,
-						_ => throw new InvalidOperationException($"Unknown file category from Nexus ({file.Category}) for mod id {id}")
-					};
-					return new GenericFile(id: file.FileID, type: type, displayName: file.Name, fileName: file.FileName, version: file.FileVersion, rawData: file);
-				})
-				.ToArray();
-
-			// create mod model
-			GenericMod mod;
-			{
-				string author = nexusMod.User?.Name ?? nexusMod.Author;
-				string authorLabel = nexusMod.Author != null && !nexusMod.Author.Equals(author, StringComparison.InvariantCultureIgnoreCase)
-					? nexusMod.Author
-					: null;
-
-				mod = new GenericMod(
-					site: ModSite.Nexus,
-					id: nexusMod.ModID,
-					name: nexusMod.Name,
-					author: author,
-					authorLabel: authorLabel,
-					pageUrl: $"https://www.nexusmods.com/stardewvalley/mods/{nexusMod.ModID}",
-					version: nexusMod.Version,
-					updated: nexusMod.Updated,
-					rawData: nexusMod,
-					files: files
-				);
-			}
-
-			return mod;
-		}
-		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
-		{
-			throw await this.GetRateLimitExceptionAsync();
-		}
-	}
-
-	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get download URLs.</param>
-	/// <param name="file">The file for which to get download URLs.</param>
+	/// <inheritdoc/>
 	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
 		try
 		{
-			ModFileDownloadLink[] downloadLinks = await this.Nexus.ModFiles.GetDownloadLinks(this.GameKey, mod.ID, file.ID);
+			ModFileDownloadLink[] downloadLinks = await this.MainApi.ModFiles.GetDownloadLinks(this.GameKey, (int)mod.ID, (int)file.ID);
 			return downloadLinks.Select(p => p.Uri).ToArray();
 		}
 		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
@@ -2138,10 +1920,59 @@ class NexusApiClient : IModSiteClient
 	/*********
 	** Private methods
 	*********/
+	/// <summary>Parse raw mod data from the Nexus export API.</summary>
+	/// <param name="modId">The mod ID.</param>
+	/// <param name="rawMod">The raw mod data.</param>
+	private GenericMod Parse(uint modId, NexusModExport mod)
+	{
+		// get author
+		string author = mod.Uploader ?? mod.Author;
+		string authorLabel = mod.Author != null && !mod.Author.Equals(author, StringComparison.InvariantCultureIgnoreCase)
+			? mod.Author
+			: null;
+
+		// get files
+		DateTimeOffset lastUpdated = DateTimeOffset.MinValue;
+		List<GenericFile> files = new List<GenericFile>();
+		foreach ((uint fileId, NexusFileExport file) in mod.Files)
+		{
+			// get file type
+			GenericFileType type;
+			if (file.CategoryId is (int)FileCategory.Main)
+				type = GenericFileType.Main;
+			else if (file.CategoryId is (int)FileCategory.Optional)
+				type = GenericFileType.Optional;
+			else
+				continue;
+
+			// add file
+			files.Add(new GenericFile(id: fileId, type: type, displayName: file.Name, fileName: file.FileName, version: file.Version, rawData: file));
+
+			// track last update
+			DateTimeOffset uploadedAt = DateTimeOffset.FromUnixTimeSeconds(file.UploadedAt);
+			if (uploadedAt > lastUpdated)
+				lastUpdated = uploadedAt;
+		}
+
+		// get model
+		return new GenericMod(
+			site: ModSite.Nexus,
+			id: modId,
+			name: mod.Name,
+			author: author,
+			authorLabel: authorLabel,
+			pageUrl: $"https://www.nexusmods.com/stardewvalley/mods/{modId}",
+			version: null,
+			updated: lastUpdated,
+			rawData: mod,
+			files: files.ToArray()
+		);
+	}
+
 	/// <summary>Get an exception indicating that rate limits have been exceeded.</summary>
 	private async Task<RateLimitedException> GetRateLimitExceptionAsync()
 	{
-		IRateLimitManager rateLimits = await this.Nexus.GetRateLimits();
+		IRateLimitManager rateLimits = await this.MainApi.GetRateLimits();
 		TimeSpan unblockTime = rateLimits.GetTimeUntilRenewal();
 		throw new RateLimitedException(unblockTime, this.GetRateLimitSummary(rateLimits));
 	}

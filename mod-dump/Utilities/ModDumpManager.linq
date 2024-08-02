@@ -17,111 +17,162 @@
 #load "FileHelper.linq"
 #load "IncrementalProgressBar.linq"
 
-/// <summary>Manages the mod dump folder containing downloaded versions of every mod.</summary>
-public class ModDumpManager
+/// <summary>Manages the mod dump folder containing metadata and downloads for every mod.</summary>
+public class ModCache
 {
 	/*********
 	** Fields
 	*********/
-	/// <summary>The path in which to store cached data.</summary>
-	private readonly string RootPath;
-
-	/// <summary>Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</summary>
-	private readonly bool ResetUnpacked;
+	/// <summary>The path in which cached data is stored.</summary>
+	private readonly string CachePath;
 
 	/// <summary>The settings to use when writing JSON files.</summary>
 	private readonly JsonSerializerSettings JsonSettings = JsonHelper.CreateDefaultSettings();
 
 
 	/*********
+	** Accessors
+	*********/
+	/// <summary>The cached mods.</summary>
+	public Dictionary<ModSite, Dictionary<long, GenericMod>> Mods { get; }
+	
+
+	/*********
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
-	/// <param name="rootPath">The path in which to store cached data.</param>
-	/// <param name="resetUnpacked">Whether to delete the entire unpacked folder and unpack all files from the export path. If this is false, only updated mods will be re-unpacked.</param>
-	public ModDumpManager(string rootPath, bool resetUnpacked)
+	/// <param name="rootPath">The path in which cached data is stored.</param>
+	public ModCache(string cachePath)
 	{
-		this.RootPath = rootPath;
-		this.ResetUnpacked = resetUnpacked;
+		this.CachePath = cachePath;
+
+		string cacheFilePath = this.GetModsCacheFilePath();
+		this.Mods = File.Exists(cacheFilePath)
+			? JsonConvert.DeserializeObject<Dictionary<ModSite, Dictionary<long, GenericMod>>>(File.ReadAllText(cacheFilePath))
+			: new();
+
+		SevenZipBase.SetLibraryPath(Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess
+			? @"C:\Program Files (x86)\7-Zip\7z.dll"
+			: @"C:\Program Files\7-Zip\7z.dll"
+		);
 	}
 
-	/// <summary>Get the absolute file path for the JSON file containing a cached representation of the <see cref="ReadMods" /> result.</summary>
-	private string GetCacheFilePath()
+	/// <summary>Get the mods cached for a site, if any.</summary>
+	/// <param name="site">The mod site key.</param>
+	public IEnumerable<GenericMod> GetModsFor(ModSite site)
 	{
-		return Path.Combine(this.RootPath, "cache.json");
+		return this.Mods.TryGetValue(site, out Dictionary<long, GenericMod> mods)
+			? mods.Values
+			: Array.Empty<GenericMod>();
 	}
 
-	/// <summary>Delete the cache of mod file data, if it exists.</summary>
-	private void DeleteCache()
+	/// <summary>Get a mod cached for a site, if any.</summary>
+	/// <param name="site">The mod site key.</param>
+	/// <param name="modId">The mod ID within the site.</param>
+	public GenericMod GetMod(ModSite site, long modId)
 	{
-		File.Delete(this.GetCacheFilePath());
+		return this.Mods.TryGetValue(site, out Dictionary<long, GenericMod> mods) && mods.TryGetValue(modId, out GenericMod mod)
+			? mod
+			: null;
 	}
 
-	/// <summary>Unpack all mod downloads in the cache which haven't been unpacked yet.</summary>
-	/// <param name="unpackMods">The mod folder names to unpack.</param>
-	public void UnpackModDownloads(HashSet<string> unpackMods = null)
+	/// <summary>Add a mod to the cache.</summary>
+	/// <param name="mod">The mod to cache.</param>
+	public void AddMod(GenericMod mod)
 	{
-		HashSet<string> modFoldersToUnpack = new HashSet<string>(this.GetModFoldersWithFilesNotUnpacked(this.RootPath), StringComparer.InvariantCultureIgnoreCase);
-		if (modFoldersToUnpack.Any())
+		if (!this.Mods.TryGetValue(mod.Site, out Dictionary<long, GenericMod> mods))
+			this.Mods[mod.Site] = mods = new();
+
+		mods[mod.ID] = mod;
+	}
+
+	/// <summary>Fully delete a mod from the cache.</summary>
+	/// <param name="site">The mod site.</param>
+	/// <param name="modId">The mod ID within the site.</param>
+	public void DeleteMod(ModSite site, long modId)
+	{
+		if (this.Mods.TryGetValue(site, out Dictionary<long, GenericMod> mods))
+			mods.Remove(modId);
+
+		string dirPath = Path.Combine(this.CachePath, site.ToString(), modId.ToString());
+		if (Directory.Exists(dirPath))
+			FileHelper.ForceDelete(new DirectoryInfo(dirPath));
+	}
+
+	/// <summary>Get the absolute path for the folder containing a mod's downloaded files.</summary>
+	/// <param name="site">The mod site.</param>
+	/// <param name="modId">The mod ID within the site.</param>
+	public string GetModFolderPath(ModSite site, long modId)
+	{
+		return Path.Combine(this.CachePath, site.ToString(), modId.ToString());
+	}
+
+	/// <summary>Get the absolute path for the folder containing a mod's downloaded files.</summary>
+	/// <param name="site">The mod site.</param>
+	/// <param name="modId">The mod ID within the site.</param>
+	public string GetModFilePath(ModSite site, long modId, GenericFile file)
+	{
+		string dirPath = Path.Combine(this.CachePath, site.ToString(), modId.ToString());
+
+		Directory.CreateDirectory(dirPath);
+		return Path.Combine(dirPath, $"temp_{file.ID}{Path.GetExtension(file.FileName)}");
+	}
+
+	/// <summary>Unpack a downloaded mod file.</summary>
+	/// <param name="site">The mod site.</param>
+	/// <param name="modId">The mod ID within the site.</param>
+	/// <param name="error">An error indicating that unpacking failed, if applicable.</param>
+	public bool TryUnpackFile(ModSite site, long modId, GenericFile file, out string error)
+	{
+		FileInfo download = new FileInfo(this.GetModFilePath(site, modId, file));
+		if (!download.Exists)
+			throw new InvalidOperationException($"Can't unpack file {site}:{modId} > {file.ID} because there's no file at {download.FullName}.");
+
+		string finalPath = Path.Combine(download.Directory.FullName, file.ID.ToString());
+
+		string setError = null;
+		ConsoleHelper.AutoRetry(() =>
 		{
-			this.DeleteCache();
-			this.UnpackMods(rootPath: this.RootPath, filter: folder => this.ResetUnpacked || unpackMods?.Any(p => folder.FullName.EndsWith(p)) is true || modFoldersToUnpack.Any(p => folder.FullName.EndsWith(p)));
-		}
+			// skip if not an archive
+			if (download.Extension == ".exe")
+			{
+				download.MoveTo(Path.Combine($"{finalPath}.exe"), overwrite: true);
+				setError = null;
+				return;
+			}
+
+			// unzip into temporary folder
+			DirectoryInfo finalDir = new DirectoryInfo(finalPath);
+			if (finalDir.Exists)
+				FileHelper.ForceDelete(finalDir);
+			finalDir.Create();
+			finalDir.Refresh();
+
+			try
+			{
+				this.ExtractFile(download, finalDir);
+			}
+			catch (Exception ex)
+			{
+				setError = ex is SevenZipArchiveException ? ex.Message : ex.ToString();
+				FileHelper.ForceDelete(finalDir);
+				return;
+			}
+		});
+
+		error = setError;
+
+		if (error is null)
+			FileHelper.ForceDelete(download);
+
+		return error is null;
 	}
 
-	/// <summary>Remove all files for a mod from the dump.</summary>
-	/// <param name="site">The mod site.</param>
-	/// <param name="modId">The mod ID within the site.</param>
-	public void DeleteMod(ModSite site, string modId)
-	{
-		string path = Path.Combine(this.RootPath, site.ToString(), modId.ToString());
-		if (Directory.Exists(path))
-			FileHelper.ForceDelete(new DirectoryInfo(path));
-	}
-
-	/// <summary>Get the folder which contains the downloads and extracted files for a mod, creating it if needed. (This is *not* the mod folder; it may contain multiple mod folder which can be downloaded from the same mod page.)</summary>
-	/// <param name="site">The mod site.</param>
-	/// <param name="modId">The mod ID within the site.</param>
-	public DirectoryInfo GetModFolder(ModSite site, string modId)
-	{
-		DirectoryInfo folder = new DirectoryInfo(Path.Combine(this.RootPath, site.ToString(), modId));
-
-		if (!folder.Exists)
-		{
-			folder.Create();
-			folder.Refresh();
-		}
-
-		return folder;
-	}
-
-	/// <summary>Get the absolute path to which to save a mod download (e.g. a zip file, not the individual files within the download).</summary>
-	/// <param name="site">The mod site.</param>
-	/// <param name="modId">The mod ID within the site.</param>
-	/// <param name="file">The mod file that will be downloaded.</param>
-	public string GetModDownloadPath(ModSite site, string modId, GenericFile file)
-	{
-		DirectoryInfo modFolder = this.GetModFolder(site, modId);
-
-		string filesPath = Path.Combine(modFolder.FullName, "files");
-		Directory.CreateDirectory(filesPath);
-
-		return Path.Combine(filesPath, $"{file.ID}{Path.GetExtension(file.FileName)}");
-	}
-
-	/// <summary>Save the mod metadata to its dump folder.</summary>
-	/// <param name="mod">The mod metadata to save.</param>
-	public void SaveModData(GenericMod mod)
-	{
-		DirectoryInfo modDir = this.GetModFolder(mod.Site, mod.ID.ToString());
-		File.WriteAllText(Path.Combine(modDir.FullName, "mod.json"), JsonConvert.SerializeObject(mod, this.JsonSettings));
-	}
-
-	/// <summary>Parse unpacked mod data in the given folder.</summary>
-	public IEnumerable<ParsedMod> ReadMods()
+	/// <summary>Parse all unpacked mod folders.</summary>
+	public IEnumerable<ParsedMod> ReadUnpackedModFolders()
 	{
 		// get from cache
-		string cacheFilePath = this.GetCacheFilePath();
+		string cacheFilePath = this.GetFoldersCacheFilePath();
 		if (File.Exists(cacheFilePath))
 		{
 			Stopwatch timer = Stopwatch.StartNew();
@@ -136,53 +187,62 @@ public class ModDumpManager
 
 		// read data from each mod's folder
 		List<ParsedMod> parsedMods = new();
-		ModToolkit toolkit = new ModToolkit();
-		foreach (DirectoryInfo siteFolder in this.GetSortedSubfolders(new DirectoryInfo(this.RootPath)))
+		ModToolkit toolkit = new();
+		foreach (DirectoryInfo siteFolder in this.GetSortedSubfolders(new DirectoryInfo(this.CachePath)))
 		{
-			Stopwatch timer = Stopwatch.StartNew();
+			if (!Enum.TryParse(siteFolder.Name, out ModSite site))
+			{
+				ConsoleHelper.Print($"   Ignored {siteFolder.FullName}: folder name isn't a valid site key.", Severity.Warning);
+				continue;
+			}
 
+			Stopwatch timer = Stopwatch.StartNew();
 			var modFolders = this.GetSortedSubfolders(siteFolder).ToArray();
 			var progress = new IncrementalProgressBar(modFolders.Length).Dump();
 
 			foreach (DirectoryInfo modFolder in modFolders)
 			{
-				progress.Increment();
-				progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name}...";
+				if (!long.TryParse(modFolder.Name, out long modId))
+				{
+					ConsoleHelper.Print($"   Ignored {modFolder.FullName}: folder name isn't a valid mod ID.", Severity.Warning);
+					continue;
+				}
 
-				// read metadata files
-				GenericMod metadata = JsonConvert.DeserializeObject<GenericMod>(File.ReadAllText(Path.Combine(modFolder.FullName, "mod.json")));
-				IDictionary<int, GenericFile> fileMap = metadata.Files.ToDictionary(p => p.ID);
+				progress.Increment();
+				progress.Caption = $"Reading {site} > {modId}...";
+
+				// get mod info
+				GenericMod metadata = this.Mods.GetValueOrDefault(site)?.GetValueOrDefault(modId);
+				if (metadata is null)
+				{
+					ConsoleHelper.Print($"   Ignored {modFolder.FullName}: there's no matching mod in the cached data from the modding site.", Severity.Warning);
+					continue;
+				}
 
 				// load mod folders
-				IDictionary<GenericFile, ModFolder[]> unpackedFileFolders = new Dictionary<GenericFile, ModFolder[]>();
-				DirectoryInfo unpackedFolder = new DirectoryInfo(Path.Combine(modFolder.FullName, "unpacked"));
-				if (unpackedFolder.Exists)
+				IDictionary<long, GenericFile> fileMap = metadata.Files.ToDictionary(p => p.ID);
+				IDictionary<GenericFile, ModFolder[]> unpackedFolders = new Dictionary<GenericFile, ModFolder[]>();
+				foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(modFolder))
 				{
-					foreach (DirectoryInfo fileDir in this.GetSortedSubfolders(unpackedFolder))
+					progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name} > {fileDir.Name}...";
+
+					// get file data
+					GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
+
+					// get mod folders from toolkit
+					ModFolder[] mods = toolkit.GetModFolders(rootPath: modFolder.FullName, modPath: fileDir.FullName, useCaseInsensitiveFilePaths: true).ToArray();
+					if (mods.Length == 0)
 					{
-						if (fileDir.Name == "_tmp")
-							continue;
-
-						progress.Caption = $"Reading {siteFolder.Name} > {modFolder.Name} > {fileDir.Name}...";
-
-						// get file data
-						GenericFile fileData = fileMap[int.Parse(fileDir.Name)];
-
-						// get mod folders from toolkit
-						ModFolder[] mods = toolkit.GetModFolders(rootPath: unpackedFolder.FullName, modPath: fileDir.FullName, useCaseInsensitiveFilePaths: true).ToArray();
-						if (mods.Length == 0)
-						{
-							ConsoleHelper.Print($"   Ignored {fileDir.FullName}, folder is empty?");
-							continue;
-						}
-
-						// store metadata
-						unpackedFileFolders[fileData] = mods;
+						ConsoleHelper.Print($"   Ignored {fileDir.FullName}: folder is empty?", Severity.Warning);
+						continue;
 					}
+
+					// store metadata
+					unpackedFolders[fileData] = mods;
 				}
 
 				// yield mod
-				parsedMods.Add(new ParsedMod(metadata, unpackedFileFolders));
+				parsedMods.Add(new ParsedMod(metadata, unpackedFolders));
 			}
 
 			timer.Stop();
@@ -202,134 +262,33 @@ public class ModDumpManager
 		return parsedMods.ToArray();
 	}
 
+	/// <summary>Save the metadata to the cache file.</summary>
+	public void SaveCache()
+	{
+		// update mods cache
+		string json = JsonConvert.SerializeObject(this.Mods, this.JsonSettings);
+		File.WriteAllText(this.GetModsCacheFilePath(), json);
+
+		// clear folder cache
+		string foldersCachePath = this.GetFoldersCacheFilePath();
+		if (File.Exists(foldersCachePath))
+			File.Delete(foldersCachePath);
+	}
+
 
 	/*********
 	** Private methods
 	*********/
-	/// <summary>Get all mod folders which have files that haven't been unpacked.</summary>
-	/// <param name="rootPath">The path containing mod folders.</param>
-	private IEnumerable<string> GetModFoldersWithFilesNotUnpacked(string rootPath)
+	/// <summary>Get the absolute path for the JSON file containing the cached mod data.</summary>
+	private string GetModsCacheFilePath()
 	{
-		// unpack files
-		foreach (DirectoryInfo siteDir in this.GetSortedSubfolders(new DirectoryInfo(rootPath)))
-		{
-			foreach (DirectoryInfo modDir in this.GetSortedSubfolders(siteDir))
-			{
-				// get packed folder
-				string filesPath = Path.Combine(modDir.FullName, "files");
-				if (!Directory.Exists(filesPath))
-					continue;
-
-				// check for files that need unpacking
-				string unpackedDirPath = Path.Combine(modDir.FullName, "unpacked");
-				foreach (string archiveFilePath in Directory.GetFiles(filesPath))
-				{
-					string extension = Path.GetExtension(archiveFilePath);
-					if (extension == ".exe")
-						continue;
-
-					string id = Path.GetFileNameWithoutExtension(archiveFilePath);
-					string targetDirPath = Path.Combine(unpackedDirPath, id);
-					if (!Directory.Exists(targetDirPath))
-					{
-						yield return Path.Combine(siteDir.Name, modDir.Name);
-						break;
-					}
-				}
-			}
-		}
+		return Path.Combine(this.CachePath, "mods.json");
 	}
 
-	/// <summary>Unpack all mods in the given folder.</summary>
-	/// <param name="rootPath">The path in which to store cached data.</param>
-	/// <param name="filter">A filter which indicates whether a mod folder should be unpacked.</param>
-	private void UnpackMods(string rootPath, Func<DirectoryInfo, bool> filter)
+	/// <summary>Get the absolute path for the JSON file containing the cached folder data.</summary>
+	private string GetFoldersCacheFilePath()
 	{
-		SevenZipBase.SetLibraryPath(Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess
-			? @"C:\Program Files (x86)\7-Zip\7z.dll"
-			: @"C:\Program Files\7-Zip\7z.dll"
-		);
-
-		foreach (DirectoryInfo siteDir in new DirectoryInfo(rootPath).EnumerateDirectories())
-		{
-			// get folders to unpack
-			DirectoryInfo[] modDirs = this
-				.GetSortedSubfolders(siteDir)
-				.Where(filter)
-				.ToArray();
-			if (!modDirs.Any())
-				continue;
-
-			// unpack files
-			Stopwatch timer = Stopwatch.StartNew();
-			var progress = new IncrementalProgressBar(modDirs.Count()).Dump();
-			foreach (DirectoryInfo modDir in modDirs)
-			{
-				progress.Increment();
-				progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} ({progress.Percent}%)...";
-
-				// get packed folder
-				DirectoryInfo packedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "files"));
-				if (!packedDir.Exists)
-					continue;
-
-				// create/reset unpacked folder
-				DirectoryInfo unpackedDir = new DirectoryInfo(Path.Combine(modDir.FullName, "unpacked"));
-				if (unpackedDir.Exists)
-				{
-					FileHelper.ForceDelete(unpackedDir);
-					unpackedDir.Refresh();
-				}
-				unpackedDir.Create();
-
-				// unzip each download
-				foreach (FileInfo archiveFile in packedDir.GetFiles())
-				{
-					ConsoleHelper.AutoRetry(() =>
-					{
-						progress.Caption = $"Unpacking {siteDir.Name} > {modDir.Name} > {archiveFile.Name} ({progress.Percent}%)...";
-
-						// validate
-						if (archiveFile.Extension == ".exe")
-						{
-							ConsoleHelper.Print($"  Skipped {archiveFile.FullName} (not an archive).", Severity.Error);
-							return;
-						}
-
-						// unzip into temporary folder
-						string id = Path.GetFileNameWithoutExtension(archiveFile.Name);
-						DirectoryInfo tempDir = new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp", $"{archiveFile.Name}"));
-						if (tempDir.Exists)
-							FileHelper.ForceDelete(tempDir);
-						tempDir.Create();
-						tempDir.Refresh();
-
-						try
-						{
-							this.ExtractFile(archiveFile, tempDir);
-						}
-						catch (Exception ex)
-						{
-							ConsoleHelper.Print($"  Could not unpack {archiveFile.FullName}:\n{(ex is SevenZipArchiveException ? ex.Message : ex.ToString())}", Severity.Error);
-							Console.WriteLine();
-							FileHelper.ForceDelete(tempDir);
-							return;
-						}
-
-						// move into final location
-						if (tempDir.EnumerateFiles().Any() || tempDir.EnumerateDirectories().Count() > 1) // no root folder in zip
-							tempDir.Parent.MoveTo(Path.Combine(unpackedDir.FullName, id));
-						else
-						{
-							tempDir.MoveTo(Path.Combine(unpackedDir.FullName, id));
-							FileHelper.ForceDelete(new DirectoryInfo(Path.Combine(unpackedDir.FullName, "_tmp")));
-						}
-					});
-				}
-			}
-			timer.Stop();
-			progress.Caption = $"Unpacked {progress.Total} mods from {siteDir.Name} in {ConsoleHelper.GetFormattedTime(timer.Elapsed)} (100%)";
-		}
+		return Path.Combine(this.CachePath, "folders.json");
 	}
 
 	/// <summary>Extract an archive file to the given folder.</summary>
@@ -368,7 +327,6 @@ public class ModDumpManager
 			);
 	}
 }
-
 
 /// <summary>Get a clone of the input as a raw data dictionary.</summary>
 /// <param name="data">The input data to clone.</param>
@@ -410,7 +368,7 @@ public class GenericMod
 	public ModSite Site { get; }
 
 	/// <summary>The mod ID within the site.</summary>
-	public int ID { get; }
+	public long ID { get; }
 
 	/// <summary>The mod display name.</summary>
 	public string Name { get; }
@@ -451,7 +409,7 @@ public class GenericMod
 	/// <param name="updated">When the mod metadata or files were last updated.</param>
 	/// <param name="rawData">The original data from the mod site.</param>
 	/// <param name="files">The available mod downloads.</param>
-	public GenericMod(ModSite site, int id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files)
+	public GenericMod(ModSite site, long id, string name, string author, string authorLabel, string pageUrl, string version, DateTimeOffset updated, object rawData, GenericFile[] files)
 	{
 		this.Site = site;
 		this.ID = id;
@@ -530,7 +488,7 @@ public class GenericFile
 	** Accessors
 	*********/
 	/// <summary>The file ID.</summary>
-	public int ID { get; set; }
+	public long ID { get; set; }
 
 	/// <summary>The file type.</summary.
 	public GenericFileType Type { get; set; }
@@ -561,7 +519,7 @@ public class GenericFile
 	/// <param name="fileName">The filename on the mod site.</param>
 	/// <param name="version">The file version on the mod site.</param>
 	/// <param name="rawData">The original file data from the mod site.</param>
-	public GenericFile(int id, GenericFileType type, string displayName, string fileName, string version, object rawData)
+	public GenericFile(long id, GenericFileType type, string displayName, string fileName, string version, object rawData)
 	{
 		this.ID = id;
 		this.Type = type;

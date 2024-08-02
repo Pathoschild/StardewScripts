@@ -17,9 +17,13 @@ Usage:
 5. Run the script to fetch & display metadata.
 
 ## Fetch mods
+> [!NOTE]
+> This uses special API endpoints that aren't publicly accessible. You'll need special permission from CurseForge,
+> ModDrop, and Nexus before you can use this script.
+
 `fetch mods.linq` downloads every Stardew Valley mod from CurseForge + ModDrop + Nexus, unpacks the
-downloads, and runs LINQ queries on them. Once downloaded, the local cache can be updated
-incrementally with new/updated mods.
+downloads, and runs LINQ queries on them. Once downloaded, the local cache is updated incrementally
+with new and updated mods.
 
 Usage:
 1. [Install SMAPI](https://smapi.io/).
@@ -27,10 +31,11 @@ Usage:
 3. Open the script file in [LINQPad](https://www.linqpad.net).
 4. Fix the references to `SMAPI.Toolkit.CoreInterfaces.dll` and `SMAPI.Toolkit.dll` in the Stardew
    Valley folder.
-5. Edit the script to set `ModSites` credentials, `RootPath`, and `FetchMods` near the top.
+5. Edit the script to set `ModSites` credentials and `ModDumpPath` near the top.
 6. Run the script to begin downloading.
 
-The script will handle API rate limits automatically. The first download may take a very long time.
+The script will handle API rate limits automatically, and will automatically continue from the last
+fetch when run again. The first run may take 2-3 days due to Nexus rate limits.
 
 ## Fetch mod repositories
 `fetch mod repositories.linq` fetches the list of SMAPI mods from the wiki, and downloads every

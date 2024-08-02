@@ -52,8 +52,8 @@ private string ModFolderPathDoNotNormalizeToken => Path.Combine(this.ModFolderPa
 /// <summary>The mod dump from which to install mod updates, if they're fetched.</summary>
 private Lazy<ILookup<string, ParsedMod>> ModDump = new(() =>
 {
-	ModDumpManager modDump = new(rootPath: @"C:\dev\mod-dump", resetUnpacked: false);
-	return modDump.ReadMods().ToLookup(mod => $"{mod.Site}:{mod.ID}");
+	ModCache modDump = new(@"C:\dev\mod-dump");
+	return modDump.ReadUnpackedModFolders().ToLookup(mod => $"{mod.Site}:{mod.ID}");
 });
 
 /****
