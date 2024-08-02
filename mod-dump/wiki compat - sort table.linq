@@ -43,10 +43,10 @@ void Main()
 			{
 				if (int.TryParse(a.nexusId, out int nexusA) && int.TryParse(b.nexusId, out int nexusB))
 					return nexusA.CompareTo(nexusB);
-				
+
 				return string.Compare(a.comparableAuthor, b.comparableAuthor);
 			}
-			
+
 			// special case: if they have a common prefix, list shorter one first
 			if (nameA.StartsWith(nameB))
 				return -1;
@@ -56,7 +56,7 @@ void Main()
 			// else sort alphabetically
 			return string.Compare(nameA, nameB);
 		});
-		
+
 		templates = parsedTemplates.Select(p => p.template).ToArray();
 	}
 
@@ -66,10 +66,10 @@ void Main()
 		string header = match.Groups[1].Value;
 		string remainingContent = match.Groups[2].Value;
 		string footer = match.Groups[3].Value;
-		
+
 		if (!string.IsNullOrWhiteSpace(remainingContent))
 			throw new InvalidOperationException($"Some templates could not be extracted.\nRemaining text: {match.Value.Trim()}.");
-		
+
 		return
 			header
 			+ Environment.NewLine

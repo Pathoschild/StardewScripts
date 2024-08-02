@@ -84,27 +84,20 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	// mods marked abandoned
 	..ModSearch.ForSiteIds(ModSite.CurseForge,
 		308067, // Custom Furniture
-		393984, // Easy Prairie King
 		309743, // Pelican TTS
 		308058, // Plan Importer
 		308062, // Portraiture
 		306738, // PyTK
-		310789, // Scale Up
 		307726, // Seed Bag
 		310737, // Ship From Inventory
-		307654, // The Harp of Yoba
-		306750  // TMXL Map Toolkit
+		307654  // The Harp of Yoba
 	),
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.CurseForge, 877227, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
 
-	// mod packs
-	..ModSearch.ForSiteIds(ModSite.CurseForge,
-		953780, // The First Modpack
-		987052  // Morning Dew
-	),
-	
+	// special cases
+	new(ModSite.CurseForge, 868753, fileId: 4769761), // accidentally uploaded wrong mod
 	#endregion
 
 
@@ -134,18 +127,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		509780  // Running Late
 	),
 
-	// deleted mods (ModDrop keeps a readonly version of the deleted page)
-	..ModSearch.ForSiteIds(ModSite.ModDrop,
-		1287339 // MARGO - Modular Gameplay Overhaul
-	),
-
-	// special cases
-	..ModSearch.ForSiteIds(ModSite.ModDrop,
-		580803, // PPJA Home of Abandoned Mods - CFR Conversions
-		624116, // Sprint Sprint Sprint, replaced by Sprint Sprint
-		1034925 // Better Tappers, duplicate mod page
-	),
-
 	// mods which include a copy of another mod for some reason
 	new(ModSite.ModDrop, 1240025, manifestId: "Cherry.ExpandedPreconditionsUtility"), // Little Witch Academia Constanze NPC
 	new(ModSite.ModDrop, 1240025, manifestId: "Cherry.ShopTileFramework"),            // Little Witch Academia Constanze NPC
@@ -155,11 +136,13 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.ModDrop, 1163121, manifestId: "Cherry.ShopTileFramework"),            // Little Witch Academia Constanze NPC - (SVE)
 	new(ModSite.ModDrop, 1163121, manifestId: "Pathoschild.ContentPatcher"),          // Little Witch Academia Constanze NPC - (SVE)
 	new(ModSite.ModDrop, 1163121, manifestId: "Platonymous.CustomMusic"),             // Little Witch Academia Constanze NPC - (SVE)
-	new(ModSite.ModDrop, 1565408, manifestId: "CJBok.CheatsMenu"),                    // "Stardew Valley Expanded Pro" mod pack
-	new(ModSite.ModDrop, 1565408, manifestId: "Pathoschild.ContentPatcher"),          // "Stardew Valley Expanded Pro" mod pack
-	new(ModSite.ModDrop, 1565408, manifestId: "Esca.FarmTypeManager"),                // "Stardew Valley Expanded Pro" mod pack
-	new(ModSite.ModDrop, 1565408, manifestId: "CaptainSully.InfiniteWateringCan"),    // "Stardew Valley Expanded Pro" mod pack
-	new(ModSite.ModDrop, 1565408, manifestId: "FlashShifter.SVECode"),                // "Stardew Valley Expanded Pro" mod pack
+
+	// special cases
+	..ModSearch.ForSiteIds(ModSite.ModDrop,
+		580803, // PPJA Home of Abandoned Mods - CFR Conversions
+		624116, // Sprint Sprint Sprint, replaced by Sprint Sprint
+		1034925 // Better Tappers, duplicate mod page
+	),
 	#endregion
 
 
@@ -205,7 +188,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		18168, // Child to NPC (ru/uk)
 		22514, // Chocobo Valley (es)
 		14119, // CJB Cheats Menu (es)
-		17430, // CJB Cheats Menu (vi)
 		17649, // CJB Cheats Menu (vi)
 		17657, // CJB Cheats Menu (vi)
 		4305,  // Climates of Ferngill (pt)
@@ -226,7 +208,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		25825, // Distant Lands (de)
 		22509, // Distant Lands (es)
 		15908, // Downtown Zuzu (fr)
-		18857, // Downtown Zuzu (id)
 		11090, // Downtown Zuzu (it)
 		9901,  // Downtown Zuzu (ru)
 		18313, // Downtown Zuzu (th)
@@ -270,7 +251,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		10720, // Loved Labels (pl)
 		20568, // Loved Labels (pt)
 		18253, // Love Festival (ru)
-		22788, // Love Festival (th)
 		18150, // Love Festival (tr)
 		4339,  // Lunar Disturbances (pt)
 		7082,  // Lunar Disturbances (pt)
@@ -300,7 +280,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		13369, // NPC Map Locations (vi)
 		17659, // NPC Map Locations (vi)
 		14437, // NPC Map Locations (zh)
-		24624, // Nuclear Valley (zh)
 		14878, // Ornithologist's Guild (ru)
 		8696,  // Personal Effects Redux (pt)
 		14821, // Personal Effects Redux (pt)
@@ -318,7 +297,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		8170,  // Riley (de)
 		10349, // Robin Romance (es)
 		16432, // Rodney - a new NPC for East Scarp
-		6096,  // Sailor Moon Hairstyles Clothing and Kimono (zh)
 		16399, // Self Service (pt)
 		17658, // Self Service (vi)
 		20993, // Self Service for 1.6 (pt)
@@ -326,7 +304,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		18378, // Shiko NPC (id)
 		18662, // Shopping Show (vi)
 		18453, // Show Birthday (pt)
-		14373, // Socializing Skill (vi)
 		19242, // Socializing Skill (vi)
 		11140, // Spouses in Ginger Island (zh)
 		20244, // Stardew Notifications (tr)
@@ -334,12 +311,11 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		5259,  // Stardew Valley Expanded (de)
 		5272,  // Stardew Valley Expanded (es)
 		5509,  // Stardew Valley Expanded (es)
-		8411,  // Stardew Valley Expanded (fr)
 		12867, // Stardew Valley Expanded (fr)
-		5788,  // Stardew Valley Expanded (ja)
+		26602, // Stardew Valley Expanded (fr)
 		4206,  // Stardew Valley Expanded (pt)
+		6062,  // Stardew Valley Expanded (tr)
 		6332,  // Stardew Valley Expanded (tr)
-		8143,  // Stardew Valley Expanded (zh)
 		19243, // Survivalist Skill (vi)
 		10221, // The Ranch Expansion Marnie and Jas (es)
 		17727, // Time Before Harvest Enhanced (vi)
@@ -351,7 +327,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		10785, // Tristan (es)
 		14398, // Tristan (es)
 		7556,  // UI Info Suite (fr)
-		15208, // UI Info Suite 2 (vi)
 		13389, // UI Info Suite (vi)
 		6637,  // Underground Secrets (ru)
 		22366, // Visit Mount Vapius (es)
@@ -359,13 +334,16 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		25953, // XP Display (zh)
 
 		// reposts
+		19034, // Animal Sitter
 		22479, // Auto-Eat
+		21137, // Buy Cooking Recipes
 		20781, // Crop Harvest Bubbles
 		20783, // Crop Variation
 		21428, // Crop Watering Bubbles
 		22678, // Dialogue Display Framework
 		12920, // Extra Map Layers (version for Android by original author, with same mod ID)
 		20910, // Farm Cave Framework
+		22201, // Fishing Info Overlays
 		20726, // Fish Spot Bait
 		11297, // Friends Forever
 		20702, // Friends Forever
@@ -375,10 +353,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		21635, // Junimos Accept Cash
 		21285, // Like a Duck to Water
 		21068, // Mailbox Menu
-		12729, // Many Enchantments
 		16921, // More Random Edition
 		19817, // Multiplayer for Mobile
-		22257, // Napalm Mummies
 		12369, // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
 		19291, // Night Owl Repacked
 		20869, // No Fence Decay
@@ -386,16 +362,13 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		1427,  // Prairie King Made Easy
 		10916, // Qi Exchanger
 		887,   // Reseed
-		9350,  // Reset Terrain Features
 		1363,  // Save Anywhere
 		8386,  // Save Anywhere
-		9128,  // Shop Tile Framework
 		22275, // Show Item Quality
 		22167, // Sprinkler Mod
 		22763, // Tilemap Challenge
 		1077,  // UI Mod Suite
 		19879, // Virtual Keyboard
-		21054, // Yet Another Jump Mod
 
 		// files to drop into another mod's folder
 		18729, // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
@@ -405,13 +378,11 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		3941,  // Daily Planner
 		8876,  // Map Editor (replaced by Map Editor Extended with the same mod ID)
 		2676,  // PokeMania
-		444,   // Save Anywhere (replaced by Save Anywhere Redux at Nexus:8386 with the same mod ID)
 		3294,  // Sprint Sprint Sprint (replaced by Sprint Sprint)
 
 		// other
 		10622, // Bulk Staircases (author created a new account to post newer versions)
 		19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
-		17262, // Stardrop Quick Start (not a mod itself, just has dependencies)
 		19905  // XNB Archive (not a mod)
 	),
 	#endregion
@@ -431,7 +402,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 17346, 73218), // Ghosties Wildfood Retexture
 	new(ModSite.Nexus, 18027, 75111), // Guinea Pig Pet for Alternative Textures
 	new(ModSite.Nexus, 17279, 73016), // Helpful Spouses (pt)
-	new(ModSite.Nexus, 17705, 74245), // HxW Fairy Garden Furniture - Gnome Pack
 	new(ModSite.Nexus, 2602, 10660),  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
 	new(ModSite.Nexus, 5202, 22886),  // Minecraft Mobs as Rarecrows, missing quote
 	new(ModSite.Nexus, 237, 929),     // No Soil Decay, invalid version "0.0.0"
@@ -450,6 +420,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	// reposts
 	new(ModSite.Nexus, 23271, manifestId: "ChelseaBingiel.LuckyRabbitsFoot"),   // Actually Lucky Rabbit's Foot
 	new(ModSite.Nexus, 24374, manifestId: "aedenthorn.AdvancedMeleeFramework"), // Advanced Melee Framework
+	new(ModSite.Nexus, 21264, manifestId: "hootless.BusLocations"),             // Bus Locations
 	new(ModSite.Nexus, 24806, manifestId: "MiphasGrace.SurpriseBaby1"),         // Surprise Pregnancy
 	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),            // Survivalist - Hunger and Thirst
 	new(ModSite.Nexus, 23570, manifestId: "TyoAtrosa.Treeshaker"),              // Tree Shaker
@@ -463,15 +434,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 20250, manifestId: "MindMeltMax.SAMLTest"), // demo for main mod
 
 	// legacy pre-standardization content packs (ALL = Advanced Location Loader, SI = Seasonal Immersion)
-	new(ModSite.Nexus, 3713, 15421), // BathHouse Apartment for ALL
-	new(ModSite.Nexus, 3713, 15423), // BathHouse Apartment for ALL
 	new(ModSite.Nexus, 1032, 5771),  // Bus Interior Restored for ALL
-	new(ModSite.Nexus, 1980, 7425),  // Earth and Water Obelisks for SI
-	new(ModSite.Nexus, 1980, 7426),  // Earth and Water Obelisks for SI
-	new(ModSite.Nexus, 1980, 7427),  // Earth and Water Obelisks for SI
-	new(ModSite.Nexus, 1980, 7428),  // Earth and Water Obelisks for SI
-	new(ModSite.Nexus, 1980, 7429),  // Earth and Water Obelisks for SI
-	new(ModSite.Nexus, 1980, 7430),  // Earth and Water Obelisks for SI
 	new(ModSite.Nexus, 806, 5996),   // Expanded Crevices for ALL
 	new(ModSite.Nexus, 588, 3033),   // Extended Cellar for ALL
 	new(ModSite.Nexus, 588, 3083),   // Extended Cellar for ALL
@@ -494,13 +457,13 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment2"),      // Hardew Valley
 	new(ModSite.Nexus, 8563, manifestId: "spacechase0.CustomNPCFixes"),         // Harvest Valley Farm
 	new(ModSite.Nexus, 16426, manifestId: "alja.CCCB"),                         // Little Harder Community Center Bundles
-	new(ModSite.Nexus, 13248, manifestId: "Stashek.FishingRodRecolor"),         // Main Questline Redux (PMC CCJ)
 	new(ModSite.Nexus, 21954, manifestId: "alja.CCCB"),                         // Moonshine's Moderate Community Center Challange
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomElementHandler"),   // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFarming"),          // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomFurniture"),        // New NPC Alec
 	new(ModSite.Nexus, 1692, manifestId: "Platonymous.CustomNPC"),              // New NPC Alec
 	new(ModSite.Nexus, 1128, manifestId: "Advize.GetDressed"),                  // New Shirts and 2 new Skirts
+	new(ModSite.Nexus, 5004, manifestId: "zazizu.darkUI"),                      // Pathologic
 	new(ModSite.Nexus, 5384, manifestId: "Platonymous.PlatoUI"),                // Plato Warp Menu
 	new(ModSite.Nexus, 19225, manifestId: "Platonymous.Portraiture"),           // Portraiture
 	new(ModSite.Nexus, 11929, manifestId: "Paritee.BetterFarmAnimalVariety"),   // -RU- Dark Club
@@ -509,10 +472,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 20593, manifestId: "Esca.FarmTypeManager"),              // Standard Farm Expanded
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew VallEasy - Easy Gold Everywhere
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment2"),      // Stardew VallEasy - Easy Gold Everywhere
-	new(ModSite.Nexus, 2426, manifestId: "Ilyaki.ArtifactSystemFixed"),         // Unofficial Balance Patch
-	new(ModSite.Nexus, 2426, manifestId: "BetterQuarry"),                       // Unofficial Balance Patch
-	new(ModSite.Nexus, 2426, manifestId: "Nishtra.MiningAtTheFarm"),            // Unofficial Balance Patch
-	new(ModSite.Nexus, 2426, manifestId: "KevinConnors.ProfessionAdjustments"), // Unofficial Balance Patch
 	new(ModSite.Nexus, 23344, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Boutique
 	new(ModSite.Nexus, 23518, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Gourmand
 	new(ModSite.Nexus, 23517, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Sweet Tooth
