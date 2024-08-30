@@ -8,6 +8,14 @@ public enum Severity { Trace, Info, Warning, Error }
 /// <summary>Provides common methods for writing LINQPad scripts.</summary>
 public static class ConsoleHelper
 {
+	/****
+	** Constants
+	****/
+	public const string TraceStyle = "opacity: 0.5";
+	public const string ErrorStyle = "color: red; font-weight: bold;";
+	public const string SuccessStyle = "color: green;";
+
+
 	/*********
 	** Public methods
 	*********/

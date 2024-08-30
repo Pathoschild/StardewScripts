@@ -30,7 +30,8 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 #load "Utilities/ConsoleHelper.linq"
 #load "Utilities/FileHelper.linq"
 #load "Utilities/IncrementalProgressBar.linq"
-#load "Utilities/ModDumpManager.linq"
+#load "Utilities/ModCache.linq"
+#load "Utilities/ModCacheUtilities.linq"
 
 /*********
 ** Configuration
@@ -61,16 +62,19 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 };
 
 /// <summary>The directory path in which to store cached mod data and downloads.</summary>
-readonly string ModDumpPath = @"C:\dev\mod-dump";
+const string ModDumpPath = @"C:\dev\mod-dump";
 
 /// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
-readonly string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
+const string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
+
+/// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
+private readonly ModCacheUtilities ModCacheHelper = new(@"C:\dev\mod-dump", InstallModsToPath);
 
 /// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
 readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
 
 /// <summary>Whether to fetch any updated mods from the remote mod sites. If false, the script will skip to analysis with the last cached mods.</summary>
-readonly bool FetchMods = false;
+readonly bool FetchMods = true;
 
 /// <summary>Whether to delete mods which no longer exist on the mod sites. If false, they'll show warnings instead.</summary>
 readonly bool DeleteRemovedMods = false; // NOTE: this can instantly delete many mods, which may take a long time to refetch. Consider only enabling it after you double-check the list it prints with it off.
@@ -516,7 +520,7 @@ async Task Main()
 
 	// read cache
 	ConsoleHelper.Print($"Reading mod cache...");
-	ModCache modDump = new(this.ModDumpPath);
+	ModCache modDump = this.ModCacheHelper.Cache;
 
 	// sync cache to mod sites
 	if (this.FetchMods)
@@ -529,6 +533,8 @@ async Task Main()
 
 		foreach (IModSiteClient modSite in this.ModSites)
 			await this.DownloadAndCacheSiteAsync(modDump, modSite);
+
+		this.ModCacheHelper.ReloadFromModCache();
 	}
 
 	// read mod data
@@ -538,8 +544,8 @@ async Task Main()
 	// add launch button
 	new Hyperlinq(
 		() => Process.Start(
-			fileName: Path.Combine(this.InstallModsToPath, "..", "StardewModdingAPI.exe"),
-			arguments: @$"--mods-path ""{Path.GetFileName(this.InstallModsToPath)}"""
+			fileName: Path.Combine(InstallModsToPath, "..", "StardewModdingAPI.exe"),
+			arguments: @$"--mods-path ""{Path.GetFileName(InstallModsToPath)}"""
 		),
 		"launch SMAPI"
 	).Dump("actions");
@@ -605,7 +611,7 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 			? this.GetCustomSourceUrl(mod)
 			: null
 
-		let isModInstalled = Directory.Exists(Path.Combine(this.InstallModsToPath, folder.RawFolder.Directory.Name))
+		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
 
 		let missingLabels = (new[] { !wikiHasManifestId ? "manifest ID" : null, !wikiHasSiteId ? "site ID" : null }).Where(p => p is not null).ToArray()
 
@@ -632,7 +638,7 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 					() => new object[] // returning an array allows collapsing the log in the LINQPad output
 					{
 						Util.WithStyle(
-							Util.VerticalRun(this.InstallMod(folder)),
+							Util.VerticalRun(this.ModCacheHelper.TryInstall(folder, deleteTargetFolder: false)),
 							"font-style: monospace; font-size: 0.9em;"
 						)
 					}
@@ -706,37 +712,6 @@ IEnumerable<dynamic> GetWikiModsNotInCache(ModCache modDump, WikiModList compatL
 			};
 		}
 	}
-}
-
-/// <summary>Copy a mod into the mods folder indicated by <see cref="InstallModsToPath"/>.</summary>
-/// <param name="folder">The mod folder to install.</param>
-private IEnumerable<object> InstallMod(ParsedFile folder)
-{
-	const string traceStyle = "opacity: 0.5";
-	const string errorStyle = "color: red; font-weight: bold;";
-	const string successStyle = "color: green;";
-
-	// get paths
-	DirectoryInfo fromDir = folder.RawFolder.Directory;
-	DirectoryInfo toDir = new DirectoryInfo(Path.Combine(this.InstallModsToPath, fromDir.Name));
-	yield return Util.WithStyle($"Installing mod:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", traceStyle);
-	if (toDir.Exists)
-	{
-		yield return Util.WithStyle($"Target mod folder already exists.", errorStyle);
-		yield break;
-	}
-
-	// copy mod
-	foreach (FileInfo file in fromDir.GetFiles("*", SearchOption.AllDirectories))
-	{
-		string relativePath = Path.GetRelativePath(fromDir.FullName, file.FullName);
-		string toPath = Path.Combine(toDir.FullName, relativePath);
-
-		Directory.CreateDirectory(Path.GetDirectoryName(toPath));
-		File.Copy(file.FullName, toPath);
-	}
-
-	yield return Util.WithStyle("Done!", successStyle);
 }
 
 /// <summary>Get mods which the SMAPI toolkit marked as invalid or unparseable.</summary>
