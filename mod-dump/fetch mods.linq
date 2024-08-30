@@ -1586,7 +1586,7 @@ class CurseForgeApiClient : IModSiteClient
 	public Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
 	{
 		return Task.FromResult(
-			GetDownloadUrls(file).Select(url => new Uri(url)).ToArray()
+			GetDownloadUrls(mod, file).Select(url => new Uri(url)).ToArray()
 		);
 	}
 
@@ -1595,8 +1595,9 @@ class CurseForgeApiClient : IModSiteClient
 	** Private methods
 	*********/
 	/// <summary>Get the download URLs for a CurseForge file.</summary>
+	/// <param name="mod">The mod which has the file to download.</param>
 	/// <param name="file">The file for which to get download URLs.</param>
-	private IEnumerable<string> GetDownloadUrls(GenericFile file)
+	private IEnumerable<string> GetDownloadUrls(GenericMod mod, GenericFile file)
 	{
 		// API download URL
 		if (file.RawData.GetValueOrDefault("downloadUrl") is string apiDownloadUrl)
@@ -1604,8 +1605,7 @@ class CurseForgeApiClient : IModSiteClient
 
 		// build CDN URL manually
 		// The API doesn't always return a download URL.
-		string fileId = file.ID.ToString();
-		yield return $"https://mediafilez.forgecdn.net/files/{fileId.Substring(0, 4)}/{fileId.Substring(4)}/{file.FileName.Replace(' ', '+')}";
+		yield return $"https://www.curseforge.com/api/v1/mods/{mod.ID}/files/{file.ID}/download";
 	}
 
 	/// <summary>Parse raw mod data from the CurseForge API.</summary>
