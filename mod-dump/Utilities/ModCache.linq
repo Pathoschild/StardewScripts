@@ -502,6 +502,9 @@ public class GenericFile
 	/// <summary>The file version on the mod site.</summary>
 	public string Version { get; set; }
 
+	/// <summary>When this mod file was uploaded.</summary>
+	public DateTimeOffset Uploaded { get; set; }
+
 	/// <summary>The original file data from the mod site.</summary>
 	public Dictionary<string, object> RawData { get; set; }
 
@@ -518,14 +521,16 @@ public class GenericFile
 	/// <param name="displayName">The display name on the mod site.</param>
 	/// <param name="fileName">The filename on the mod site.</param>
 	/// <param name="version">The file version on the mod site.</param>
+	/// <param name="uploaded">When this mod file was uploaded.</param>
 	/// <param name="rawData">The original file data from the mod site.</param>
-	public GenericFile(long id, GenericFileType type, string displayName, string fileName, string version, object rawData)
+	public GenericFile(long id, GenericFileType type, string displayName, string fileName, string version, DateTimeOffset uploaded, object rawData)
 	{
 		this.ID = id;
 		this.Type = type;
 		this.DisplayName = displayName;
 		this.FileName = fileName;
 		this.Version = version;
+		this.Uploaded = uploaded;
 		this.RawData = UserQuery.CloneToDictionary(rawData);
 	}
 }
@@ -562,7 +567,7 @@ public class ParsedFile : GenericFile
 	/// <param name="download">The raw mod file.</param>
 	/// <param name="folder">The raw parsed mod folder.</param>
 	public ParsedFile(GenericFile download, ModFolder folder)
-		: base(id: download.ID, type: download.Type, displayName: download.DisplayName, fileName: download.FileName, version: download.Version, rawData: download.RawData)
+		: base(id: download.ID, type: download.Type, displayName: download.DisplayName, fileName: download.FileName, version: download.Version, uploaded: download.Uploaded, rawData: download.RawData)
 	{
 		this.RawFolder = folder;
 
@@ -579,10 +584,11 @@ public class ParsedFile : GenericFile
 	/// <param name="modError">The mod parse error, if it could not be parsed.</param>
 	/// <param name="modId">The mod ID from the manifest.</param>
 	/// <param name="modVersion">The mod version from the manifest.</param>
+	/// <param name="fileUploaded">When this mod file was uploaded.</param>
 	/// <param name="rawFolder">The raw parsed mod folder.</param>
 	[JsonConstructor]
-	public ParsedFile(int id, GenericFileType type, string displayName, string fileName, string version, object rawData, string modDisplayName, ModType modType, ModParseError? modError, string modId, string modVersion, ModFolder rawFolder)
-		: base(id, type, displayName, fileName, version, rawData)
+	public ParsedFile(int id, GenericFileType type, string displayName, string fileName, string version, DateTimeOffset fileUploaded, object rawData, string modDisplayName, ModType modType, ModParseError? modError, string modId, string modVersion, ModFolder rawFolder)
+		: base(id, type, displayName, fileName, version, fileUploaded, rawData)
 	{
 		this.ModDisplayName = modDisplayName;
 		this.ModType = modType;

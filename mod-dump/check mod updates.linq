@@ -41,9 +41,6 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 /// <summary>The absolute path for the folder containing mods.</summary>
 private const string GameFolderPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley";
 
-/// <summary>The folder to which mods should be moved which you click 'move to mod dump'.</summary>
-private readonly string ModDumpFolderPath = @"E:\source\_Stardew\_smapi-mod-dump\compiled\okay";
-
 /// <summary>The absolute path for the folder containing installed mods.</summary>
 private static string InstalledModsPath => Path.Combine(GameFolderPath, "Mods (test)");
 
@@ -428,14 +425,6 @@ async Task Main()
 				}
 			}
 
-			// create metadata file
-			File.WriteAllText(
-				Path.Combine(actualDir.FullName, "_metadata.txt"),
-				$"page URL: {url}\n"
-				+ $"IDs: {string.Join(", ", mod.IDs)}\n"
-				+ $"update keys: {string.Join(", ", mod.UpdateKeys)}\n"
-			);
-
 			// normalize
 			if (!relativePath.StartsWith(ModCacheUtilities.TemporaryFolderPrefix))
 			{
@@ -756,8 +745,6 @@ async Task Main()
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {warnStyle}"), $"⚠ {warning}"));
 			foreach (var issue in mod.MinorIssues)
 				issues.Add(new XElement("div", new XAttribute("style", $"{smallStyle} {fadedStyle}"), $"⚠ {issue}"));
-			if (mod.Manifest.ExtraFields.TryGetValue("@modDump", out object rawNotes) && rawNotes is string notes)
-				issues.Add(new XElement("div", $"ⓘ {notes}"));
 
 			// build name column
 			object nameCol = Util.WithStyle(mod.Name, smallStyle);
@@ -767,33 +754,20 @@ async Task Main()
 				nameCol = Util.VerticalRun(nameCol, Util.WithStyle($"  by {mod.Author}", smallStyle));
 
 			// get actions
-			object actions = Util.OnDemand(
-				"→dump",
-				() => new object[] // returning an array allows collapsing the log in the LINQPad output
-				{
-					Util.WithStyle(
-						Util.VerticalRun(this.TryMoveToModDump(mod.ModData, toolkit)),
-						"font-style: monospace; font-size: 0.9em;"
-					)
-				}
-			);
+			object actions = null;
 			if (hasUpdate)
 			{
 				var data = mod.ModData;
 
-				actions = Util.HorizontalRun(true,
-					actions,
-					"•",
-					Util.OnDemand(
-						"install from dump",
-						() => new object[] // returning an array allows collapsing the log in the LINQPad output
-						{
-							Util.WithStyle(
-								Util.VerticalRun(this.ModCacheHelper.TryUpdateFromModCache(data.Folder.Directory, data.IDs, data.UpdateKeys, data.InstalledVersion)),
-								"font-style: monospace; font-size: 0.9em;"
-							)
-						}
-					)
+				actions = Util.OnDemand(
+					"install from dump",
+					() => new object[] // returning an array allows collapsing the log in the LINQPad output
+					{
+						Util.WithStyle(
+							Util.VerticalRun(this.ModCacheHelper.TryUpdateFromModCache(data.Folder.Directory, data.IDs, data.UpdateKeys, data.InstalledVersion)),
+							"font-style: monospace; font-size: 0.9em;"
+						)
+					}
 				);
 			}
 
@@ -834,62 +808,6 @@ async Task Main()
 /*********
 ** Helpers
 *********/
-/// <summary>Move the folder into the mod dump repo specified by <see cref="ModDumpFolderPath" />, deleting the previous folder if found.</summary>
-/// <param name="mod">The mod whose folder to move.</param>
-/// <param name="toolkit">The toolkit with which to scan for a matching mod folder, if any.</param>
-private IEnumerable<object> TryMoveToModDump(ModData mod, ModToolkit toolkit)
-{
-	// validation
-	if (mod.Folder.Directory.Name.StartsWith('%'))
-	{
-		yield return Util.WithStyle("This seems to be a temporary folder (per the '%' prefix in the folder name).", ConsoleHelper.ErrorStyle);
-		yield break;
-	}
-
-	// get mod ID
-	string uniqueId = mod.Folder.Manifest?.UniqueID;
-	if (string.IsNullOrWhiteSpace(uniqueId))
-	{
-		yield return Util.WithStyle("Can't move mod to mod dump because it has no manifest ID.", ConsoleHelper.ErrorStyle);
-		yield break;
-	}
-
-	// delete mod if it already exists
-	// note: the mod may be installed with a different folder name (e.g. with an "[unofficial]" suffix)
-	var scanner = new ModScanner(toolkit.JsonHelper);
-	var targetDir = new DirectoryInfo(Path.Combine(ModDumpFolderPath, mod.Folder.Directory.Name));
-	yield return Util.WithStyle("Removing previous copies...", ConsoleHelper.TraceStyle);
-	if (targetDir.Exists)
-	{
-		ModFolder targetFolder = scanner.ReadFolder(targetDir.Parent, targetDir, true);
-
-		if (!string.Equals(targetFolder.Manifest?.UniqueID, uniqueId, StringComparison.OrdinalIgnoreCase))
-		{
-			yield return Util.WithStyle($"Can't move mod to mod dump because the '{targetDir.Name}' folder contains a different mod ('{targetFolder.DisplayName}' with unique ID '{targetFolder.Manifest.UniqueID}').", ConsoleHelper.ErrorStyle);
-			yield break;
-		}
-
-		FileHelper.ForceDelete(targetDir);
-		yield return Util.WithStyle($"   Deleted {targetDir.Name}.", ConsoleHelper.TraceStyle);
-	}
-	else
-	{
-		foreach (ModFolder folder in scanner.GetModFolders(targetDir.Parent.FullName, true))
-		{
-			if (string.Equals(folder.Manifest?.UniqueID, uniqueId, StringComparison.OrdinalIgnoreCase))
-			{
-				FileHelper.ForceDelete(folder.Directory);
-				yield return Util.WithStyle($"   Deleted {folder.Directory.Name}.", ConsoleHelper.TraceStyle);
-			}
-		}
-	}
-
-	// move folder
-	FileHelper.RecursiveCopy(mod.Folder.Directory, targetDir.Parent);
-	FileHelper.ForceDelete(mod.Folder.Directory);
-	yield return Util.WithStyle("Done!", ConsoleHelper.SuccessStyle);
-}
-
 /// <summary>Get links for a mod.</summary>
 /// <param name="mod">The wiki entry for the mod.</param>
 private dynamic GetReportLinks(WikiModEntry mod)

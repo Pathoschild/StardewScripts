@@ -79,6 +79,9 @@ readonly bool FetchMods = true;
 /// <summary>Whether to delete mods which no longer exist on the mod sites. If false, they'll show warnings instead.</summary>
 readonly bool DeleteRemovedMods = false; // NOTE: this can instantly delete many mods, which may take a long time to refetch. Consider only enabling it after you double-check the list it prints with it off.
 
+/// <summary>The date from which to list updated mods.</summary>
+readonly DateTimeOffset ListModsUpdatedSince = GetStartOfMonth().AddDays(-3);
+
 /// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
 readonly ModSearch[] IgnoreForAnalysis = [
 	/*********
@@ -509,12 +512,24 @@ private IDictionary<string, ModSearch[]> IgnoreForAnalysisBySiteId;
 *********/
 async Task Main()
 {
+	// dump CSS
+	Util
+		.RawHtml(
+			"""
+			<style>
+				h1 { margin-top: 0.5em; }
+			</style>
+			"""
+		)
+		.Dump();
+
 	// build optimized mod search lookup
 	this.IgnoreForAnalysisBySiteId = this.IgnoreForAnalysis
 		.GroupBy(p => $"{p.Site}:{p.SiteId}")
 		.ToDictionary(p => p.Key, p => p.ToArray());
 
 	// fetch compatibility list
+	Util.RawHtml("<h1>Init log</h1>").Dump();
 	ConsoleHelper.Print("Fetching wiki compatibility list...");
 	WikiModList compatList = await new ModToolkit().GetWikiCompatibilityListAsync();
 
@@ -550,23 +565,46 @@ async Task Main()
 		"launch SMAPI"
 	).Dump("actions");
 
-	// run analyses
+	// detect issues
 	ConsoleHelper.Print($"Running analyses...");
 	{
-		var notOnWiki = this.GetModsNotOnWiki(mods, compatList).ToArray();
-		if (notOnWiki.Length > 0)
+		Util.RawHtml("<h1>Detected issues</h1>").Dump();
+		
+		// wiki issues
+		Util.RawHtml("<h3>Wiki issues</h3>").Dump();
 		{
-			notOnWiki.Dump("SMAPI mods not on the wiki");
-			new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", notOnWiki.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
+			var notOnWiki = this.GetModsNotOnWiki(mods, compatList).ToArray();
+			if (notOnWiki.Length > 0)
+			{
+				notOnWiki.Dump("SMAPI mods not on the wiki");
+				new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", notOnWiki.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
+			}
+			else
+				"none".Dump("SMAPI mods not on the wiki");
 		}
-		else
-			"none".Dump("SMAPI mods not on the wiki");
+		this.GetWikiModsNotInCache(modDump, compatList).Dump("Mods on the wiki which weren't found on the modding sites");
+
+		// mod issues
+		Util.RawHtml("<h3>Mod issues</h3>").Dump();
+		this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
+
+		// script issues
+		Util.RawHtml("<h3>Script issues</h3>").Dump();
+		this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
 	}
-	this.GetWikiModsNotInCache(modDump, compatList).Dump("Mods on the wiki which weren't found on the modding sites");
-	this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
-	this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(IgnoreForAnalysis)} values which don't match any local mod");
-	this.GetModTypes(mods).Dump("mod types");
-	this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version");
+
+	// mod updates
+	{
+		Util.RawHtml("<h1>Mod updates</h1>").Dump();
+		this.GetModsOnCompatibilityListUpdatedSince(mods, compatList, ListModsUpdatedSince).Dump($"Mod files on compatibility list uploaded since {ListModsUpdatedSince:yyyy-MM-dd HH:mm}");
+	}
+
+	// stats
+	{
+		Util.RawHtml("<h1>Stats</h1>").Dump();
+		this.GetModTypes(mods).Dump("mod types");
+		this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version");
+	}
 }
 
 
@@ -667,6 +705,107 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 				)
 				+ "}}"
 			)
+		}
+	)
+	.ToArray();
+}
+
+/// <summary>Get SMAPI mods on the wiki compatibility list which have been updated recently.</summary>
+/// <param name="mods">The mods to check.</param>
+/// <param name="compatList">The mod data from the wiki compatibility list.</param>
+/// <param name="updatedSince">The earliest update date for which to list mods.</param>
+IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMod> mods, WikiModList compatList, DateTimeOffset updatedSince)
+{
+	// fetch mods on the wiki
+	var manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
+
+	// build compatibility list lookup
+	var compatEntries = new Dictionary<string, WikiModEntry>();
+	foreach (var entry in compatList.Mods)
+	{
+		if (entry.CurseForgeID.HasValue)
+			compatEntries[$"{ModSite.CurseForge}:{entry.CurseForgeID}"] = entry;
+		if (entry.ModDropID.HasValue)
+			compatEntries[$"{ModSite.ModDrop}:{entry.ModDropID}"] = entry;
+		if (entry.NexusID.HasValue)
+			compatEntries[$"{ModSite.Nexus}:{entry.NexusID}"] = entry;
+	}
+	
+	// fetch report
+	const string smallStyle = "font-size: 0.8em;";
+	return (
+		from mod in mods
+		from folder in mod.ModFolders
+
+		let compatEntry = compatEntries.GetValueOrDefault($"{mod.Site}:{mod.ID}")
+		let compat = compatEntry?.Compatibility
+
+		where
+			compatEntry != null
+			&& folder.Uploaded >= updatedSince
+			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+
+		let uploadedStr = folder.Uploaded.ToString("yyyy-MM-dd")
+		let manifest = folder.RawFolder.Manifest
+		let names = this.GetModNames(folder, mod)
+		let authorNames = this.GetAuthorNames(manifest, mod)
+		let githubRepo = this.GetGitHubRepo(manifest, mod)
+		let customSourceUrl = githubRepo == null
+			? this.GetCustomSourceUrl(mod)
+			: null
+		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
+
+		let highlightType = folder.ModType is not (ModType.Smapi or ModType.ContentPack)
+		let highlightStatus = compat is null || compat.Status is not (WikiCompatibilityStatus.Ok or WikiCompatibilityStatus.Optional)
+
+		orderby
+			(highlightType || highlightStatus) descending, // mods with issues first
+			uploadedStr descending, // then newest first
+			mod.Name
+
+		select new
+		{
+			Link = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
+			Mod =
+				$"{mod.Name}\n   by "
+				+ (mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
+					? $"{mod.Author} ({mod.AuthorLabel})"
+					: mod.Author
+				),
+			//SiteVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : mod.Version,
+			FileUpdated = uploadedStr,
+			FileName = folder.DisplayName,
+			FileCategory = folder.Type,
+			ModType = Util.WithStyle(folder.ModType, highlightType ? ConsoleHelper.ErrorStyle : ""),
+			Summary =
+			compatEntry != null
+				? Util.WithStyle($"{compat.Summary} {(!string.IsNullOrWhiteSpace(compat.BrokeIn) ? $"[broke in {compat.BrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? ConsoleHelper.ErrorStyle : "")}")
+				: Util.WithStyle($"not found on wiki", ConsoleHelper.ErrorStyle),
+			folder.ModID,
+			folder.ModVersion,
+			Actions = Util.HorizontalRun(true,
+				isModInstalled
+					? "installed"
+					: (object)Util.OnDemand(
+						"install",
+						() => new object[] // returning an array allows collapsing the log in the LINQPad output
+						{
+							Util.WithStyle(
+								Util.VerticalRun(this.ModCacheHelper.TryInstall(folder, deleteTargetFolder: false)),
+								"font-style: monospace; font-size: 0.9em;"
+							)
+						}
+					),
+				new Hyperlinq(folder.RawFolder.DirectoryPath, "files")
+			),
+			Metadata = Util.OnDemand("expand", () => new
+			{
+				FileId = folder.ID,
+				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				Manifest = Util.OnDemand("expand", () => manifest),
+				Mod = Util.OnDemand("expand", () => mod),
+				Folder = Util.OnDemand("expand", () => folder)
+			})
 		}
 	)
 	.ToArray();
@@ -986,6 +1125,16 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 /*********
 ** Implementation
 *********/
+/// <summary>Get the start of the preceding month.</summary>
+/// <param name="dayOffset">The day offset to apply to the date.</param>
+private static DateTimeOffset GetStartOfMonth(int fuzzyDays = 5)
+{
+	DateTimeOffset now = DateTimeOffset.Now;
+
+	return new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, 0, now.Offset)
+		.AddMonths(now.Day <= fuzzyDays ? -1 : 0);
+}
+
 /// <summary>Fetch and cache all mods and mod files from a mod site.</summary>
 /// <param name="modDump">The mod dump to update.</param>
 /// <param name="modSite">The mod site from which to fetch mods.</param>
@@ -1610,6 +1759,7 @@ class CurseForgeApiClient : IModSiteClient
 				displayName: file.DisplayName,
 				fileName: file.FileName,
 				version: this.GetFileVersion(file.DisplayName, file.FileName),
+				uploaded: file.FileDate,
 				rawData: file
 			));
 
@@ -1783,6 +1933,10 @@ class ModDropApiClient : IModSiteClient
 				if (file.IsOld || file.IsDeleted || file.IsHidden)
 					continue;
 
+				DateTimeOffset dateCreated = DateTimeOffset.FromUnixTimeMilliseconds(file.DateCreated);
+				if (dateCreated > lastUpdated)
+					lastUpdated = dateCreated;
+
 				files.Add(new GenericFile(
 					id: file.Id,
 					type: !file.IsPreRelease && !file.IsAlternative
@@ -1791,12 +1945,9 @@ class ModDropApiClient : IModSiteClient
 					displayName: file.Name,
 					fileName: file.FileName,
 					version: file.Version,
+					uploaded: dateCreated,
 					rawData: file
 				));
-
-				DateTimeOffset dateCreated = DateTimeOffset.FromUnixTimeMilliseconds(file.DateCreated);
-				if (dateCreated > lastUpdated)
-					lastUpdated = dateCreated;
 			}
 			catch
 			{
@@ -1922,13 +2073,13 @@ class NexusApiClient : IModSiteClient
 			else
 				continue;
 
-			// add file
-			files.Add(new GenericFile(id: fileId, type: type, displayName: file.Name, fileName: file.FileName, version: file.Version, rawData: file));
-
 			// track last update
 			DateTimeOffset uploadedAt = DateTimeOffset.FromUnixTimeSeconds(file.UploadedAt);
 			if (uploadedAt > lastUpdated)
 				lastUpdated = uploadedAt;
+
+			// add file
+			files.Add(new GenericFile(id: fileId, type: type, displayName: file.Name, fileName: file.FileName, version: file.Version, uploaded: uploadedAt, rawData: file));
 		}
 
 		// special case: if a mod has zero main/optional files, get files from any non-archived/deleted/old category
@@ -1939,12 +2090,12 @@ class NexusApiClient : IModSiteClient
 				if (file.CategoryId is (int)FileCategory.Archived or (int)FileCategory.Deleted or (int)FileCategory.Old)
 					continue;
 
-				files.Add(new GenericFile(id: fileId, type: GenericFileType.Optional, displayName: file.Name, fileName: file.FileName, version: file.Version, rawData: file));
-
 				// track last update
 				DateTimeOffset uploadedAt = DateTimeOffset.FromUnixTimeSeconds(file.UploadedAt);
 				if (uploadedAt > lastUpdated)
 					lastUpdated = uploadedAt;
+
+				files.Add(new GenericFile(id: fileId, type: GenericFileType.Optional, displayName: file.Name, fileName: file.FileName, version: file.Version, uploaded: uploadedAt, rawData: file));
 			}
 		}
 
