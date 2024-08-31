@@ -37,7 +37,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 ** Configuration
 *********/
 /// <summary>The user agent sent to the mod site APIs.</summary>
-const string UserAgent = "PathoschildModDump/20240801 (+https://github.com/Pathoschild/StardewScripts)";
+const string UserAgent = "PathoschildModDump/20240901 (+https://github.com/Pathoschild/StardewScripts)";
 
 /// <summary>The mod site clients from which to fetch mods.</summary>
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
@@ -939,6 +939,52 @@ IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 		.OrderBy(p => p.Site)
 		.ThenBy(p => p.SiteId)
 		.ThenBy(p => p.FileId);
+}
+
+/// <summary>Get stats about open-source C# mods on the wiki compatibility list.</summary>
+/// <param name="compatList">The mod data from the wiki compatibility list.</param>
+string[] GetOpenSourceStats(WikiModList compatList)
+{
+	// get C# mod count by repo
+	Dictionary<string, int> modsByRepo = new(StringComparer.OrdinalIgnoreCase);
+	int totalMods = 0;
+	foreach (WikiModEntry mod in compatList.Mods)
+	{
+		if (mod.ContentPackFor != null)
+			continue;
+
+		string repo = null;
+		if (!string.IsNullOrWhiteSpace(mod.CustomSourceUrl))
+			repo = mod.CustomSourceUrl.Trim();
+		else if (!string.IsNullOrWhiteSpace(mod.GitHubRepo))
+			repo = mod.GitHubRepo.Trim();
+
+		totalMods++;
+		if (repo != null)
+			modsByRepo[repo] = modsByRepo.GetValueOrDefault(repo) + 1;
+	}
+
+	// get stats
+	int modsWithCode = 0;
+	int modsWithSharedRepo = 0;
+	foreach (int count in modsByRepo.Values)
+	{
+		modsWithCode += count;
+		if (count > 1)
+			modsWithSharedRepo += count;
+	}
+
+	// return stats
+	return [
+		$"- We have {totalMods:#,###} tracked C# mods, of which",
+		$"- {modsWithCode:#,###} mods ({GetPercentage(modsWithCode, totalMods)}) have a source code repo, with",
+		$"- {modsWithSharedRepo:#,###} ({GetPercentage(modsWithSharedRepo, modsWithCode)}) in a multi-mod repo and {modsWithCode - modsWithSharedRepo:#,###} ({GetPercentage(modsWithCode - modsWithSharedRepo, modsWithCode)}) in a single-mod repo."
+	];
+
+	static string GetPercentage(int amount, int total)
+	{
+		return $"{Math.Round(amount / (total * 1m) * 100)}%";
+	}
 }
 
 /// <summary>Get the number of mods by type.</summary>

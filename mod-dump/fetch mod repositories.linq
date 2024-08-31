@@ -136,29 +136,21 @@ async Task Main()
 				.Select(group => new ModRepository(group))
 		);
 
-		// find invalid custom source URLs
-		string[] invalidUrls;
+		// list invalid custom source URLs
 		{
 			var validUrls = new HashSet<string>(repos.SelectMany(repo => repo.CustomSourceUrls), StringComparer.OrdinalIgnoreCase);
-			invalidUrls = mods
+			string[] invalidUrls = mods
 				.Select(mod => mod.CustomSourceUrl)
 				.Where(url => !string.IsNullOrWhiteSpace(url) && !validUrls.Contains(url))
 				.Distinct(StringComparer.OrdinalIgnoreCase)
 				.ToArray();
-		}
 
-		// print stats
-		int uniqueRepos = repos.Count;
-		int modsWithCode = repos.Sum(repo => repo.Mods.Length);
-		int modsWithSharedRepo = repos.Where(repo => repo.Mods.Length > 1).Sum(repo => repo.Mods.Length);
-
-		ConsoleHelper.Print($"   {totalMods} mods in the SMAPI compatibility list.");
-		ConsoleHelper.Print($"   {modsWithCode} mods ({this.GetPercentage(modsWithCode, totalMods)}) have a source code repo, with {modsWithSharedRepo} ({this.GetPercentage(modsWithSharedRepo, modsWithCode)}) in a multi-mod repo and {modsWithCode - modsWithSharedRepo} ({this.GetPercentage(modsWithCode - modsWithSharedRepo, modsWithCode)}) in a single-mod repo.");
-		if (invalidUrls.Any())
-		{
-			ConsoleHelper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the wiki:", Severity.Trace);
-			foreach (string url in invalidUrls.OrderBy(p => p))
-				ConsoleHelper.Print($"      {url}", Severity.Trace);
+			if (invalidUrls.Any())
+			{
+				ConsoleHelper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the wiki:", Severity.Trace);
+				foreach (string url in invalidUrls.OrderBy(p => p))
+					ConsoleHelper.Print($"      {url}", Severity.Trace);
+			}
 		}
 	}
 	Console.WriteLine();
@@ -401,14 +393,6 @@ private string GetFileHeader(string extension, ModRepository repo)
 		default:
 			return null;
 	}
-}
-
-/// <summary>Get a percentage string for display.</summary>
-/// <param name="amount">The actual amount.</param>
-/// <param name="total">The total possible amount.</param>
-private string GetPercentage(int amount, int total)
-{
-	return $"{Math.Round(amount / (total * 1m) * 100)}%";
 }
 
 /// <summary>Execute an arbitrary shell command.</summary>
