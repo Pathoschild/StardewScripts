@@ -1160,12 +1160,14 @@ async Task DownloadAndCacheSiteAsync(ModCache modDump, IModSiteClient modSite)
 	}
 
 	// remove deleted/hidden mods
+	bool removedAny = false;
 	foreach (GenericMod mod in modDump.GetModsFor(modSite.SiteKey))
 	{
 		if (!remoteMods.ContainsKey(mod.ID))
 		{
 			if (DeleteRemovedMods)
 			{
+				removedAny = true;
 				modDump.DeleteMod(modSite.SiteKey, mod.ID);
 				ConsoleHelper.Print($"      Deleted mod {mod.ID} ('{mod.Name}' by {mod.Author}) which is no longer accessible.");
 			}
@@ -1173,6 +1175,8 @@ async Task DownloadAndCacheSiteAsync(ModCache modDump, IModSiteClient modSite)
 				ConsoleHelper.Print($"      Ignored mod {mod.ID} ('{mod.Name}' by {mod.Author}) which is no longer accessible. Enable {nameof(DeleteRemovedMods)} to delete it.");
 		}
 	}
+	if (removedAny)
+		modDump.SaveCache();
 
 	// get new/updated mods
 	List<(GenericMod mod, bool isNew)> queue = new();
