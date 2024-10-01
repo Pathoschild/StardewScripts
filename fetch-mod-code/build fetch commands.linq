@@ -22,7 +22,7 @@
 See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
-#load "Utilities\ConsoleHelper"
+#load "..\mod-dump\Utilities\ConsoleHelper"
 
 /*********
 ** Configuration

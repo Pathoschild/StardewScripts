@@ -128,11 +128,9 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		1258745  // Tristan (es)
 	),
 
-	// reposts
-	..ModSearch.ForSiteIds(ModSite.ModDrop,
-		509776, // Object Progress Bars
-		509780  // Running Late
-	),
+	// reposts with the same mod ID
+	new(ModSite.ModDrop, 509776, manifestId: "Adeel.ObjectProgressbars"), // Object Progress Bars
+	new(ModSite.ModDrop, 509780, manifestId: "Coll1234567.RunningLate"),  // Running Late
 
 	// mods which include a copy of another mod for some reason
 	new(ModSite.ModDrop, 1240025, manifestId: "Cherry.ExpandedPreconditionsUtility"), // Little Witch Academia Constanze NPC
@@ -222,7 +220,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		5396,  // Dwarvish (pt)
 		5428,  // Dwarvish (zh)
 		10626, // East Scarp (es)
-		8784,  // East Scarpe (pt)
 		25952, // EXP Control (zh)
 		10967, // Extra Fish Information (fr)
 		15717, // Extended Minecart (tr)
@@ -242,6 +239,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		4693,  // Happy Birthday (pt)
 		6693,  // Happy Birthday (pt)
 		9117,  // Happy Birthday (ru)
+		26743, // Happy Home Designer (ru)
 		6111,  // Immersive Characters - Shane (es)
 		12399, // Instant Tool Upgrades (tr)
 		26451, // Iridium Tools Patch (fr)
@@ -264,6 +262,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		4265,  // Magic (pt)
 		18747, // Magic (vi)
 		18746, // Mana Bar (vi)
+		25520, // Market Town (zh)
 		15183, // Mermaid Island (es)
 		10804, // Mister Ginger Cat NPC (es)
 		16659, // Mobile Catalogues (vi)
@@ -276,6 +275,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		18252, // Multiple Spouses (th)
 		10224, // Multiple Spouses (zh)
 		14478, // Never Ending Adventure - NPC Mateo (es)
+		28191, // Never Ending Adventure - NPC Mateo (vi)
 		6295,  // Nice Messages (ru)
 		24505, // Multiplayer Info (de)
 		8928,  // Multiple Spouse Dialogs (tr)
@@ -313,13 +313,13 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		18453, // Show Birthday (pt)
 		19242, // Socializing Skill (vi)
 		11140, // Spouses in Ginger Island (zh)
+		27012, // Stardew Notifications (pt)
 		20244, // Stardew Notifications (tr)
 		18691, // Stardew Realty (pt)
 		5259,  // Stardew Valley Expanded (de)
 		5272,  // Stardew Valley Expanded (es)
 		5509,  // Stardew Valley Expanded (es)
 		12867, // Stardew Valley Expanded (fr)
-		26602, // Stardew Valley Expanded (fr)
 		4206,  // Stardew Valley Expanded (pt)
 		6062,  // Stardew Valley Expanded (tr)
 		6332,  // Stardew Valley Expanded (tr)
@@ -340,43 +340,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		17684, // What Are You Missing (vi)
 		25953, // XP Display (zh)
 
-		// reposts
-		19034, // Animal Sitter
-		22479, // Auto-Eat
-		21137, // Buy Cooking Recipes
-		20781, // Crop Harvest Bubbles
-		20783, // Crop Variation
-		21428, // Crop Watering Bubbles
-		22678, // Dialogue Display Framework
-		12920, // Extra Map Layers (version for Android by original author, with same mod ID)
-		20910, // Farm Cave Framework
-		22201, // Fishing Info Overlays
-		20726, // Fish Spot Bait
-		11297, // Friends Forever
-		20702, // Friends Forever
-		20723, // Gift Rejection
-		21766, // Help Wanted
-		21286, // Informant
-		21635, // Junimos Accept Cash
-		21285, // Like a Duck to Water
-		21068, // Mailbox Menu
-		16921, // More Random Edition
-		19817, // Multiplayer for Mobile
-		12369, // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
-		19291, // Night Owl Repacked
-		20869, // No Fence Decay
-		20706, // Plant and Fertilize All
-		1427,  // Prairie King Made Easy
-		10916, // Qi Exchanger
-		887,   // Reseed
-		1363,  // Save Anywhere
-		8386,  // Save Anywhere
-		22275, // Show Item Quality
-		22167, // Sprinkler Mod
-		22763, // Tilemap Challenge
-		1077,  // UI Mod Suite
-		19879, // Virtual Keyboard
-
 		// files to drop into another mod's folder
 		18729, // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
 		14360, // Facelift for CC's Horse Plus (replaces files in CC's Horse Plus)
@@ -392,6 +355,60 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
 		19905  // XNB Archive (not a mod)
 	),
+	
+	// reposts with same mod ID
+	new(ModSite.Nexus, 23271, manifestId: "ChelseaBingiel.LuckyRabbitsFoot"),   // Actually Lucky Rabbit's Foot
+	new(ModSite.Nexus, 24374, manifestId: "aedenthorn.AdvancedMeleeFramework"), // Advanced Melee Framework
+	new(ModSite.Nexus, 19034, manifestId: "jwdred.AnimalSitter"),            // Animal Sitter
+	new(ModSite.Nexus, 22479, manifestId: "Permamiss.AutoEat"),              // Auto-Eat
+	new(ModSite.Nexus, 21264, manifestId: "hootless.BusLocations"),          // Bus Locations
+	new(ModSite.Nexus, 21137, manifestId: "Denifia.BuyRecipes"),             // Buy Cooking Recipes
+	new(ModSite.Nexus, 27231, manifestId: "berkayylmao.ChestEx"),            // ChestEx
+	new(ModSite.Nexus, 20781, manifestId: "aedenthorn.CropHarvestBubbles"),  // Crop Harvest Bubbles
+	new(ModSite.Nexus, 20783, manifestId: "aedenthorn.CropVariation"),       // Crop Variation
+	new(ModSite.Nexus, 21428, manifestId: "aedenthorn.CropWateringBubbles"), // Crop Watering Bubbles
+	new(ModSite.Nexus, 28109, manifestId: "Aedenthorn.CustomMonsterFloors"), // Custom Dungeon Floors
+	new(ModSite.Nexus, 27888, manifestId: "aedenthorn.DynamicFlooring"),     // Dynamic Flooring
+	new(ModSite.Nexus, 20910, manifestId: "aedenthorn.FarmCaveFramework"),   // Farm Cave Framework
+	new(ModSite.Nexus, 22201, manifestId: "barteke22.FishingInfoOverlays"),  // Fishing Info Overlays
+	new(ModSite.Nexus, 20726, manifestId: "aedenthorn.FishSpotBait"),        // Fish Spot Bait
+	new(ModSite.Nexus, 11297, manifestId: "IsaacS.FriendsForever"),          // Friends Forever
+	new(ModSite.Nexus, 20702, manifestId: "IsaacS.FriendsForever"),          // Friends Forever
+	new(ModSite.Nexus, 20723, manifestId: "aedenthorn.GiftRejection"),       // Gift Rejection
+	new(ModSite.Nexus, 21286, manifestId: "Slothsoft.Informant"),            // Informant
+	new(ModSite.Nexus, 21635, manifestId: "spacechase0.JunimosAcceptCash"),  // Junimos Accept Cash
+	new(ModSite.Nexus, 21285, manifestId: "aedenthorn.LikeADuckToWater"),    // Like a Duck to Water
+	new(ModSite.Nexus, 21068, manifestId: "aedenthorn.MailboxMenu"),         // Mailbox Menu
+	new(ModSite.Nexus, 27343, manifestId: "d5a1lamdtd.MarketTown"),          // Market Town
+	new(ModSite.Nexus, 16921, manifestId: "Chikakoo.Randomizer"),            // More Random Edition
+	new(ModSite.Nexus, 19817, manifestId: "Multiplayer.Mod"),                // Multiplayer Mod (for mobile)
+	new(ModSite.Nexus, 12369, manifestId: "KCC.SnS"),                        // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
+	new(ModSite.Nexus, 19291, manifestId: "Omegasis.NightOwl"),              // Night Owl
+	new(ModSite.Nexus, 20869, manifestId: "cat.nofencedecay"),               // No Fence Decay
+	new(ModSite.Nexus, 28203, manifestId: "aedenthorn.ImportMap"),           // Object Import Map
+	new(ModSite.Nexus, 27626, manifestId: "aedenthorn.OutfitSets"),          // Outfit Sets
+	new(ModSite.Nexus, 20706, manifestId: "aedenthorn.PlantAll"),            // Plant and Fertilize All
+	new(ModSite.Nexus, 1427, manifestId: "Mucchan.PrairieKingMadeEasy"),     // Prairie King Made Easy
+	new(ModSite.Nexus, 10916, manifestId: "mizzion.qiexchanger"),            // Qi Exchanger
+	new(ModSite.Nexus, 887, manifestId: "Roc.Reseed"),                       // Reseed
+	new(ModSite.Nexus, 8386, manifestId: "Omegasis.SaveAnywhere"),           // Save Anywhere
+	new(ModSite.Nexus, 22275, manifestId: "Jonqora.ShowItemQuality"),        // Show Item Quality
+	new(ModSite.Nexus, 22167, manifestId: "aedenthorn.SprinklerMod"),        // Sprinkler Mod
+	new(ModSite.Nexus, 24806, manifestId: "MiphasGrace.SurpriseBaby1"),      // Surprise Pregnancy
+	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),         // Survivalist - Hunger and Thirst
+	new(ModSite.Nexus, 22135, manifestId: "aedenthorn.StatueShorts"),        // Statue Shorts
+	new(ModSite.Nexus, 22763, manifestId: "SpicyKai.Tileman"),               // Tileman Challenge
+	new(ModSite.Nexus, 28049, manifestId: "aedenthorn.TrainTracks"),         // Train Tracks
+	new(ModSite.Nexus, 23570, manifestId: "TyoAtrosa.Treeshaker"),           // Tree Shaker
+	new(ModSite.Nexus, 1077, manifestId: "Demiacle.UiModSuite"),             // UI Mod Suite
+	new(ModSite.Nexus, 27425, manifestId: "VirtualKeyboard"),                // Virtual Keyboard
+	new(ModSite.Nexus, 27842, manifestId: "VirtualKeyboard"),                // Virtual Keyboard
+	new(ModSite.Nexus, 24119, manifestId: "aedenthorn.WikiLinks"),           // Wiki Links
+
+	// other simple or obsolete reposts
+	new(ModSite.Nexus, 12920), // Extra Map Layers (version for Android by original author)
+	new(ModSite.Nexus, 1363),  // Save Anywhere
+	new(ModSite.Nexus, 19879), // Virtual Keyboard
 	#endregion
 
 
@@ -424,15 +441,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
 	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
 
-	// reposts
-	new(ModSite.Nexus, 23271, manifestId: "ChelseaBingiel.LuckyRabbitsFoot"),   // Actually Lucky Rabbit's Foot
-	new(ModSite.Nexus, 24374, manifestId: "aedenthorn.AdvancedMeleeFramework"), // Advanced Melee Framework
-	new(ModSite.Nexus, 21264, manifestId: "hootless.BusLocations"),             // Bus Locations
-	new(ModSite.Nexus, 24806, manifestId: "MiphasGrace.SurpriseBaby1"),         // Surprise Pregnancy
-	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),            // Survivalist - Hunger and Thirst
-	new(ModSite.Nexus, 23570, manifestId: "TyoAtrosa.Treeshaker"),              // Tree Shaker
-	new(ModSite.Nexus, 24119, manifestId: "aedenthorn.WikiLinks"),              // Wiki Links
-
 	// utility mods that are part of a larger mod
 	new(ModSite.Nexus, 2677, 14752), // Always On Server for Multiplayer > Server Connection Reset
 	new(ModSite.Nexus, 2364, 9477),  // Even More Secret Woods > Bush Reset
@@ -458,6 +466,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	// mods which include a copy of another mod for some reason
 	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
+	new(ModSite.Nexus, 26746, manifestId: "Platonymous.Portraiture"),           // Expand Shane's CG events
 	new(ModSite.Nexus, 3496, manifestId: "Esca.FarmTypeManager"),               // Farm Extended
 	new(ModSite.Nexus, 6029, manifestId: "Cherry.ToolUpgradeCosts"),            // Hardew Valley
 	new(ModSite.Nexus, 6029, manifestId: "jahangmar.LevelingAdjustment"),       // Hardew Valley
@@ -602,6 +611,7 @@ async Task Main()
 	// stats
 	{
 		Util.RawHtml("<h1>Stats</h1>").Dump();
+		this.GetOpenSourceStats(compatList).Dump("open-source stats");
 		this.GetModTypes(mods).Dump("mod types");
 		this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version");
 	}
@@ -774,7 +784,7 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 				),
 			//SiteVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : mod.Version,
 			FileUpdated = uploadedStr,
-			FileName = folder.DisplayName,
+			File = $"{folder.DisplayName} {folder.Version}",
 			FileCategory = folder.Type,
 			ModType = Util.WithStyle(folder.ModType, highlightType ? ConsoleHelper.ErrorStyle : ""),
 			Summary =

@@ -100,6 +100,9 @@ javascript:(function() {
             /* Denifia */
             1126: "Buy Cooking Recipes",
 
+            /* DonCami */
+            26447: "Treasury Farm",
+
             /* Entoarox */
             2270: "Advanced Location Loader",
             2272: "Custom Paths",
@@ -190,6 +193,7 @@ javascript:(function() {
             3378: "Profit Calculator",
             7455: "Pyromancer's Journey",
             15696: "Qi Chests",
+            26444: "Random Cats in Events",
             9386: "Realtime Minimap",
             12029: "Responsive MP Knockback",
             605: "Rush Orders",
