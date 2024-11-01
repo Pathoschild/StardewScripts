@@ -199,7 +199,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		4197,  // Companion NPCs (pt)
 		15932, // Convenient Inventory (pt)
 		14723, // Cooking Skill (ru)
-		17789, // Crop Harvest Bubbles (pt)
 		9920,  // Crop Regrowth and Perennial Crops (pt)
 		18035, // Customize Anywhere (fr)
 		12968, // Custom NPC Belos (id)
@@ -229,6 +228,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		23394, // Fashion Sense (es)
 		18034, // Fashion Sense (fr)
 		13106, // Festival of the Mundane (zh)
+		28397, // Fishing Trawler (ru)
 		13165, // Fishing Trawler (vi)
 		15286, // Fireworks Festival (zh)
 		6157,  // Garden Village Shops (ru)
@@ -250,7 +250,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		15624, // LewdDew Valley (zh)
 		13866, // Line Sprinklers (fr)
 		17797, // Loan Mod (vi)
-		9143,  // Lookup Anything (id)
 		22518, // Lookup Anything (id)
 		18723, // Lookup Anything (vi)
 		10720, // Loved Labels (pl)
@@ -262,6 +261,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		4265,  // Magic (pt)
 		18747, // Magic (vi)
 		18746, // Mana Bar (vi)
+		28680, // Maritime Secrets (zh)
 		25520, // Market Town (zh)
 		15183, // Mermaid Island (es)
 		10804, // Mister Ginger Cat NPC (es)
@@ -363,22 +363,20 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 22479, manifestId: "Permamiss.AutoEat"),              // Auto-Eat
 	new(ModSite.Nexus, 21264, manifestId: "hootless.BusLocations"),          // Bus Locations
 	new(ModSite.Nexus, 21137, manifestId: "Denifia.BuyRecipes"),             // Buy Cooking Recipes
-	new(ModSite.Nexus, 27231, manifestId: "berkayylmao.ChestEx"),            // ChestEx
+	new(ModSite.Nexus, 28591, manifestId: "funnysnek.ChangeCabinType"),      // Change Cabin Type
 	new(ModSite.Nexus, 20781, manifestId: "aedenthorn.CropHarvestBubbles"),  // Crop Harvest Bubbles
 	new(ModSite.Nexus, 20783, manifestId: "aedenthorn.CropVariation"),       // Crop Variation
-	new(ModSite.Nexus, 21428, manifestId: "aedenthorn.CropWateringBubbles"), // Crop Watering Bubbles
 	new(ModSite.Nexus, 28109, manifestId: "Aedenthorn.CustomMonsterFloors"), // Custom Dungeon Floors
 	new(ModSite.Nexus, 27888, manifestId: "aedenthorn.DynamicFlooring"),     // Dynamic Flooring
 	new(ModSite.Nexus, 20910, manifestId: "aedenthorn.FarmCaveFramework"),   // Farm Cave Framework
 	new(ModSite.Nexus, 22201, manifestId: "barteke22.FishingInfoOverlays"),  // Fishing Info Overlays
 	new(ModSite.Nexus, 20726, manifestId: "aedenthorn.FishSpotBait"),        // Fish Spot Bait
 	new(ModSite.Nexus, 11297, manifestId: "IsaacS.FriendsForever"),          // Friends Forever
-	new(ModSite.Nexus, 20702, manifestId: "IsaacS.FriendsForever"),          // Friends Forever
+	new(ModSite.Nexus, 28324, manifestId: "aedenthorn.GemIsles"),            // Gem Isles
 	new(ModSite.Nexus, 20723, manifestId: "aedenthorn.GiftRejection"),       // Gift Rejection
+	new(ModSite.Nexus, 28351, manifestId: "atravita.IdentifiableCombinedRings"), // Identifiable Combined Rings
 	new(ModSite.Nexus, 21286, manifestId: "Slothsoft.Informant"),            // Informant
 	new(ModSite.Nexus, 21635, manifestId: "spacechase0.JunimosAcceptCash"),  // Junimos Accept Cash
-	new(ModSite.Nexus, 21285, manifestId: "aedenthorn.LikeADuckToWater"),    // Like a Duck to Water
-	new(ModSite.Nexus, 21068, manifestId: "aedenthorn.MailboxMenu"),         // Mailbox Menu
 	new(ModSite.Nexus, 27343, manifestId: "d5a1lamdtd.MarketTown"),          // Market Town
 	new(ModSite.Nexus, 16921, manifestId: "Chikakoo.Randomizer"),            // More Random Edition
 	new(ModSite.Nexus, 19817, manifestId: "Multiplayer.Mod"),                // Multiplayer Mod (for mobile)
@@ -391,6 +389,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 1427, manifestId: "Mucchan.PrairieKingMadeEasy"),     // Prairie King Made Easy
 	new(ModSite.Nexus, 10916, manifestId: "mizzion.qiexchanger"),            // Qi Exchanger
 	new(ModSite.Nexus, 887, manifestId: "Roc.Reseed"),                       // Reseed
+	new(ModSite.Nexus, 28750, manifestId: "aedenthorn.Restauranteer"),       // Restauranteer
+	new(ModSite.Nexus, 28712, manifestId: "aedenthorn.RobinWorkHours"),      // Robin Work Hours 
 	new(ModSite.Nexus, 8386, manifestId: "Omegasis.SaveAnywhere"),           // Save Anywhere
 	new(ModSite.Nexus, 22275, manifestId: "Jonqora.ShowItemQuality"),        // Show Item Quality
 	new(ModSite.Nexus, 22167, manifestId: "aedenthorn.SprinklerMod"),        // Sprinkler Mod
@@ -398,6 +398,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),         // Survivalist - Hunger and Thirst
 	new(ModSite.Nexus, 22135, manifestId: "aedenthorn.StatueShorts"),        // Statue Shorts
 	new(ModSite.Nexus, 22763, manifestId: "SpicyKai.Tileman"),               // Tileman Challenge
+	new(ModSite.Nexus, 28304, manifestId: "Cherry.ToolUpgradeCosts"),        // Tool Upgrade Costs
 	new(ModSite.Nexus, 28049, manifestId: "aedenthorn.TrainTracks"),         // Train Tracks
 	new(ModSite.Nexus, 23570, manifestId: "TyoAtrosa.Treeshaker"),           // Tree Shaker
 	new(ModSite.Nexus, 1077, manifestId: "Demiacle.UiModSuite"),             // UI Mod Suite
@@ -488,12 +489,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 20593, manifestId: "Esca.FarmTypeManager"),              // Standard Farm Expanded
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment"),       // Stardew VallEasy - Easy Gold Everywhere
 	new(ModSite.Nexus, 9509, manifestId: "jahangmar.LevelingAdjustment2"),      // Stardew VallEasy - Easy Gold Everywhere
-	new(ModSite.Nexus, 23344, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Boutique
-	new(ModSite.Nexus, 23518, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Gourmand
-	new(ModSite.Nexus, 23517, manifestId: "alja.CCCB"),                         // Wildflour's Atelier Goods - CC Bundles Sweet Tooth
 
 	// downloads which replace files in other mods
-	new(ModSite.Nexus, 22703, 104961), // BBBoong's Ridgeside Village Seasonal Portraits
 	new(ModSite.Nexus, 19236, 78568),  // Anime Catboy Portrait Mod - Wizard SVE
 	new(ModSite.Nexus, 21191, 86404),  // Auto Fish - Deutsch
 	new(ModSite.Nexus, 19698, 80076),  // Vanilla Portrait Frame

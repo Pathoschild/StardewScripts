@@ -72,7 +72,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/AngelaRanna/StardewMods.git "~AngelaRanna" # 3 mods: Angel's Existing Weapon Updater, Angel's Lead Rod Drop Rate Fixer, Angel's Weapon Rebalance
    git clone -q https://github.com/AngeloC3/StardewMods.git "Stardew Media Keys" # 1 mod: Stardew Media Keys
    git clone -q https://github.com/Annosz/StardewValleyModding.git "~Annosz" # 5 mods: Cheaper Beach Bridge Repair, Highlighted Jars, Krobus Sells Larger Stacks, Remember Faced Direction, Sleepless Fisherman
-   git clone -q https://github.com/Annosz/UIInfoSuite2.git "~Annosz (2)" # 5 mods: Ferngill Simple Economy, Quick Save, Scaring - Thieving Skill, Stardew Valley Balance Overhaul, Ui Info Suite 2
+   git clone -q https://github.com/Annosz/UIInfoSuite2.git "~Annosz (2)" # 4 mods: Ferngill Simple Economy, Scaring - Thieving Skill, Stardew Valley Balance Overhaul, Ui Info Suite 2
    git clone -q https://github.com/AnotherPillow/WarpParsnip.git "Warp Parsnip" # 1 mod: Warp Parsnip
    git clone -q https://github.com/ApryllForever/NuclearBombLocations.git "Nuclear Valley - PG" # 1 mod: Nuclear Valley - PG
    git clone -q https://github.com/ApryllForever/PolyamorySweetLove.git "PolyamorySweet" # 5 mods: Polyamory Sweet → Polyamory Kiss, Polyamory Sweet → Polyamory Sweet Bed, Polyamory Sweet → Polyamory Sweet Love, Polyamory Sweet → Polyamory Sweet Rooms, Polyamory Sweet → Polyamory Sweet Wedding
@@ -212,6 +212,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/Denifia/StardewMods.git "~Denifia" # 2 mods: Buy Cooking Recipes, Send Items to Other Farmers
    git clone -q https://github.com/derslayr10/GreenhouseConstruction.git "Greenhouse Construction" # 1 mod: Greenhouse Construction
    git clone -q https://github.com/DespairScent/AlwaysSpecialTitle.git "Always Special Title" # 1 mod: Always Special Title
+   git clone -q https://github.com/DespairScent/Autonomals.git "Autonomals" # 1 mod: Autonomals
    git clone -q https://github.com/DespairScent/PrecisionWheel.git "Precision Wheel" # 1 mod: Precision Wheel
    git clone -q https://github.com/desto-git/sdv-mods.git "~desto-git" # 2 mods: Billboard Profit Margin, Gift Decline
    git clone -q https://github.com/desto-git/smapi-RegularQuality.git "Regular Quality" # 1 mod: Regular Quality
@@ -312,6 +313,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/focustense/StardewFishingSea.git "A Fishing Sea" # 1 mod: A Fishing Sea
    git clone -q https://github.com/focustense/StardewForgeMenuChoice.git "Pick Your Enchantment Restored" # 1 mod: Pick Your Enchantment Restored
    git clone -q https://github.com/focustense/StardewRadialMenu.git "Radial Menu" # 1 mod: Radial Menu
+   git clone -q https://github.com/focustense/StardewUI.git "Stardew UI" # 1 mod: Stardew UI
    git clone -q https://github.com/foxwhite25/Stardew-Ultimate-Fertilizer.git "Ultimate Fertilizer" # 1 mod: Ultimate Fertilizer
    git clone -q https://github.com/Freaksaus/Tileman-Redux.git "Tileman Redux" # 1 mod: Tileman Redux
    git clone -q https://github.com/FricativeMelon/GroupableChests.git "Groupable Chests" # 1 mod: Groupable Chests
@@ -371,6 +373,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/ichortower/SecretWoodsSnorlax.git "Secret Woods Snorlax" # 1 mod: Secret Woods Snorlax
    git clone -q https://github.com/ichortower/TaterToss.git "Tater Toss - Throw Your Toddlers" # 1 mod: Tater Toss - Throw Your Toddlers
    git clone -q https://github.com/ichortower/TheFishDimension.git "The Fish Dimension" # 1 mod: The Fish Dimension
+   git clone -q https://github.com/ichortower/TheJClub.git "The J Club" # 1 mod: The J Club
    git clone -q https://github.com/idermailer/DresserSorter.git "Dresser Sorter" # 1 mod: Dresser Sorter
    git clone -q https://github.com/idermailer/iDontUseThatWater.git "I Don't Use That Water" # 1 mod: I Don't Use That Water
    git clone -q https://github.com/idermailer/InstantDialogues.git "Instant Dialogues" # 1 mod: Instant Dialogues
@@ -921,6 +924,7 @@ through mod code and perform analyses.
    git clone -q https://gitlab.com/delixx/stardew-valley/gacha-geodes.git "Gacha Geodes" # 1 mod: Gacha Geodes
    git clone -q https://gitlab.com/delixx/stardew-valley/lenient-window-resize.git "Lenient Window Resize" # 1 mod: Lenient Window Resize
    git clone -q https://gitlab.com/delixx/stardew-valley/personal-indoor-farm.git "Personal Indoor Farm" # 1 mod: Personal Indoor Farm
+   git clone -q https://gitlab.com/delixx/stardew-valley/quicksave.git "Quick Save" # 1 mod: Quick Save
    git clone -q https://gitlab.com/delixx/stardew-valley/unlockable-bundles.git "Unlockable Bundles" # 1 mod: Unlockable Bundles
    git clone -q https://gitlab.com/enom/time-before-harvest-enhanced.git "Time Before Harvest Enhanced" # 1 mod: Time Before Harvest Enhanced
    git clone -q https://gitlab.com/geko_x/stardew-mods.git "~geko_x" # 2 mods: Shut Up, Zoomy Farmer
