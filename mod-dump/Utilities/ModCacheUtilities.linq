@@ -67,17 +67,31 @@ public class ModCacheUtilities
 	/// <summary>Install a mod from the mod dump.</summary>
 	/// <param name="mod">The mod ID to install.</param>
 	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
-	public IEnumerable<object> TryInstall(string id, string folderNamePrefix = null)
+	public List<object> TryInstall(string id, string folderNamePrefix = null)
 	{
+		TryInstall(id, out List<object> log, folderNamePrefix);
+		return log;
+	}
+
+	/// <summary>Install a mod from the mod dump.</summary>
+	/// <param name="mod">The mod ID to install.</param>
+	/// <param name="log">A formatted list of log messages to display.</param>
+	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
+	/// <returns>Returns whether the mod was successfully installed (or was already installed).</returns>
+	public bool TryInstall(string id, out List<object> log, string folderNamePrefix = null)
+	{
+		log = new();
+
 		// get latest version from mod dump
 		ParsedFile selectedMod = null;
 		{
 			if (!this.ModCacheImpl.IsValueCreated)
-				yield return Util.WithStyle("Reading mod dump...", ConsoleHelper.TraceStyle);
+				log.Add(Util.WithStyle("Reading mod dump...", ConsoleHelper.TraceStyle));
+
 			ILookup<string, ParsedMod> modFoldersBySiteId = this.ModFoldersBySiteId.Value;
 
 			// find latest version of the target mod
-			yield return Util.WithStyle($"Scanning for ID '{id}'...", ConsoleHelper.TraceStyle);
+			log.Add(Util.WithStyle($"Scanning for ID '{id}'...", ConsoleHelper.TraceStyle));
 			ISemanticVersion latestVersion = null;
 			foreach (ParsedMod modPage in modFoldersBySiteId.SelectMany(p => p))
 			{
@@ -95,31 +109,46 @@ public class ModCacheUtilities
 			}
 			if (selectedMod is null)
 			{
-				yield return Util.WithStyle($"No matching mod found in the mod dump.", ConsoleHelper.ErrorStyle);
-				yield break;
+				log.Add(Util.WithStyle($"No matching mod found in the mod dump.", ConsoleHelper.ErrorStyle));
+				return false;
 			}
 		}
 
-		foreach (object entry in TryInstall(selectedMod, folderNamePrefix))
-			yield return entry;
+		bool success = TryInstall(selectedMod, out var innerLog, folderNamePrefix);
+		log.Add(innerLog);
+		return success;
 	}
 
 	/// <summary>Install a mod from the mod dump.</summary>
 	/// <param name="folder">The mod folder to install.</param>
 	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
 	/// <param name="deleteTargetFolder">Whether to delete the target folder if it already exists.</param>
-	public IEnumerable<object> TryInstall(ParsedFile folder, string folderNamePrefix = null, bool deleteTargetFolder = true)
+	public List<object> TryInstall(ParsedFile folder, string folderNamePrefix = null, bool deleteTargetFolder = true)
 	{
+		TryInstall(folder, out List<object> log, folderNamePrefix);
+		return log;
+	}
+
+	/// <summary>Install a mod from the mod dump.</summary>
+	/// <param name="folder">The mod folder to install.</param>
+	/// <param name="log">A formatted list of log messages to display.</param>
+	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
+	/// <param name="deleteTargetFolder">Whether to delete the target folder if it already exists.</param>
+	/// <returns>Returns whether the mod was successfully installed (or was already installed).</returns>
+	public bool TryInstall(ParsedFile folder, out List<object> log, string folderNamePrefix = null, bool deleteTargetFolder = true)
+	{
+		log = new();
+
 		// get paths
 		DirectoryInfo fromDir = folder.RawFolder.Directory;
 		DirectoryInfo toDir = new DirectoryInfo(Path.Combine(this.InstalledModsPath, folderNamePrefix + fromDir.Name));
-		yield return Util.WithStyle($"Installing '{folder.DisplayName}' version {folder.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", ConsoleHelper.TraceStyle);
+		log.Add(Util.WithStyle($"Installing '{folder.DisplayName}' version {folder.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", ConsoleHelper.TraceStyle));
 		if (toDir.Exists)
 		{
 			if (!deleteTargetFolder)
 			{
-				yield return Util.WithStyle($"Target mod folder already exists.", ConsoleHelper.ErrorStyle);
-				yield break;
+				log.Add(Util.WithStyle($"Target mod folder already exists.", ConsoleHelper.ErrorStyle));
+				return true;
 			}
 
 			FileHelper.ForceDelete(toDir);
@@ -136,7 +165,8 @@ public class ModCacheUtilities
 			File.Copy(file.FullName, toPath);
 		}
 
-		yield return Util.WithStyle("Done!", ConsoleHelper.SuccessStyle);
+		log.Add(Util.WithStyle("Done!", ConsoleHelper.SuccessStyle));
+		return true;
 	}
 
 	/// <summary>If a newer version of a mod exists in the mod dump folder, replace the installed version with those newer files.</summary>

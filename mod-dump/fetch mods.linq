@@ -355,7 +355,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
 		19905  // XNB Archive (not a mod)
 	),
-	
+
 	// reposts with same mod ID
 	new(ModSite.Nexus, 23271, manifestId: "ChelseaBingiel.LuckyRabbitsFoot"),   // Actually Lucky Rabbit's Foot
 	new(ModSite.Nexus, 24374, manifestId: "aedenthorn.AdvancedMeleeFramework"), // Advanced Melee Framework
@@ -563,19 +563,31 @@ async Task Main()
 	ParsedMod[] mods = modDump.ReadUnpackedModFolders().ToArray();
 
 	// add launch button
-	new Hyperlinq(
-		() => Process.Start(
-			fileName: Path.Combine(InstallModsToPath, "..", "StardewModdingAPI.exe"),
-			arguments: @$"--mods-path ""{Path.GetFileName(InstallModsToPath)}"""
+	Util.VerticalRun(
+		new Hyperlinq(
+			() => Process.Start(
+				fileName: Path.Combine(InstallModsToPath, "..", "StardewModdingAPI.exe"),
+				arguments: @$"--mods-path ""{Path.GetFileName(InstallModsToPath)}"""
+			),
+			"launch SMAPI"
 		),
-		"launch SMAPI"
+		Util.OnDemand(
+			"install compatible mods on compatibility list",
+			() => new object[] // returning an array allows collapsing the log in the LINQPad output
+			{
+				Util.WithStyle(
+					Util.VerticalRun(this.InstallEveryCompatibleCSharpMod(compatList.Mods)),
+					"font-style: monospace; font-size: 0.9em;"
+				)
+			}
+		)
 	).Dump("actions");
 
 	// detect issues
 	ConsoleHelper.Print($"Running analyses...");
 	{
 		Util.RawHtml("<h1>Detected issues</h1>").Dump();
-		
+
 		// wiki issues
 		Util.RawHtml("<h3>Wiki issues</h3>").Dump();
 		{
@@ -737,7 +749,7 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 		if (entry.NexusID.HasValue)
 			compatEntries[$"{ModSite.Nexus}:{entry.NexusID}"] = entry;
 	}
-	
+
 	// fetch report
 	const string smallStyle = "font-size: 0.8em;";
 	return (
@@ -816,6 +828,38 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 		}
 	)
 	.ToArray();
+}
+
+/// <summary>Install every mod from the C# compatibility list that's marked compatible.</summary>
+/// <param name="mods">The mods to install.</param>
+IEnumerable<object> InstallEveryCompatibleCSharpMod(WikiModEntry[] mods)
+{
+	if (Directory.GetFileSystemEntries(InstallModsToPath).Any())
+	{
+		yield return Util.WithStyle($"Can't install all mods to folder '{InstallModsToPath}' because that folder isn't empty.", ConsoleHelper.ErrorStyle);
+		yield break;
+	}
+
+
+	foreach (WikiModEntry mod in mods)
+	{
+		if (mod.Compatibility.Status is not (WikiCompatibilityStatus.Ok or WikiCompatibilityStatus.Optional or WikiCompatibilityStatus.Unofficial))
+			continue;
+
+		string modId = mod.ID.FirstOrDefault();
+		if (modId is null)
+			continue;
+
+		bool installed = this.ModCacheHelper.TryInstall(modId, out List<object> log);
+
+		var _mod = mod;
+		yield return Util.HorizontalRun(true,
+			installed
+				? Util.WithStyle($"Installed {mod.Name.FirstOrDefault()}.", ConsoleHelper.SuccessStyle)
+				: Util.WithStyle($"Error installing {mod.Name.FirstOrDefault()}. Compatibility status: {mod.Compatibility.Summary}{(!string.IsNullOrWhiteSpace(mod.Compatibility.BrokeIn) ? $"[broke in {mod.Compatibility.BrokeIn}]" : "")}.", ConsoleHelper.ErrorStyle),
+			new Lazy<object>(() => new { log, _mod })
+		);
+	}
 }
 
 /// <summary>Get SMAPI mods listed on the wiki compatibility list which don't exist in the mod dump, so they were probably hidden or deleted. This excludes mods marked abandoned on the wiki.</summary>
