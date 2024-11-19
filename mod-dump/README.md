@@ -57,10 +57,10 @@ Usage:
 
 ## Compatibility list scripts
 These are utilities to help maintain the SMAPI mod compatibility list:
-* `wiki compat - get stats.js` logs some high-level mod compatibility stats.
-* `wiki compat - highlight workaround links to a broken mod.js` reports 'use X instead' links which
+* `compat repo - get stats.linq` logs some high-level mod compatibility stats.
+* `compat repo - detect incorrect mod links in summaries.js` reports 'use X instead' links which
   point to a mod which is marked broken, abandoned, or obsolete.
-* `wiki compat - get stats.linq` sorts the compatibility list.
+* `wiki compat - sort list.linq` sorts the compatibility list.
 
 To use the scripts:
 1. Clone the [mod compatibility repo](https://github.com/Pathoschild/SmapiCompatibilityList).
