@@ -5,81 +5,100 @@
 See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
+/*********
+** Configuration
+*********/
+/// <summary>The absolute path for the compatibility list data file.</summary>
+private const string CompatDataPath = @"E:\source\_Stardew\_SmapiCompatibilityList\data\data.jsonc";
+
+
+/*********
+** Script
+*********/
 void Main()
 {
-	// normalize
-	string modified = Regex.Replace(data, @"{{\s*#invoke\s*:\s*SMAPI compatibility\s*\|\s*entry", "{{#invoke:SMAPI compatibility|entry");
+	// load data
+	// NOTE: we deliberate work with the JSON directly to avoid discarding comments & formatting
+	string fullData = File.ReadAllText(CompatDataPath);
 
-	// extract templates
-	string[] templates;
+	// isolate mods list
+	int startIndex;
+	int endIndex;
+	string data;
 	{
-		List<string> extractedTemplates = new();
-		modified = Regex.Replace(modified, @"{{#invoke:SMAPI compatibility\|entry[\s\S]+?\n}}", match =>
-		{
-			if (match.Value.IndexOf("{{#invoke", 1) != -1)
-				throw new InvalidOperationException($"Mismatched templates. Found #invoke inside #invoke call.\nMatched text: {match.Value}.");
+		var startMatch = Regex.Match(fullData, $"^\t\"mods\": *\\[{Environment.NewLine}", RegexOptions.Multiline);
+		var endMatch = Regex.Match(fullData, "^\t\\]", RegexOptions.Multiline);
 
-			extractedTemplates.Add(match.Value);
+		if (!startMatch.Success)
+			throw new InvalidOperationException($"Can't find start of 'mods' field.");
+		if (!endMatch.Success)
+			throw new InvalidOperationException($"Can't find end of 'mods' field.");
+		if (endMatch.Index < startMatch.Index)
+			throw new InvalidOperationException($"Found end of 'mods' field before it's start (probably due to a format change).");
 
-			return string.Empty;
-		});
-
-		var parsedTemplates =
-			(
-				from template in extractedTemplates
-				let comparableName = ToComparable(Regex.Match(template, @"\|\s*name\s*=\s*(.+)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract name field from template.\nRaw text: {template}"))
-				let nexusId = Regex.Match(template, @"\|\s*nexus\s*=\s*(.*)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract nexus field from template.\nRaw text: {template}")
-				let comparableAuthor = ToComparable(Regex.Match(template, @"\|\s*author\s*=\s*(.+)")?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract author field from template.\nRaw text: {template}"))
-				select new { comparableName, comparableAuthor, nexusId, template }
-			).ToList();
-
-		parsedTemplates.Sort((a, b) =>
-		{
-			string nameA = a.comparableName;
-			string nameB = b.comparableName;
-
-			// same name, sort by age and then author
-			if (nameA == nameB)
-			{
-				if (int.TryParse(a.nexusId, out int nexusA) && int.TryParse(b.nexusId, out int nexusB))
-					return nexusA.CompareTo(nexusB);
-
-				return string.Compare(a.comparableAuthor, b.comparableAuthor);
-			}
-
-			// special case: if they have a common prefix, list shorter one first
-			if (nameA.StartsWith(nameB))
-				return -1;
-			if (nameB.StartsWith(nameA))
-				return 1;
-
-			// else sort alphabetically
-			return string.Compare(nameA, nameB);
-		});
-
-		templates = parsedTemplates.Select(p => p.template).ToArray();
+		startIndex = startMatch.Index + startMatch.Length;
+		endIndex = endMatch.Index;
+		data = fullData[startIndex..endIndex];
 	}
 
-	// merge back into table
-	modified = Regex.Replace(modified, @"({{#invoke:SMAPI compatibility\|header}})([\s\S]+)({{#invoke:SMAPI compatibility\|footer}})", match =>
+	// extract entry blocks
+	string[] entries;
 	{
-		string header = match.Groups[1].Value;
-		string remainingContent = match.Groups[2].Value;
-		string footer = match.Groups[3].Value;
+		string newline = Environment.NewLine;
+		string startOfBlock = "\t\t{";
+		string endOfBlock = "\t\t},";
 
-		if (!string.IsNullOrWhiteSpace(remainingContent))
-			throw new InvalidOperationException($"Some templates could not be extracted.\nRemaining text: {match.Value.Trim()}.");
+		string wrappedData = (newline + endOfBlock + newline) + data.TrimEnd() + "," + (newline + startOfBlock + newline); // add empty 'entries' to start and end to get a consistent split
+		entries = wrappedData.Split($"{newline}{endOfBlock}{newline}{startOfBlock}{newline}", StringSplitOptions.RemoveEmptyEntries);
+	}
 
-		return
-			header
-			+ Environment.NewLine
-			+ string.Join(Environment.NewLine, templates)
-			+ Environment.NewLine
-			+ footer;
-	});
+	// extract names
+	var parsedEntries =
+		(
+			from entry in entries
+			let comparableName = ToComparable(Regex.Match(entry, @"^\t\t\t""name"":\s*""(.+)""", RegexOptions.Multiline)?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract 'name' field from entry.\nRaw text: {entry}"))
+			let nexusId = Regex.Match(entry, @"^\t\t\t""nexus"":\s*(\d+)", RegexOptions.Multiline)?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract 'nexus' field from entry.\nRaw text: {entry}")
+			let comparableAuthor = ToComparable(Regex.Match(entry, @"^\t\t\t""author"":\s*""(.+)""", RegexOptions.Multiline)?.Groups[1].Value ?? throw new InvalidOperationException($"Can't extract 'author' field from entry.\nRaw text: {entry}"))
+			select new { comparableName, comparableAuthor, nexusId, entry }
+		).ToList();
 
 	// sort
-	modified.Dump();
+	parsedEntries.Sort((a, b) =>
+	{
+		string nameA = a.comparableName;
+		string nameB = b.comparableName;
+
+		// same name, sort by age and then author
+		if (nameA == nameB)
+		{
+			if (int.TryParse(a.nexusId, out int nexusA) && int.TryParse(b.nexusId, out int nexusB))
+				return nexusA.CompareTo(nexusB);
+
+			return string.Compare(a.comparableAuthor, b.comparableAuthor);
+		}
+
+		// special case: if they have a common prefix, list shorter one first
+		if (nameA.StartsWith(nameB))
+			return 1;
+		if (nameB.StartsWith(nameA))
+			return -1;
+
+		// else sort alphabetically
+		return string.Compare(nameA, nameB);
+	});
+
+	// merge back into data
+	string modifiedFullData =
+		$$"""
+		{{fullData.Substring(0, startIndex).TrimEnd()}}
+		{{"\t\t{"}}
+		{{string.Join("\n\t\t},\n\t\t{\n", parsedEntries.Select(p => p.entry))}}
+		{{"\t\t}"}}
+		{{fullData.Substring(endIndex)}}
+		""";
+
+	// save to file
+	File.WriteAllText(CompatDataPath, modifiedFullData, new UTF8Encoding(false));
 }
 
 /// <summary>Get a comparable representation of a string value which ignores case, spaces, punctuation, and symbols.</summary>
@@ -88,23 +107,3 @@ string ToComparable(string value)
 {
 	return new string(value.ToLower().Where(ch => ch is not (' ') && !Char.IsPunctuation(ch) && !Char.IsSymbol(ch)).ToArray());
 }
-
-#region data
-const string data =
-"""
-===C# mods===
-This includes every known C# SMAPI mod. It's updated for new/updated mods on CurseForge/ModDrop/Nexus periodically with the help of {{github|Pathoschild/StardewScripts/tree/main/mod-dump|semi-automated scripts}}, but feel free to make corrections as needed!
-
-<!--
-
-Tokens used in the markup:
- - "@retest-after Mod Name" means the mod is broken due to the named mod being broken, so it should be retested when that mod is updated.
- - "@retest-linked" means one or more mods should be retested when this mod is updated.
-
--->
-{{#invoke:SMAPI compatibility|header}}
-...
-{{#invoke:SMAPI compatibility|footer}}
-<div class="game-stable-version" style="display:none;">{{version|link=0}}</div><div class="game-beta-version" style="display:none;">{{version|link=0}}</div>
-""";
-#endregion

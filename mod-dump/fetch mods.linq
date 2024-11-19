@@ -1,4 +1,5 @@
 <Query Kind="Program">
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\Pathoschild.Http.Client.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
   <NuGetReference>HtmlAgilityPack</NuGetReference>
@@ -10,13 +11,13 @@
   <Namespace>Pathoschild.Http.Client</Namespace>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CurseForgeExport</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CurseForgeExport.ResponseModels</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.ModDropExport</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.ModDropExport.ResponseModels</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.NexusExport</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.NexusExport.ResponseModels</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.Wiki</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
@@ -536,8 +537,8 @@ async Task Main()
 
 	// fetch compatibility list
 	Util.RawHtml("<h1>Init log</h1>").Dump();
-	ConsoleHelper.Print("Fetching wiki compatibility list...");
-	WikiModList compatList = await new ModToolkit().GetWikiCompatibilityListAsync();
+	ConsoleHelper.Print("Fetching mod compatibility list...");
+	ModCompatibilityEntry[] compatList = await new ModToolkit().GetCompatibilityListAsync();
 
 	// read cache
 	ConsoleHelper.Print($"Reading mod cache...");
@@ -576,7 +577,7 @@ async Task Main()
 			() => new object[] // returning an array allows collapsing the log in the LINQPad output
 			{
 				Util.WithStyle(
-					Util.VerticalRun(this.InstallEveryCompatibleCSharpMod(compatList.Mods)),
+					Util.VerticalRun(this.InstallEveryCompatibleCSharpMod(compatList)),
 					"font-style: monospace; font-size: 0.9em;"
 				)
 			}
@@ -588,19 +589,19 @@ async Task Main()
 	{
 		Util.RawHtml("<h1>Detected issues</h1>").Dump();
 
-		// wiki issues
-		Util.RawHtml("<h3>Wiki issues</h3>").Dump();
+		// compatibility list issues
+		Util.RawHtml("<h3>Compatibility list issues</h3>").Dump();
 		{
-			var notOnWiki = this.GetModsNotOnWiki(mods, compatList).ToArray();
-			if (notOnWiki.Length > 0)
+			var notOnCompatList = this.GetModsNotOnCompatibilityList(mods, compatList).ToArray();
+			if (notOnCompatList.Length > 0)
 			{
-				notOnWiki.Dump("SMAPI mods not on the wiki");
-				new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", notOnWiki.Select(p => ((Lazy<string>)p.WikiEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the wiki (wiki format)");
+				notOnCompatList.Dump("SMAPI mods not on the compatibility list");
+				new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", notOnCompatList.Select(p => ((Lazy<string>)p.CompatEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the comptibility list (JSON format)");
 			}
 			else
-				"none".Dump("SMAPI mods not on the wiki");
+				"none".Dump("SMAPI mods not on the compatibility list");
 		}
-		this.GetWikiModsNotInCache(modDump, compatList).Dump("Mods on the wiki which weren't found on the modding sites");
+		this.GetCompatibilityListModsNotInCache(modDump, compatList).Dump("Mods on the compatibility list which weren't found on the modding sites");
 
 		// mod issues
 		Util.RawHtml("<h3>Mod issues</h3>").Dump();
@@ -630,18 +631,18 @@ async Task Main()
 /*********
 ** Common queries
 *********/
-/// <summary>Get SMAPI mods which aren't listed on the wiki compatibility list.</summary>
+/// <summary>Get SMAPI mods which aren't listed on the mod compatibility list.</summary>
 /// <param name="mods">The mods to check.</param>
-/// <param name="compatList">The mod data from the wiki compatibility list.</param>
-IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList compatList)
+/// <param name="compatList">The mod data from the mod compatibility list.</param>
+IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
 {
-	// fetch mods on the wiki
-	ISet<string> manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
+	// fetch mods on the compatibility list
+	ISet<string> manifestIDs = new HashSet<string>(compatList.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
 	IDictionary<ModSite, ISet<long>> siteIDs = new Dictionary<ModSite, ISet<long>>
 	{
-		[ModSite.CurseForge] = new HashSet<long>(compatList.Mods.Where(p => p.CurseForgeID.HasValue).Select(p => (long)p.CurseForgeID.Value)),
-		[ModSite.ModDrop] = new HashSet<long>(compatList.Mods.Where(p => p.ModDropID.HasValue).Select(p => (long)p.ModDropID.Value)),
-		[ModSite.Nexus] = new HashSet<long>(compatList.Mods.Where(p => p.NexusID.HasValue).Select(p => (long)p.NexusID.Value))
+		[ModSite.CurseForge] = new HashSet<long>(compatList.Where(p => p.CurseForgeID.HasValue).Select(p => (long)p.CurseForgeID.Value)),
+		[ModSite.ModDrop] = new HashSet<long>(compatList.Where(p => p.ModDropID.HasValue).Select(p => (long)p.ModDropID.Value)),
+		[ModSite.Nexus] = new HashSet<long>(compatList.Where(p => p.NexusID.HasValue).Select(p => (long)p.NexusID.Value))
 	};
 
 	// fetch report
@@ -655,10 +656,10 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 			&& !string.IsNullOrWhiteSpace(folder.ModID)
 			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
 
-		let wikiHasManifestId = manifestIDs.Contains(folder.ModID)
-		let wikiHasSiteId = siteIDs[mod.Site].Contains(mod.ID)
+		let compatHasManifestId = manifestIDs.Contains(folder.ModID)
+		let compatHasSiteId = siteIDs[mod.Site].Contains(mod.ID)
 
-		where (!wikiHasManifestId || !wikiHasSiteId)
+		where (!compatHasManifestId || !compatHasSiteId)
 
 		let manifest = folder.RawFolder.Manifest
 		let names = this.GetModNames(folder, mod)
@@ -670,7 +671,7 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 
 		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
 
-		let missingLabels = (new[] { !wikiHasManifestId ? "manifest ID" : null, !wikiHasSiteId ? "site ID" : null }).Where(p => p is not null).ToArray()
+		let missingLabels = (new[] { !compatHasManifestId ? "manifest ID" : null, !compatHasSiteId ? "site ID" : null }).Where(p => p is not null).ToArray()
 
 		select new
 		{
@@ -709,7 +710,7 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 				Mod = Util.OnDemand("expand", () => mod),
 				Folder = Util.OnDemand("expand", () => folder)
 			}),
-			WikiEntry = new Lazy<string>(() => // can't be in Metadata since it's accessed by the main script
+			CompatEntry = new Lazy<string>(() => // can't be in Metadata since it's accessed by the main script
 				"{{#invoke:SMAPI compatibility|entry\n"
 				+ $"  |name    = {string.Join(", ", names)}\n"
 				+ $"  |author  = {string.Join(", ", authorNames)}\n"
@@ -729,18 +730,18 @@ IEnumerable<dynamic> GetModsNotOnWiki(IEnumerable<ParsedMod> mods, WikiModList c
 	.ToArray();
 }
 
-/// <summary>Get SMAPI mods on the wiki compatibility list which have been updated recently.</summary>
+/// <summary>Get SMAPI mods on the compatibility list which have been updated recently.</summary>
 /// <param name="mods">The mods to check.</param>
-/// <param name="compatList">The mod data from the wiki compatibility list.</param>
+/// <param name="compatList">The mod data from the compatibility list.</param>
 /// <param name="updatedSince">The earliest update date for which to list mods.</param>
-IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMod> mods, WikiModList compatList, DateTimeOffset updatedSince)
+IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList, DateTimeOffset updatedSince)
 {
-	// fetch mods on the wiki
-	var manifestIDs = new HashSet<string>(compatList.Mods.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
+	// get mod IDs on the compatibility list
+	var manifestIDs = new HashSet<string>(compatList.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
 
 	// build compatibility list lookup
-	var compatEntries = new Dictionary<string, WikiModEntry>();
-	foreach (var entry in compatList.Mods)
+	var compatEntries = new Dictionary<string, ModCompatibilityEntry>();
+	foreach (var entry in compatList)
 	{
 		if (entry.CurseForgeID.HasValue)
 			compatEntries[$"{ModSite.CurseForge}:{entry.CurseForgeID}"] = entry;
@@ -775,7 +776,7 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
 
 		let highlightType = folder.ModType is not (ModType.Smapi or ModType.ContentPack)
-		let highlightStatus = compat is null || compat.Status is not (WikiCompatibilityStatus.Ok or WikiCompatibilityStatus.Optional)
+		let highlightStatus = compat is null || compat.Status is not (ModCompatibilityStatus.Ok or ModCompatibilityStatus.Optional)
 
 		orderby
 			(highlightType || highlightStatus) descending, // mods with issues first
@@ -799,7 +800,7 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 			Summary =
 			compatEntry != null
 				? Util.WithStyle($"{compat.Summary} {(!string.IsNullOrWhiteSpace(compat.BrokeIn) ? $"[broke in {compat.BrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? ConsoleHelper.ErrorStyle : "")}")
-				: Util.WithStyle($"not found on wiki", ConsoleHelper.ErrorStyle),
+				: Util.WithStyle($"not found on compatibility list", ConsoleHelper.ErrorStyle),
 			folder.ModID,
 			folder.ModVersion,
 			Actions = Util.HorizontalRun(true,
@@ -832,7 +833,7 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 
 /// <summary>Install every mod from the C# compatibility list that's marked compatible.</summary>
 /// <param name="mods">The mods to install.</param>
-IEnumerable<object> InstallEveryCompatibleCSharpMod(WikiModEntry[] mods)
+IEnumerable<object> InstallEveryCompatibleCSharpMod(ModCompatibilityEntry[] mods)
 {
 	if (Directory.GetFileSystemEntries(InstallModsToPath).Any())
 	{
@@ -841,9 +842,9 @@ IEnumerable<object> InstallEveryCompatibleCSharpMod(WikiModEntry[] mods)
 	}
 
 
-	foreach (WikiModEntry mod in mods)
+	foreach (ModCompatibilityEntry mod in mods)
 	{
-		if (mod.Compatibility.Status is not (WikiCompatibilityStatus.Ok or WikiCompatibilityStatus.Optional or WikiCompatibilityStatus.Unofficial))
+		if (mod.Compatibility.Status is not (ModCompatibilityStatus.Ok or ModCompatibilityStatus.Optional or ModCompatibilityStatus.Unofficial))
 			continue;
 
 		string modId = mod.ID.FirstOrDefault();
@@ -862,17 +863,17 @@ IEnumerable<object> InstallEveryCompatibleCSharpMod(WikiModEntry[] mods)
 	}
 }
 
-/// <summary>Get SMAPI mods listed on the wiki compatibility list which don't exist in the mod dump, so they were probably hidden or deleted. This excludes mods marked abandoned on the wiki.</summary>
+/// <summary>Get SMAPI mods listed on the mod compatibility list which don't exist in the mod dump, so they were probably hidden or deleted. This excludes mods marked abandoned on the compatibility list.</summary>
 /// <param name="modDump">The mod dump to search.</param>
-/// <param name="compatList">The mod data from the wiki compatibility list.</param>
-IEnumerable<dynamic> GetWikiModsNotInCache(ModCache modDump, WikiModList compatList)
+/// <param name="compatList">The mod data from the mod compatibility list.</param>
+IEnumerable<dynamic> GetCompatibilityListModsNotInCache(ModCache modDump, ModCompatibilityEntry[] mods)
 {
 	ModToolkit toolkit = new();
 
 	HashSet<string> missingPages = new(StringComparer.OrdinalIgnoreCase);
-	foreach (WikiModEntry mod in compatList.Mods)
+	foreach (ModCompatibilityEntry mod in mods)
 	{
-		if (mod.Compatibility.Status is WikiCompatibilityStatus.Abandoned or WikiCompatibilityStatus.Obsolete)
+		if (mod.Compatibility.Status is ModCompatibilityStatus.Abandoned or ModCompatibilityStatus.Obsolete)
 			continue;
 
 		missingPages.Clear();
@@ -992,14 +993,14 @@ IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
 		.ThenBy(p => p.FileId);
 }
 
-/// <summary>Get stats about open-source C# mods on the wiki compatibility list.</summary>
-/// <param name="compatList">The mod data from the wiki compatibility list.</param>
-string[] GetOpenSourceStats(WikiModList compatList)
+/// <summary>Get stats about open-source C# mods on the mod compatibility list.</summary>
+/// <param name="compatList">The mod data from the mod compatibility list.</param>
+string[] GetOpenSourceStats(ModCompatibilityEntry[] compatList)
 {
 	// get C# mod count by repo
 	Dictionary<string, int> modsByRepo = new(StringComparer.OrdinalIgnoreCase);
 	int totalMods = 0;
-	foreach (WikiModEntry mod in compatList.Mods)
+	foreach (ModCompatibilityEntry mod in compatList)
 	{
 		if (mod.ContentPackFor != null)
 			continue;

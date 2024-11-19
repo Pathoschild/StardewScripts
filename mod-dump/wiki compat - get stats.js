@@ -1,58 +1,85 @@
+<Query Kind="Program">
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\Newtonsoft.Json.dll</Reference>
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
+  <Namespace>Newtonsoft.Json</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo.RawDataModels</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
+  <IncludeUncapsulator>false</IncludeUncapsulator>
+</Query>
+
 /*
 
 See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
-(function() {
-    let statuses = { "ok": 0, "workaround": 0, "soon": 0, "broken": 0 };
-    let total = 0;
-    $(".mod").each(function(i, entry) {
-        entry = $(entry);
+/*********
+** Configuration
+*********/
+/// <summary>The absolute path for the compatibility list data file.</summary>
+private const string CompatDataPath = @"E:\source\_Stardew\_SmapiCompatibilityList\data\data.jsonc";
 
-        var name = entry.data("name");
-        var status = entry.data("status");
-        var isOpenSource = !!entry.data("github") || !!entry.data("custom-source");
 
-        switch (status)
-        {
-            case "ok":
-            case "optional":
-                statuses.ok++;
-                total++;
-                break;
+/*********
+** Script
+*********/
+void Main()
+{
+	// load data
+	string json = File.ReadAllText(CompatDataPath);
+	var data = JsonConvert.DeserializeObject<RawCompatibilityList>(json);
 
-            case "unofficial":
-            case "workaround":
-                statuses.workaround++;
-                total++;
-                break;
+	// collect stats
+	int ok = 0;
+	int workaround = 0;
+	int soon = 0;
+	int broken = 0;
+	int total = 0;
+	foreach (RawModEntry mod in data.Mods)
+	{
+		var status = mod.GetStatus();
 
-            case "broken":
-                if (isOpenSource)
-                    statuses.soon++;
-                else
-                    statuses.broken++;
-                total++;
-                break;
+		switch (status)
+		{
+			case ModCompatibilityStatus.Ok:
+			case ModCompatibilityStatus.Optional:
+				ok++;
+				total++;
+				break;
 
-            case "abandoned":
-            case "obsolete":
-                break; // abandoned/obsolete mods don't count towards stats
+			case ModCompatibilityStatus.Unofficial:
+			case ModCompatibilityStatus.Workaround:
+				workaround++;
+				total++;
+				break;
 
-            default:
-                console.log(`ignored mod '${name}', invalid status '${status}'.`);
-                break;
-        }
-    });
+			case ModCompatibilityStatus.Broken:
+				if (mod.GitHub != null || mod.Source != null)
+					soon++;
+				else
+					broken++;
+				total++;
+				break;
 
-    console.log(`${Math.round(((statuses.ok + statuses.workaround) / total) * 1000) / 10}% compatible`);
-    console.log(
-        "{{/barchart\n"
-        + `  |ok         = ${statuses.ok}\n`
-        + `  |workaround = ${statuses.workaround}\n`
-        + `  |soon       = ${statuses.soon}\n`
-        + `  |broken     = ${statuses.broken}\n`
-        + `  |total      = ${total}\n`
-        + "}}"
-    );
-})();
+			case ModCompatibilityStatus.Abandoned:
+			case ModCompatibilityStatus.Obsolete:
+				break; // abandoned/obsolete mods don't count towards stats
+
+			default:
+				mod.Dump($"ignored mod with invalid status '{status}'.");
+				break;
+		}
+	}
+
+	// dump status
+	new
+	{
+		Overall = $"{(ok + workaround) / (total * 1f):P1} compatible",
+
+		Ok = ok,
+		Workaround = workaround,
+		Soon = soon,
+		Broken = broken,
+		Total = total
+	}.Dump("stats");
+}

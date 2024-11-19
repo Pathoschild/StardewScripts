@@ -8,8 +8,8 @@
   <Namespace>Pathoschild.Http.Client</Namespace>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.WebApi</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.Wiki</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModData</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
@@ -54,22 +54,19 @@ private readonly ModCacheUtilities ModCacheHelper = new(@"C:\dev\mod-dump", Inst
 /****
 ** Common settings
 ****/
-/// <summary>The wiki compatibility statuses to highlight as errors. Mainly useful when you have a set of mods you know work or don't work, and want to find errors in the compatibility list.</summary>
-private readonly HashSet<WikiCompatibilityStatus> HighlightStatuses = new HashSet<WikiCompatibilityStatus>(
+/// <summary>The mod compatibility statuses to highlight as errors. Mainly useful when you have a set of mods you know work or don't work, and want to find errors in the compatibility list.</summary>
+private readonly HashSet<ModCompatibilityStatus> HighlightStatuses = new HashSet<ModCompatibilityStatus>(
 	// all statuses
 	new[]
 	{
-		WikiCompatibilityStatus.Ok, WikiCompatibilityStatus.Optional, WikiCompatibilityStatus.Unofficial, // OK
-		WikiCompatibilityStatus.Broken, WikiCompatibilityStatus.Workaround, // broken
-		WikiCompatibilityStatus.Abandoned, WikiCompatibilityStatus.Obsolete // abandoned
+		ModCompatibilityStatus.Ok, ModCompatibilityStatus.Optional, ModCompatibilityStatus.Unofficial, // OK
+		ModCompatibilityStatus.Broken, ModCompatibilityStatus.Workaround, // broken
+		ModCompatibilityStatus.Abandoned, ModCompatibilityStatus.Obsolete // abandoned
 	}
-	//.Except(new[] { WikiCompatibilityStatus.Abandoned, WikiCompatibilityStatus.Obsolete }) // if abandoned
-	//.Except(new[] { WikiCompatibilityStatus.Broken, WikiCompatibilityStatus.Workaround }) // if broken
-	.Except(new[] { WikiCompatibilityStatus.Ok, WikiCompatibilityStatus.Optional, WikiCompatibilityStatus.Unofficial }) // if OK
+	//.Except(new[] { ModCompatibilityStatus.Abandoned, ModCompatibilityStatus.Obsolete }) // if abandoned
+	//.Except(new[] { ModCompatibilityStatus.Broken, ModCompatibilityStatus.Workaround }) // if broken
+	.Except(new[] { ModCompatibilityStatus.Ok, ModCompatibilityStatus.Optional, ModCompatibilityStatus.Unofficial }) // if OK
 );
-
-/// <summary>Whether to show data for the latest version of the game, even if it's a beta.</summary>
-public bool ForBeta = true;
 
 /// <summary>Whether to normalize mod folders.</summary>
 public bool NormalizeFolders = true;
@@ -95,9 +92,9 @@ public bool ShowCompatListErrors = true;
 /****
 ** Mod exception lists
 ****/
-/// <summary>Mod IDs, update keys, custom URLs, or entry DLLs to ignore when checking if a local mod is on the wiki.</summary>
+/// <summary>Mod IDs, update keys, custom URLs, or entry DLLs to ignore when checking if a local mod is on the mod compatibility list.</summary>
 /// <remarks>This should only be used when a mod can't be cross-referenced because it has no ID and isn't released anywhere valid that can be used as an update key.</summary>
-public string[] IgnoreMissingWikiMods = new[]
+public string[] IgnoreMissingCompatListMods = new[]
 {
 	// no ID
 	"Nexus:450", // XmlSerializerRetool
@@ -118,7 +115,7 @@ public string[] IgnoreMissingWikiMods = new[]
 	"Pathoschild.TestContentMod"
 };
 
-/// <summary>Mod IDs to ignore when checking if a wiki mod is installed locally.</summary>
+/// <summary>Mod IDs to ignore when checking if a compatibility list mod is installed locally.</summary>
 public string[] IgnoreMissingLocalMods = new[]
 {
 	// bundled with SMAPI
@@ -157,7 +154,7 @@ public IDictionary<string, string> OverrideModPageUrls = new Dictionary<string, 
 	["Spouseroom"] = "https://community.playstarbound.com/threads/111636" // Spouse's Room Mod
 };
 
-/// <summary>Maps mod IDs to the folder name to use, overriding the name from the wiki.</summary>
+/// <summary>Maps mod IDs to the folder name to use, overriding the name from the compatibility list.</summary>
 public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
 {
 	// prefixes for testing convenience
@@ -182,7 +179,7 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["FAKE.RainRandomizer"] = "Rain Randomizer",
 
 	// fix invalid names
-	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by wiki
+	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by compatibility list
 	["leclair.bcbuildings"] = "Better Crafting - Buildings", // : replaced with _
 	["minervamaga.FeelingLucky"] = "Feeling Lucky", // ? replaced with _, just strip it instead
 
@@ -248,6 +245,13 @@ public IDictionary<string, Tuple<string, string>> EquivalentModVersions = new Di
 	["ElectroCrumpet.PelicanPostalService"] = Tuple.Create("1.0.5-beta", "1.0.6") // Pelican Postal Service
 };
 
+/****
+** State
+****/
+/// <summary>The SMAPI mod toolkit.</summary>
+readonly ModToolkit ModToolkit = new();
+
+
 /*********
 ** Script
 *********/
@@ -270,7 +274,7 @@ async Task Main()
 	Console.WriteLine("Initialising...");
 
 	// data
-	var toolkit = new ModToolkit();
+	var toolkit = this.ModToolkit;
 	var mods = new List<ModData>();
 
 	// check tokens
@@ -415,7 +419,7 @@ async Task Main()
 			string relativePath = PathUtilities.GetRelativePath(InstalledModsPath, actualDir.FullName);
 
 			// get page url
-			string url = mod.GetModPageUrl();
+			string url = mod.GetModPageUrl(toolkit);
 			foreach (string id in mod.IDs)
 			{
 				if (this.OverrideModPageUrls.TryGetValue(id, out string @override))
@@ -513,9 +517,12 @@ async Task Main()
 		var result = (
 			from mod in mods
 			let metadata = mod?.ApiRecord?.Metadata
-			where metadata != null
 
-			orderby (metadata?.Name ?? mod.Folder.DisplayName).Replace(" ", "").Replace("'", "")
+			where mod.Folder.Type is ModType.Smapi
+				? metadata != null // C# mods should be added to compat list
+				: metadata?.Name != null // other mods should only be validated if they're already listed (e.g. in 'broken content packs' section)
+
+			orderby (metadata.Name ?? mod.Folder.DisplayName).Replace(" ", "").Replace("'", "")
 			let compatHasID = metadata.ID.Any() == true
 			let ids = mod.IDs.ToArray()
 			let modHasID = ids.Any()
@@ -529,7 +536,7 @@ async Task Main()
 			select new
 			{
 				ID = ids.FirstOrDefault(),
-				Wiki = metadata?.Name != null
+				CompatList = metadata?.Name != null
 					? new
 					{
 						Name = metadata.Name,
@@ -538,7 +545,7 @@ async Task Main()
 						ChucklefishID = Format(metadata.ChucklefishID?.ToString(), mod.GetModID("Chucklefish", mustBeInt: true)),
 						GitHub = Format(metadata.GitHubRepo, mod.GetModID("GitHub"))
 					}
-					: (object)Format("not on wiki", null),
+					: (object)Format("not on compat list", null),
 				UpdateKeys = string.Join(", ", mod.UpdateKeys),
 				Raw = Util.OnDemand("raw data", () => mod)
 			}
@@ -548,7 +555,7 @@ async Task Main()
 	}
 
 	/****
-	** Report mods missing from the wiki
+	** Report mods missing from the compatibility list
 	****/
 	if (this.ShowMissingCompatMods)
 	{
@@ -559,9 +566,9 @@ async Task Main()
 					mod.ApiRecord?.Metadata == null
 					&& mod.IsInstalled
 					&& mod.Folder.Manifest.ContentPackFor == null
-					&& !this.IgnoreMissingWikiMods.Intersect(mod.UpdateKeys).Any()
-					&& !this.IgnoreMissingWikiMods.Intersect(mod.IDs).Any()
-					&& !this.IgnoreMissingWikiMods.Contains(mod.Folder.Manifest.EntryDll)
+					&& !this.IgnoreMissingCompatListMods.Intersect(mod.UpdateKeys).Any()
+					&& !this.IgnoreMissingCompatListMods.Intersect(mod.IDs).Any()
+					&& !this.IgnoreMissingCompatListMods.Contains(mod.Folder.Manifest.EntryDll)
 				select mod
 			)
 			.Where(p => p.IDs.Count() > 1 || !p.IDs.FirstOrDefault()?.Contains("FAKE.") == true)
@@ -585,9 +592,9 @@ async Task Main()
 	}
 
 	/****
-	** Report mods on the wiki not installed locally
+	** Report mods on the compatibility list not installed locally
 	****/
-	Lazy<Task<WikiModList>> compatListAsync = new(() => toolkit.GetWikiCompatibilityListAsync());
+	Lazy<Task<ModCompatibilityEntry[]>> compatListAsync = new(() => toolkit.GetCompatibilityListAsync());
 	if (this.ShowMissingLocalMods)
 	{
 		// get mods installed locally
@@ -596,11 +603,11 @@ async Task Main()
 			StringComparer.InvariantCultureIgnoreCase
 		);
 
-		// fetch mods on the wiki that aren't installed
-		WikiModList compatList = await compatListAsync.Value;
+		// fetch mods on the compatibility list that aren't installed
+		ModCompatibilityEntry[] compatList = await compatListAsync.Value;
 		var missing =
 			(
-				from mod in compatList.Mods
+				from mod in compatList
 				where
 					// has an ID
 					mod.ID.Any()
@@ -642,11 +649,11 @@ async Task Main()
 	****/
 	if (this.ShowMissingDependencies)
 	{
-		WikiModList compatList = await compatListAsync.Value;
-		Lazy<Dictionary<string, WikiModEntry>> wikiModsById = new(() =>
+		ModCompatibilityEntry[] compatList = await compatListAsync.Value;
+		Lazy<Dictionary<string, ModCompatibilityEntry>> compatModsById = new(() =>
 		{
-			Dictionary<string, WikiModEntry> values = new(StringComparer.OrdinalIgnoreCase);
-			foreach (WikiModEntry entry in compatList.Mods)
+			Dictionary<string, ModCompatibilityEntry> values = new(StringComparer.OrdinalIgnoreCase);
+			foreach (ModCompatibilityEntry entry in compatList)
 			{
 				foreach (string id in entry.ID)
 					values.TryAdd(id, entry);
@@ -665,7 +672,7 @@ async Task Main()
 
 				where !installed
 
-				let requiredName = wikiModsById.Value.GetValueOrDefault(requiredId)?.Name.FirstOrDefault() ?? "???"
+				let requiredName = compatModsById.Value.GetValueOrDefault(requiredId)?.Name.FirstOrDefault() ?? "???"
 				orderby requiredName
 
 				select new
@@ -693,7 +700,7 @@ async Task Main()
 	** Show final report
 	****/
 	this
-		.GetReport(mods.Where(p => p.IsInstalled), this.ForBeta)
+		.GetReport(mods.Where(p => p.IsInstalled))
 		.OrderBy(mod =>
 		{
 			if (mod.HasUpdate)
@@ -716,7 +723,7 @@ async Task Main()
 			const string fadedStyle = "color: gray;";
 
 			// get mod info
-			bool highlightStatus = mod.WikiStatus != null && this.HighlightStatuses.Contains(mod.WikiStatus.Value);
+			bool highlightStatus = mod.Compatibility != null && this.HighlightStatuses.Contains(mod.Compatibility.Value);
 			var apiMetadata = mod.ModData.ApiRecord?.Metadata;
 
 			// parse overrides
@@ -777,8 +784,8 @@ async Task Main()
 				Name = nameCol,
 				Installed = Util.WithStyle(mod.Installed, smallStyle),
 				Latest = Util.RawHtml(versionHtml),
-				Status = Util.WithStyle(mod.WikiStatus, $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
-				Summary = Util.WithStyle($"{mod.WikiSummary} {(!string.IsNullOrWhiteSpace(mod.WikiBrokeIn) ? $"[broke in {mod.WikiBrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
+				Status = Util.WithStyle(mod.Compatibility, $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
+				Summary = Util.WithStyle($"{mod.CompatSummary} {(!string.IsNullOrWhiteSpace(mod.CompatBrokeIn) ? $"[broke in {mod.CompatBrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? errorStyle : "")}"),
 				Issues = Util.RawHtml(issues),
 				Type = mod.ModData.Folder.Type,
 				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
@@ -809,46 +816,53 @@ async Task Main()
 ** Helpers
 *********/
 /// <summary>Get links for a mod.</summary>
-/// <param name="mod">The wiki entry for the mod.</param>
-private dynamic GetReportLinks(WikiModEntry mod)
+/// <param name="mod">The compatibility entry for the mod.</param>
+private dynamic GetReportLinks(ModCompatibilityEntry mod)
 {
-	if (mod == null)
-		return null;
-	
-	return new
-	{
-		Nexus = mod.NexusID.HasValue ? new Hyperlinq($"https://www.nexusmods.com/stardewvalley/mods/{mod.NexusID}", $"Nexus:{mod.NexusID}") : null,
-		ModDrop = mod.ModDropID.HasValue ? new Hyperlinq($"https://www.moddrop.com/sdv/mod/{mod.ModDropID}", $"ModDrop:{mod.ModDropID}") : null,
-		CurseForge = mod.CurseForgeID.HasValue ? new Hyperlinq($"https://curseforge.com/stardewvalley/mods/{mod.CurseForgeKey}", $"CurseForge:{mod.CurseForgeKey}") : null,
-		Chucklefish = mod.ChucklefishID.HasValue ? new Hyperlinq($"https://community.playstarbound.com/resources/{mod.ChucklefishID}", $"Chucklefish:{mod.ChucklefishID}") : null,
-		GitHub = mod.GitHubRepo != null ? new Hyperlinq($"https://github.com/{mod.GitHubRepo}", $"GitHub:{mod.GitHubRepo}") : null,
-		Custom = mod.CustomUrl != null ? new Hyperlinq(mod.CustomUrl, "custom") : null,
-	};
+	return mod is not null
+		? GetReportLinks(nexusId: mod.NexusID, modDropId: mod.ModDropID, curseForgeId: mod.CurseForgeID, chucklefishId: mod.ChucklefishID, gitHubRepo: mod.GitHubRepo, customUrl: mod.CustomUrl)
+		: null;
 }
 
 /// <summary>Get links for a mod.</summary>
 /// <param name="mod">The API metadata for the mod.</param>
 private dynamic GetReportLinks(ModEntryModel mod)
 {
-	if (mod?.Metadata == null)
-		return null;
+	ModExtendedMetadataModel meta = mod?.Metadata;
+	return meta is not null
+		? GetReportLinks(nexusId: meta.NexusID, modDropId: meta.ModDropID, curseForgeId: meta.CurseForgeID, chucklefishId: meta.ChucklefishID, gitHubRepo: meta.GitHubRepo, customUrl: meta.CustomUrl)
+		: null;
+}
 
-	var meta = mod.Metadata;
+/// <summary>Get links for a mod.</summary>
+/// <param name="mod">The API metadata for the mod.</param>
+private dynamic GetReportLinks(int? nexusId, int? modDropId, int? curseForgeId, int? chucklefishId, string gitHubRepo, string customUrl)
+{
 	return new
 	{
-		Nexus = meta.NexusID.HasValue ? new Hyperlinq($"https://www.nexusmods.com/stardewvalley/mods/{meta.NexusID}", $"Nexus:{meta.NexusID}") : null,
-		ModDrop = meta.ModDropID.HasValue ? new Hyperlinq($"https://www.moddrop.com/sdv/mod/{meta.ModDropID}", $"ModDrop:{meta.ModDropID}") : null,
-		CurseForge = meta.CurseForgeID.HasValue ? new Hyperlinq($"https://stardewvalley.curseforge.com/projects/{meta.CurseForgeKey}", $"CurseForge:{meta.CurseForgeKey}") : null,
-		Chucklefish = meta.ChucklefishID.HasValue ? new Hyperlinq($"https://community.playstarbound.com/resources/{meta.ChucklefishID}", $"Chucklefish:{meta.ChucklefishID}") : null,
-		GitHub = meta.GitHubRepo != null ? new Hyperlinq($"https://github.com/{meta.GitHubRepo}", $"GitHub:{meta.GitHubRepo}") : null,
-		Custom = meta.CustomUrl != null ? new Hyperlinq(meta.CustomUrl, "custom") : null,
+		Nexus = BuildLink(ModSiteKey.Nexus, nexusId),
+		ModDrop = BuildLink(ModSiteKey.ModDrop, modDropId),
+		CurseForge = BuildLink(ModSiteKey.CurseForge, curseForgeId),
+		Chucklefish = BuildLink(ModSiteKey.Chucklefish, chucklefishId),
+		GitHub = BuildLink(ModSiteKey.GitHub, gitHubRepo),
+		Custom = customUrl != null ? new Hyperlinq(customUrl, "custom") : null
 	};
+
+	Hyperlinq BuildLink(ModSiteKey site, object id)
+	{
+		if (id is not null)
+		{
+			string url = this.ModToolkit.GetUpdateUrl(site, id.ToString());
+			return new Hyperlinq(url, $"{site}:{id}");
+		}
+
+		return null;
+	}
 }
 
 /// <summary>Get a flattened view of the mod data.</summary>
 /// <param name="mods">The mods to represent.</param>
-/// <param name="forBeta">Whether to render data for the beta version of Stardew Valley (if any).</param>
-IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
+IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods)
 {
 	foreach (ModData mod in mods)
 	{
@@ -863,7 +877,7 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 			{
 				new { Version = mod.ApiRecord?.Metadata?.Main?.Version, Url = mod.ApiRecord?.Metadata?.Main?.Url },
 				new { Version = mod.ApiRecord?.Metadata.Optional?.Version, Url = mod.ApiRecord?.Metadata?.Optional?.Url },
-				new { Version = mod.GetUnofficialVersion(forBeta), Url = $"https://stardewvalleywiki.com/Modding:SMAPI_compatibility#{this.GetAnchor(mod.ApiRecord?.Metadata?.Name ?? mod.Folder.DisplayName)}" }
+				new { Version = mod.GetUnofficialVersion(), Url = $"https://smapi.io/mods#{this.GetAnchor(mod.ApiRecord?.Metadata?.Name ?? mod.Folder.DisplayName)}" }
 			};
 			ISemanticVersion latestVersion = null;
 			string downloadUrl = null;
@@ -897,7 +911,7 @@ IEnumerable<ReportEntry> GetReport(IEnumerable<ModData> mods, bool forBeta)
 			}
 
 			// build model
-			yield return new ReportEntry(mod, latestVersion, downloadUrl, forBeta, ignoreUpdate, this.GetReportLinks(mod.ApiRecord), (Func<string, string>)(p => this.TryFormatVersion(p)));
+			yield return new ReportEntry(mod, latestVersion, downloadUrl, ignoreUpdate, this.GetReportLinks(mod.ApiRecord), (Func<string, string>)(p => this.TryFormatVersion(p)));
 		}
 	}
 }
@@ -1018,40 +1032,38 @@ class ModData
 	}
 
 	/// <summary>Get the unofficial update for this mod, if any.</summary>
-	/// <param name="forBeta">If there's an ongoing Stardew Valley or SMAPI beta which affects compatibility, whether to return the unofficial update for that beta version instead of the one for the stable version.</param>
-	public ISemanticVersion GetUnofficialVersion(bool forBeta)
+	public ISemanticVersion GetUnofficialVersion()
 	{
-		return forBeta
-			? this.ApiRecord?.Metadata?.UnofficialForBeta?.Version ?? this.ApiRecord?.Metadata?.Unofficial?.Version
-			: this.ApiRecord?.Metadata.Unofficial?.Version;
+		return this.ApiRecord?.Metadata.Unofficial?.Version;
 	}
 
 	/// <summary>Get the URL to this mod's web page.</summary>
-	public string GetModPageUrl()
+	/// <param name="toolkit">The mod toolkit with which to build URLs.</param>
+	public string GetModPageUrl(ModToolkit toolkit)
 	{
 		// Nexus ID
-		string nexusID = this.GetModID("Nexus", mustBeInt: true);
-		if (nexusID != null)
-			return $"https://www.nexusmods.com/stardewvalley/mods/{nexusID}";
+		string nexusId = this.GetModID("Nexus", mustBeInt: true);
+		if (nexusId != null)
+			return toolkit.GetUpdateUrl(ModSiteKey.Nexus, nexusId);
 
 		// ModDrop ID
 		string modDropId = this.GetModID("ModDrop", mustBeInt: true);
 		if (modDropId != null)
-			return $"https://www.moddrop.com/stardew-valley/mod/{modDropId}";
+			return toolkit.GetUpdateUrl(ModSiteKey.ModDrop, modDropId);
 
 		// CurseForge key
-		if (this.ApiRecord?.Metadata?.CurseForgeKey != null)
-			return $"https://stardewvalley.curseforge.com/projects/{this.ApiRecord.Metadata.CurseForgeKey}";
+		if (this.ApiRecord?.Metadata?.CurseForgeID != null)
+			return toolkit.GetUpdateUrl(ModSiteKey.CurseForge, this.ApiRecord.Metadata.CurseForgeID.ToString());
 
 		// Chucklefish ID
-		string chucklefishID = this.GetModID("Chucklefish", mustBeInt: true);
-		if (chucklefishID != null)
-			return $"https://community.playstarbound.com/resources/{chucklefishID}";
+		string chucklefishId = this.GetModID("Chucklefish", mustBeInt: true);
+		if (chucklefishId != null)
+			return toolkit.GetUpdateUrl(ModSiteKey.Chucklefish, chucklefishId);
 
 		// GitHub key
 		string repo = this.GetModID("GitHub");
 		if (repo != null)
-			return $"https://github.com/{repo}";
+			return toolkit.GetUpdateUrl(ModSiteKey.GitHub, repo);
 
 		return null;
 	}
@@ -1221,17 +1233,17 @@ class ReportEntry
 	/// <summary>Whether a newer version than the one installed is available.</summary>
 	public bool HasUpdate { get; }
 
-	/// <summary>The compatibility status from the wiki.</summary>
-	public WikiCompatibilityStatus? WikiStatus { get; }
+	/// <summary>The compatibility status from the compatibility list.</summary>
+	public ModCompatibilityStatus? Compatibility { get; }
 
-	/// <summary>The compatibility 'broke in' field from the wiki.</summary>
-	public string WikiBrokeIn { get; }
+	/// <summary>The compatibility 'broke in' field from the compatibility list.</summary>
+	public string CompatBrokeIn { get; }
 
-	/// <summary>The compatibility summary from the wiki.</summary>
-	public string WikiSummary { get; }
+	/// <summary>The compatibility summary from the compatibility list.</summary>
+	public string CompatSummary { get; }
 
-	/// <summary>The unofficial version from the wiki, if any.</summary>
-	public ISemanticVersion WikiUnofficialVersion { get; }
+	/// <summary>The unofficial version from the compatibility list, if any.</summary>
+	public ISemanticVersion CompatUnofficialVersion { get; }
 
 	/// <summary>The URL to download the latest version.</summary>
 	public string DownloadUrl { get; set; }
@@ -1259,7 +1271,7 @@ class ReportEntry
 	** Public methods
 	********/
 	/// <summary>Construct an instance.</summary>
-	public ReportEntry(ModData mod, ISemanticVersion latestVersion, string downloadUrl, bool forBeta, bool ignoreUpdate, dynamic links, Func<string, string> tryFormatVersion)
+	public ReportEntry(ModData mod, ISemanticVersion latestVersion, string downloadUrl, bool ignoreUpdate, dynamic links, Func<string, string> tryFormatVersion)
 	{
 		var manifest = mod.Folder.Manifest;
 		var apiMetadata = mod.ApiRecord?.Metadata;
@@ -1279,20 +1291,12 @@ class ReportEntry
 		this.UpdateCheckErrors = mod.ApiRecord?.Errors ?? new string[0];
 		this.SourceUrl = mod.GetSourceUrl();
 		this.Links = links;
-		if (forBeta)
-		{
-			this.WikiStatus = apiMetadata?.BetaCompatibilityStatus ?? apiMetadata?.CompatibilityStatus;
-			this.WikiSummary = apiMetadata?.BetaCompatibilitySummary ?? apiMetadata?.CompatibilitySummary;
-			this.WikiBrokeIn = apiMetadata?.BetaBrokeIn ?? apiMetadata?.BrokeIn;
-			this.WikiUnofficialVersion = apiMetadata?.UnofficialForBeta?.Version ?? apiMetadata?.Unofficial?.Version;
-		}
-		else
-		{
-			this.WikiStatus = apiMetadata?.CompatibilityStatus;
-			this.WikiSummary = apiMetadata?.CompatibilitySummary;
-			this.WikiBrokeIn = apiMetadata?.BrokeIn;
-		}
-		
+
+		this.Compatibility = apiMetadata?.CompatibilityStatus;
+		this.CompatSummary = apiMetadata?.CompatibilitySummary;
+		this.CompatBrokeIn = apiMetadata?.BrokeIn;
+		this.CompatUnofficialVersion = apiMetadata?.Unofficial?.Version;
+
 		this.PopulateModIssues(tryFormatVersion);
 	}
 
@@ -1311,14 +1315,14 @@ class ReportEntry
 		var apiMetadata = this.ModData.ApiRecord?.Metadata;
 
 		// issues to highlight
-		if (this.WikiStatus == null)
-			this.Errors.Add("not on wiki");
+		if (this.Compatibility == null && this.ModData.Folder.Type is ModType.Smapi)
+			this.Errors.Add("not on compat list");
 		if (this.Installed != null && this.Latest != null && new SemanticVersion(this.Latest).IsOlderThan(this.Installed))
 			this.Warnings.Add("official version is older");
-		if (this.Installed != null && this.WikiUnofficialVersion != null && this.WikiUnofficialVersion.IsOlderThan(this.Installed))
-			this.Warnings.Add("unofficial version on wiki is older");
+		if (this.Installed != null && this.CompatUnofficialVersion != null && this.CompatUnofficialVersion.IsOlderThan(this.Installed))
+			this.Warnings.Add("unofficial version on compat list is older");
 		if (string.IsNullOrWhiteSpace(this.UpdateKeys))
-			this.Warnings.Add("no valid update keys in manifest or wiki");
+			this.Warnings.Add("no valid update keys in manifest or compat list");
 
 		// update check errors
 		foreach (string message in this.UpdateCheckErrors)
@@ -1337,10 +1341,5 @@ class ReportEntry
 /// <param name="name">The standardized mod name.</param>
 private string GetAnchor(string name)
 {
-	name = name.Replace(' ', '_');
-	return WebUtility
-		.UrlEncode(name)
-		?.Replace('%', '.')
-		.Replace("(", ".28")
-		.Replace(")", ".29");
+	return PathUtilities.CreateSlug(name)?.ToLower();
 }

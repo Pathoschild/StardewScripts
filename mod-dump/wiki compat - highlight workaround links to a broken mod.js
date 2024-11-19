@@ -1,54 +1,88 @@
+<Query Kind="Program">
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\Newtonsoft.Json.dll</Reference>
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
+  <Namespace>Newtonsoft.Json</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo.RawDataModels</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
+  <IncludeUncapsulator>false</IncludeUncapsulator>
+</Query>
+
 /*
 
 See documentation at https://github.com/Pathoschild/StardewScripts.
 
 */
-(function() {
-    let isFirst = true;
+/*********
+** Configuration
+*********/
+/// <summary>The absolute path for the compatibility list data file.</summary>
+private const string CompatDataPath = @"E:\source\_Stardew\_SmapiCompatibilityList\data\data.jsonc";
 
-    for (let modRow of document.querySelectorAll(".mod")) {
-        /* get summary element */
-        const summary = modRow.querySelector(".mod-beta-summary") ?? modRow.querySelector(".mod-summary");
-        if (!summary)
-        {
-            console.error(`Can't get summary element for mod ID '${link.id}'.`);
-            continue;
-        }
 
-        /* handle anchor links */
-        for (let link of summary.querySelectorAll("a[href^='#']")) {
-            /* get link */
-            const href = link.getAttribute("href");
-            if (href == '#') {
-            	continue;
-            }
+/*********
+** Script
+*********/
+void Main()
+{
+	// load mods
+	ModCompatibilityEntry[] mods;
+	{
+		string json = File.ReadAllText(CompatDataPath);
+		using var repoClient = new CompatibilityRepoClient("Pathoschild/StardewScripts 1.0.0");
+		var data = JsonConvert.DeserializeObject<RawCompatibilityList>(json);
+		mods = data.Mods.Select(repoClient.ParseRawModEntry).ToArray();
+	}
+	var modsByName = mods.ToLookup(p => p.Name.First(), StringComparer.OrdinalIgnoreCase);
 
-            /* get target row */
-            const targetRow = document.querySelector(`[id="${href.substr(1)}"]`);
-            if (!targetRow)
-            {
-                console.error(`Invalid target '${link.href}'.`);
-                continue;
-            }
+	// check for invalid references
+	List<LinkError> errors = new();
+	foreach (var mod in mods)
+	{
+		string summary = mod.Compatibility.Summary;
 
-            /* get status */
-            const status = targetRow.getAttribute("data-beta-status") ?? targetRow.getAttribute("data-status");
-            if (!status)
-            {
-                console.error(`Can't read status for '${link.href}' target.`);
-                continue;
-            }
+		foreach (Match match in Regex.Matches(summary, @"\[([^\]]+)\]\(#([^\)]*)\)"))
+		{
+			string modName = match.Groups[1].Value;
+			string customAnchor = match.Groups[2].Value;
 
-            /* highlight links to a broken mod */
-            if (status === "broken" || status === "abandoned" || status == "obsolete" || status === "unknown")
-            {
-                link.setAttribute("style", "border: 5px solid red;");
+			if (!string.IsNullOrEmpty(customAnchor))
+			{
+				AddLinkError("The URL should be just '#' to auto-generate the anchor based on the link text.");
+				continue;
+			}
 
-                if (isFirst) {
-                    window.scrollBy(0, link.getBoundingClientRect().top - 30);
-                    isFirst = false;
-                }
-            }
-        }
-    }
-})();
+			ModCompatibilityEntry[] targetMods = modsByName[modName].ToArray();
+			if (targetMods.Length == 0)
+			{
+				AddLinkError($"No mod with name '{modName}' found.");
+				continue;
+			}
+			if (!targetMods.Any(p => p.Compatibility.Status is ModCompatibilityStatus.Ok or ModCompatibilityStatus.Optional or ModCompatibilityStatus.Unofficial))
+			{
+				AddLinkError($"The linked mod '{modName}' has status {string.Join(", ", targetMods.Select(p => p.Compatibility.Status).Distinct())}.");
+				continue;
+			}
+			
+
+			void AddLinkError(string errorPhrase)
+			{
+				errors.Add(
+					new LinkError(mod.Name.FirstOrDefault(), mod.ID.FirstOrDefault(), summary, errorPhrase)
+				);
+			}
+		}
+	}
+
+	// dump results
+	errors
+		.OrderBy(p => p.Error.Substring(0, 10))
+		.ThenBy(p => p.ModName)
+		.Dump("link errors");
+}
+
+/// <summary>An error related to a mod link in a summary.</summary>
+/// <param name="ModName">The name of the mod whose summary has an issue.</param>
+/// <param name="ModId">The unique ID of the mod whose summary has an issue.</param>
+/// <param name="Summary">The summary text which has an issue.</param>
+/// <param name="Error">The human-readable error indicating what the issue is.</param>
+record LinkError(string ModName, string ModId, string Summary, string Error);

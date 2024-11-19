@@ -1,7 +1,7 @@
 This folder has scripts used to download and analyze all Stardew Valley mods. This is used to help
-keep the [mod compatibility list](https://stardewvalleywiki.com/Modding:Mod_compatibility#SMAPI_mods)
-up-to-date, prepare monthly stats [for Patreon](https://www.patreon.com/pathoschild), and perform
-analyses across all mods (e.g. to see which mods are using a particular feature).
+keep the [mod compatibility list](https://github.com/Pathoschild/SmapiCompatibilityList) up-to-date,
+prepare monthly stats [for Patreon](https://www.patreon.com/pathoschild), and perform analyses
+across all mods (e.g. to see which mods are using a particular feature).
 
 # Scripts
 ## Fetch mods
@@ -55,12 +55,15 @@ Usage:
 5. Optionally edit the script to set `RootPath` and other options.
 6. Run the script to begin downloading.
 
-## Wiki compatibility page scripts
-* `wiki compat - get stats.js` can be run while [editing the mod compatibility page]
-  (https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3)
-  to log some high-level compatibility stats about the listed mods.
-* `wiki compat - highlight workaround links to a broken mod.js` can be run while editing [the mod
-  compatibility page](https://stardewvalleywiki.com/Modding:Mod_compatibility)
-  to highlight any 'use X instead' links which point to a mod which is marked broken, abandoned, or bsolete.
-* `wiki compat - get stats.linq` lets you paste the [mod compatibility section](https://stardewvalleywiki.com/Modding:Mod_compatibility?action=edit&section=3)
-  into the script (at the bottom), then run it to output the sorted table.
+## Compatibility list scripts
+These are utilities to help maintain the SMAPI mod compatibility list:
+* `wiki compat - get stats.js` logs some high-level mod compatibility stats.
+* `wiki compat - highlight workaround links to a broken mod.js` reports 'use X instead' links which
+  point to a mod which is marked broken, abandoned, or obsolete.
+* `wiki compat - get stats.linq` sorts the compatibility list.
+
+To use the scripts:
+1. Clone the [mod compatibility repo](https://github.com/Pathoschild/SmapiCompatibilityList).
+2. Open a script file in [LINQPad](https://www.linqpad.net).
+3. Update the path to the compatibility list file at the top if needed.
+4. Run the script.
