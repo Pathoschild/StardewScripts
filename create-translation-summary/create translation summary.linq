@@ -21,7 +21,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 readonly string SolutionFolder = @"E:\source\_Stardew\Mods.Pathoschild";
 
 /// <summary>The relative paths within <see cref="SolutionFolder"/> to ignore when scanning for mod folders, using the system default separators (e.g. <c>\</c> on Windows).</summary>
-readonly string[] IgnoreRelativePaths = new[] { "_archived" };
+readonly string[] IgnoreRelativePaths = new[] { "_archived", "_Archived" };
 
 /// <summary>Path substrings within <see cref="SolutionFolder"/> to ignore when scanning for mod folders, using the system default separators (e.g. <c>\</c> on Windows).</summary>
 readonly string[] IgnorePathSubstrings = new[]
@@ -436,7 +436,16 @@ private void PopulateTranslationStatus(ModFolder modFolder)
 			// parse raw data
 			string locale = Path.GetFileNameWithoutExtension(file.Name);
 			string content = File.ReadAllText(file.FullName);
-			HashSet<string> keys = new HashSet<string>(JsonConvert.DeserializeObject<Dictionary<string, string>>(content).Keys, StringComparer.OrdinalIgnoreCase);
+			HashSet<string> keys;
+			try
+			{
+				keys = new HashSet<string>(JsonConvert.DeserializeObject<Dictionary<string, string>>(content).Keys, StringComparer.OrdinalIgnoreCase);
+			}
+			catch (Exception ex)
+			{
+				ex.Dump($"Error parsing {file.FullName}");
+				continue;
+			}
 
 			// get translation status
 			TranslationStatus status = TranslationStatus.Complete;
