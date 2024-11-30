@@ -6,7 +6,6 @@
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.WebApi</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.Wiki</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModData</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
@@ -15,6 +14,7 @@
   <Namespace>StardewModdingAPI.Toolkit.Utilities</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
 </Query>
 
 /*
@@ -27,7 +27,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 /*********
 ** Configuration
 *********/
-/// <summary>The source URLs to skip when cloning repositories. This should match the GitHub repository name or custom URL specified on the wiki.</summary>
+/// <summary>The source URLs to skip when cloning repositories. This should match the GitHub repository name or custom URL specified on the compatibility list.</summary>
 private readonly HashSet<string> IgnoreSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 {
 	// SMAPI
@@ -72,7 +72,7 @@ async Task Main()
 	ConsoleHelper.Print("Fetching repository URLs...");
 	{
 		// fetch mods
-		WikiModEntry[] mods = (await toolkit.GetWikiCompatibilityListAsync()).Mods.Where(p => p.ContentPackFor == null).ToArray();
+		ModCompatibilityEntry[] mods = (await toolkit.GetCompatibilityListAsync()).Where(p => p.ContentPackFor == null).ToArray();
 		int totalMods = mods.Length;
 		mods = mods
 			.Where(mod => !this.IgnoreSourceUrls.Contains(mod.GitHubRepo) && !this.IgnoreSourceUrls.Contains(mod.CustomSourceUrl))
@@ -98,7 +98,7 @@ async Task Main()
 
 			if (invalidUrls.Any())
 			{
-				ConsoleHelper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the wiki:", Severity.Trace);
+				ConsoleHelper.Print($"   Found {invalidUrls.Length} unsupported source URLs on the compatibility list:", Severity.Trace);
 				foreach (string url in invalidUrls.OrderBy(p => p))
 					ConsoleHelper.Print($"      {url}", Severity.Trace);
 			}
@@ -172,14 +172,14 @@ async Task Main()
 	ConsoleHelper.Print("Done!");
 }
 
-/// <summary>A wiki mod entry with source info.</summary>
+/// <summary>A compatibility list entry with source info.</summary>
 class ModWithSource
 {
 	/*********
 	** Accessors
 	*********/
-	/// <summary>The wiki mod entry.</summary>
-	public WikiModEntry Mod { get; }
+	/// <summary>The compatibility list entry.</summary>
+	public ModCompatibilityEntry Mod { get; }
 
 	/// <summary>The repository's web URL.</summary>
 	public string WebUrl { get; }
@@ -204,8 +204,8 @@ class ModWithSource
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
-	/// <param name="mod">The wiki mod entry.</param>
-	public ModWithSource(WikiModEntry mod)
+	/// <param name="mod">The compatibility list entry.</param>
+	public ModWithSource(ModCompatibilityEntry mod)
 	{
 		this.Mod = mod;
 
@@ -294,13 +294,13 @@ class ModRepository
 	}
 
 	/// <summary>Extract the source control info for a mod entry, if valid.</summary>
-	/// <param name="mod">The mod's wiki metadata.</param>
+	/// <param name="mod">The mod's compatibility list metadata.</param>
 	/// <param name="webUrl">The repo's web URL.</param>
 	/// <param name="sourceUrl">The repo's Git or Mercurial URL.</param>
 	/// <param name="ownerName">The name of the user who owns the repo, if available in the URL.</param>
 	/// <param name="repoName">The name of the repository project.</param>
 	/// <param name="type">The repo's source control type.</param>
-	public static bool TryGetSourceInfo(WikiModEntry mod, out string webUrl, out string sourceUrl, out string ownerName, out string repoName, out SourceType type)
+	public static bool TryGetSourceInfo(ModCompatibilityEntry mod, out string webUrl, out string sourceUrl, out string ownerName, out string repoName, out SourceType type)
 	{
 		// GitHub
 		if (!string.IsNullOrWhiteSpace(mod.GitHubRepo))

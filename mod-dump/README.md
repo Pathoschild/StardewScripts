@@ -58,8 +58,6 @@ Usage:
 ## Compatibility list scripts
 These are utilities to help maintain the SMAPI mod compatibility list:
 * `compat repo - get stats.linq` logs some high-level mod compatibility stats.
-* `compat repo - detect incorrect mod links in summaries.js` reports 'use X instead' links which
-  point to a mod which is marked broken, abandoned, or obsolete.
 * `wiki compat - sort list.linq` sorts the compatibility list.
 
 To use the scripts:

@@ -711,23 +711,36 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 				Folder = Util.OnDemand("expand", () => folder)
 			}),
 			CompatEntry = new Lazy<string>(() => // can't be in Metadata since it's accessed by the main script
-				"{{#invoke:SMAPI compatibility|entry\n"
-				+ $"  |name    = {string.Join(", ", names)}\n"
-				+ $"  |author  = {string.Join(", ", authorNames)}\n"
-				+ $"  |id      = {manifest?.UniqueID}\n"
-				+ (mod.Site == ModSite.CurseForge ? $"  |curse   = {mod.ID}\n" : "")
-				+ (mod.Site == ModSite.ModDrop ? $"  |moddrop = {mod.ID}\n" : "")
-				+ $"  |nexus   = {(mod.Site == ModSite.Nexus ? mod.ID.ToString() : "")}\n"
-				+ $"  |github  = {githubRepo}\n"
-				+ (customSourceUrl != null
-					? $"  |source  = {customSourceUrl}\n"
-					: ""
-				)
-				+ "}}"
+				BuildCompatibilityEntry(mod, manifest, names, authorNames, githubRepo, customSourceUrl)
 			)
 		}
 	)
 	.ToArray();
+	
+	static string BuildCompatibilityEntry(ParsedMod mod, IManifest manifest, string[] names, string[] authorNames, string githubRepo, string customSourceUrl)
+	{
+		// build JSON
+		string json = JsonConvert.SerializeObject(
+			new
+			{
+				name = string.Join(", ", names),
+				author = string.Join(", ", authorNames),
+				id = manifest?.UniqueID,
+				curse = mod.Site == ModSite.CurseForge ? mod.ID : null as long?,
+				moddrop = mod.Site == ModSite.ModDrop ? mod.ID : null as long?,
+				nexus = mod.Site == ModSite.Nexus ? mod.ID : null as long?,
+				github = githubRepo,
+				source = customSourceUrl
+			},
+			Newtonsoft.Json.Formatting.Indented
+		);
+
+		// remove empty optional fields
+		json = Regex.Replace(json, @"^\s*""(?:curse|moddrop|source)"": null,?" + Environment.NewLine, "", RegexOptions.Multiline);
+		json = Regex.Replace(json, $",({Environment.NewLine}}})", "$1");
+
+		return json + ",";
+	}
 }
 
 /// <summary>Get SMAPI mods on the compatibility list which have been updated recently.</summary>
