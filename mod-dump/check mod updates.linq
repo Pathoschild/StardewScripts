@@ -72,7 +72,7 @@ private readonly HashSet<ModCompatibilityStatus> HighlightStatuses = new HashSet
 public bool NormalizeFolders = true;
 
 /// <summary>Whether to allow normalizing a mod folder if it contains multiple mods. This is usually not intended (e.g. a download containing a SMAPI mod along with supporting content packs).</summary>
-public bool AllowNormalizingFoldersContainingMultipleMods = false;
+public NormalizeMultipleFolderBehavior NormalizationForFoldersContainingMultipleMods = NormalizeMultipleFolderBehavior.Skip;
 
 /// <summary>Whether to perform update checks for mods installed locally.</summary>
 public bool UpdateCheckLocal = true;
@@ -380,21 +380,33 @@ async Task Main()
 	{
 		Console.WriteLine("Normalising mod folders...");
 
-		// validate: don't allow normalizing multiple subfolders as separate mods (usually not intended)
-		if (!this.AllowNormalizingFoldersContainingMultipleMods)
+		// get mods by top folder
+		var modsByTopFolder = new Dictionary<string, List<UserQuery.ModData>>();
+		foreach (ModData mod in mods)
 		{
-			var modsByTopFolder = new Dictionary<string, List<UserQuery.ModData>>();
-			foreach (ModData mod in mods)
+			string relativePath = PathUtilities.GetRelativePath(InstalledModsPath, mod.Folder.Directory.FullName);
+			string mainFolderName = PathUtilities.GetSegments(relativePath, 2).First();
+
+			if (!modsByTopFolder.TryGetValue(mainFolderName, out List<UserQuery.ModData> modsInFolder))
+				modsByTopFolder[mainFolderName] = modsInFolder = new List<UserQuery.ModData>();
+
+			modsInFolder.Add(mod);
+		}
+
+		// get mods in a multi-mod folder
+		HashSet<ModData> modsInGroupFolders = new();
+		foreach (var group in modsByTopFolder)
+		{
+			if (group.Value.Count > 1)
 			{
-				string relativePath = PathUtilities.GetRelativePath(InstalledModsPath, mod.Folder.Directory.FullName);
-				string mainFolderName = PathUtilities.GetSegments(relativePath, 2).First();
-
-				if (!modsByTopFolder.TryGetValue(mainFolderName, out List<UserQuery.ModData> modsInFolder))
-					modsByTopFolder[mainFolderName] = modsInFolder = new List<UserQuery.ModData>();
-
-				modsInFolder.Add(mod);
+				foreach (var mod in group.Value)
+					modsInGroupFolders.Add(mod);
 			}
-			
+		}
+
+		// validate: don't allow normalizing multiple subfolders as separate mods (usually not intended)
+		if (this.NormalizationForFoldersContainingMultipleMods is NormalizeMultipleFolderBehavior.Error)
+		{
 			string[] foldersWithMultipleMods = modsByTopFolder.Where(p => p.Value.Count > 1).Select(p => p.Key).ToArray();
 			if (foldersWithMultipleMods.Any())
 			{
@@ -406,9 +418,10 @@ async Task Main()
 		// normalize
 		foreach (ModData mod in mods)
 		{
-			// get mod info
 			if (!mod.IsInstalled)
 				continue;
+
+			// get mod info
 			ModFolder folder = mod.Folder;
 			DirectoryInfo actualDir = folder.Directory;
 			string searchFolderName = PathUtilities
@@ -417,6 +430,10 @@ async Task Main()
 				.First(); // the name of the folder immediately under Mods containing this mod
 			DirectoryInfo searchDir = new DirectoryInfo(Path.Combine(InstalledModsPath, searchFolderName));
 			string relativePath = PathUtilities.GetRelativePath(InstalledModsPath, actualDir.FullName);
+
+			// skip if shouldn't be normalized
+			if (this.NormalizationForFoldersContainingMultipleMods is NormalizeMultipleFolderBehavior.Skip && modsInGroupFolders.Contains(mod))
+				continue;
 
 			// get page url
 			string url = mod.GetModPageUrl(toolkit);
@@ -944,6 +961,19 @@ private bool IsEmptyFolder(DirectoryInfo directory)
 	}
 	
 	return true;
+}
+
+/// <summary>How to normalize folders containing multiple mods.</summary>
+public enum NormalizeMultipleFolderBehavior
+{
+	/// <summary>Log an error and require the user to fix the folder before it's normalized.</summary>
+	Error,
+
+	/// <summary>Move the inner mods out of the folder and normalize those.</summary>
+	Normalize,
+
+	/// <summary>Leave folders containing multiple mods as-is.</summary>
+	Skip
 }
 
 /// <summary>The aggregated data for a mod.</summary>
