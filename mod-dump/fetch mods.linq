@@ -21,6 +21,7 @@
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
+  <Namespace>System.Dynamic</Namespace>
 </Query>
 
 /*
@@ -623,7 +624,7 @@ async Task Main()
 		Util.RawHtml("<h1>Stats</h1>").Dump();
 		this.GetOpenSourceStats(compatList).Dump("open-source stats");
 		this.GetModTypes(mods).Dump("mod types");
-		this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version");
+		DumpDictionaryToColumns(this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version"), "Content Patcher packs by format version (row)");
 	}
 }
 
@@ -1206,12 +1207,18 @@ IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ParsedMod> mo
 	}
 
 	// get counts
-	return modVersions
+	var counts = modVersions
 		.OrderBy(p => p.Value.MajorVersion)
 		.ThenBy(p => p.Value.MinorVersion)
 		.ThenBy(p => p.Value.PatchVersion)
 		.GroupBy(p => p.Value.ToString())
 		.ToDictionary(p => p.Key.ToString(), p => p.Count());
+
+	// ignore invalid values
+	counts.Remove("11.1.0");
+	counts.Remove("3.0.0");
+
+	return counts;
 }
 
 /// <summary>Get all mods which depend on the given mod.</summary>
@@ -1236,6 +1243,18 @@ IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, str
 /*********
 ** Implementation
 *********/
+/// <summary>Dump a dictionary to the console with each key formatted as a table column.</summary>
+/// <param name="dict">The dictionary data to dump.</param>
+/// <param name="label">The dump label, if any.</param>
+private void DumpDictionaryToColumns<TKey, TValue>(IDictionary<TKey, TValue> dict, string label = null)
+{
+	var result = new ExpandoObject();
+	foreach (var pair in dict)
+		result.TryAdd(pair.Key.ToString(), pair.Value);
+
+	new[] { result }.Dump(label);
+}
+
 /// <summary>Get the start of the preceding month.</summary>
 /// <param name="dayOffset">The day offset to apply to the date.</param>
 private static DateTimeOffset GetStartOfMonth(int fuzzyDays = 5)
