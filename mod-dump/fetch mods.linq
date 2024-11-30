@@ -102,6 +102,9 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		307654  // The Harp of Yoba
 	),
 
+	// reposts with the same mod ID
+	new(ModSite.CurseForge, 1145447, manifestId: "cat.betterartisangoodicons"),
+
 	// mods which include a copy of another mod for some reason
 	new(ModSite.CurseForge, 877227, manifestId: "Platonymous.PlatoUI"), // Plato Warp Menu
 
@@ -186,6 +189,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		20406, // Better Juninos (vh)
 		20767, // Bigger Backpack (es)
 		21548, // Bigger Backpack (vh)
+		29167, // Boss Battles (ru)
 		19337, // Buff Framework - Better Together - SVE Spouse Buffs (vh)
 		11417, // Bug Net (fr)
 		14960, // Bus Locations (fr)
@@ -206,6 +210,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		12968, // Custom NPC Belos (id)
 		5811,  // Custom NPC Riley (de)
 		14548, // Custom NPC Riley (tr)
+		18353, // Custom Spouse Patio Redux (es)
 		11851, // Custom Spouse Patio Redux (zh)
 		20428, // Daily Tasks Report (ru)
 		21168, // Deluxe Grabber Redux (zh)
@@ -249,7 +254,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		10685, // Juliet and Jessie the Joja Clerks (es)
 		8946,  // Junimo Dialog (pt)
 		11282, // Lavril (es)
-		15624, // LewdDew Valley (zh)
 		13866, // Line Sprinklers (fr)
 		17797, // Loan Mod (vi)
 		22518, // Lookup Anything (id)
@@ -326,6 +330,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		6062,  // Stardew Valley Expanded (tr)
 		6332,  // Stardew Valley Expanded (tr)
 		19243, // Survivalist Skill (vi)
+		29736, // The Love of Cooking (pt)
 		10221, // The Ranch Expansion Marnie and Jas (es)
 		17727, // Time Before Harvest Enhanced (vi)
 		23498, // To-Dew (id)
@@ -370,6 +375,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 20783, manifestId: "aedenthorn.CropVariation"),       // Crop Variation
 	new(ModSite.Nexus, 28109, manifestId: "Aedenthorn.CustomMonsterFloors"), // Custom Dungeon Floors
 	new(ModSite.Nexus, 27888, manifestId: "aedenthorn.DynamicFlooring"),     // Dynamic Flooring
+	new(ModSite.Nexus, 29671, manifestId: "Zamiel.EatDrinkFromInventory"),    // Eat and Drink From Inventory
 	new(ModSite.Nexus, 20910, manifestId: "aedenthorn.FarmCaveFramework"),   // Farm Cave Framework
 	new(ModSite.Nexus, 22201, manifestId: "barteke22.FishingInfoOverlays"),  // Fishing Info Overlays
 	new(ModSite.Nexus, 20726, manifestId: "aedenthorn.FishSpotBait"),        // Fish Spot Bait
@@ -381,6 +387,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 21635, manifestId: "spacechase0.JunimosAcceptCash"),  // Junimos Accept Cash
 	new(ModSite.Nexus, 27343, manifestId: "d5a1lamdtd.MarketTown"),          // Market Town
 	new(ModSite.Nexus, 16921, manifestId: "Chikakoo.Randomizer"),            // More Random Edition
+	new(ModSite.Nexus, 27953, manifestId: "Akane.MotorcycleMod"),            // Motorcycle Mod
 	new(ModSite.Nexus, 19817, manifestId: "Multiplayer.Mod"),                // Multiplayer Mod (for mobile)
 	new(ModSite.Nexus, 12369, manifestId: "KCC.SnS"),                        // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
 	new(ModSite.Nexus, 19291, manifestId: "Omegasis.NightOwl"),              // Night Owl
@@ -394,6 +401,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 28750, manifestId: "aedenthorn.Restauranteer"),       // Restauranteer
 	new(ModSite.Nexus, 28712, manifestId: "aedenthorn.RobinWorkHours"),      // Robin Work Hours 
 	new(ModSite.Nexus, 8386, manifestId: "Omegasis.SaveAnywhere"),           // Save Anywhere
+	new(ModSite.Nexus, 29377, manifestId: "Platonymous.SeedBag"),            // Seed Bag
 	new(ModSite.Nexus, 22275, manifestId: "Jonqora.ShowItemQuality"),        // Show Item Quality
 	new(ModSite.Nexus, 22167, manifestId: "aedenthorn.SprinklerMod"),        // Sprinkler Mod
 	new(ModSite.Nexus, 24806, manifestId: "MiphasGrace.SurpriseBaby1"),      // Surprise Pregnancy
@@ -467,6 +475,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 1593, 5998),  // Wax Key for ALL
 
 	// mods which include a copy of another mod for some reason
+	new(ModSite.Nexus, 29038, manifestId: "alja.CustomCCB"),                    // Aurora's Custom Bundles
 	new(ModSite.Nexus, 11228, manifestId: "cat.betterfruittrees"),              // Better Fruit Trees
 	new(ModSite.Nexus, 8097, manifestId: "Paritee.BetterFarmAnimalVariety"),    // Cotton the Sweetest Shopkeeper
 	new(ModSite.Nexus, 26746, manifestId: "Platonymous.Portraiture"),           // Expand Shane's CG events
@@ -500,8 +509,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	// special cases
 	new(ModSite.Nexus, 23235, fileId: 95378),                             // Daily Item Randomizer (blocked by Nexus antivirus check)
 	new(ModSite.Nexus, 23235, fileId: 95390),                             // Daily Item Randomizer (blocked by Nexus antivirus check)
-	new(ModSite.Nexus, 12824, fileId: 79850),                             // Marry Morris (pre-1.6 version is C#, but newer versions are content packs)
-	new(ModSite.Nexus, 15564, manifestId: "JefGrizli.RedrawPelicanTownC") // Redraw Pelican Town (C# component uploaded to both #14928 and #15564, so link it to the first one)
+	new(ModSite.Nexus, 9052, manifestId: "Kryspur.HypnoValleyMantra"),    // Hypno Valley - Mantra Command (example mod)
+	new(ModSite.Nexus, 12824, fileId: 79850)                              // Marry Morris (pre-1.6 version is C#, but newer versions are content packs)
 	#endregion
 ];
 
