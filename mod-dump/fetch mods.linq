@@ -63,6 +63,9 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 	)
 };
 
+/// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
+const string LocalCompatListRepoPath = null;
+
 /// <summary>The directory path in which to store cached mod data and downloads.</summary>
 const string ModDumpPath = @"C:\dev\mod-dump";
 
@@ -548,7 +551,9 @@ async Task Main()
 	// fetch compatibility list
 	Util.RawHtml("<h1>Init log</h1>").Dump();
 	ConsoleHelper.Print("Fetching mod compatibility list...");
-	ModCompatibilityEntry[] compatList = await new ModToolkit().GetCompatibilityListAsync();
+	ModCompatibilityEntry[] compatList = LocalCompatListRepoPath != null
+		? await new ModToolkit().GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
+		: await new ModToolkit().GetCompatibilityListAsync();
 
 	// read cache
 	ConsoleHelper.Print($"Reading mod cache...");

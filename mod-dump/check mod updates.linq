@@ -50,6 +50,9 @@ private static string ModFolderPathDoNotNormalizeToken => Path.Combine(Installed
 /// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
 private readonly ModCacheUtilities ModCacheHelper = new(@"C:\dev\mod-dump", InstalledModsPath);
 
+/// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
+const string LocalCompatListRepoPath = null;
+
 
 /****
 ** Common settings
@@ -611,7 +614,11 @@ async Task Main()
 	/****
 	** Report mods on the compatibility list not installed locally
 	****/
-	Lazy<Task<ModCompatibilityEntry[]>> compatListAsync = new(() => toolkit.GetCompatibilityListAsync());
+	Lazy<Task<ModCompatibilityEntry[]>> compatListAsync = new(
+		() => LocalCompatListRepoPath != null
+		? toolkit.GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
+		: toolkit.GetCompatibilityListAsync()
+	);
 	if (this.ShowMissingLocalMods)
 	{
 		// get mods installed locally
