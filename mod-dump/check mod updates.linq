@@ -44,9 +44,6 @@ private const string GameFolderPath = @"C:\Program Files (x86)\Steam\steamapps\c
 /// <summary>The absolute path for the folder containing installed mods.</summary>
 private static string InstalledModsPath => Path.Combine(GameFolderPath, "Mods (test)");
 
-/// <summary>The absolute path for the file which, if present, indicates mod folders should not be normalized.</summary>
-private static string ModFolderPathDoNotNormalizeToken => Path.Combine(InstalledModsPath, "DO_NOT_NORMALIZE.txt");
-
 /// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
 private readonly ModCacheUtilities ModCacheHelper = new(@"C:\dev\mod-dump", InstalledModsPath);
 
@@ -70,12 +67,6 @@ private readonly HashSet<ModCompatibilityStatus> HighlightStatuses = new HashSet
 	//.Except(new[] { ModCompatibilityStatus.Broken, ModCompatibilityStatus.Workaround }) // if broken
 	.Except(new[] { ModCompatibilityStatus.Ok, ModCompatibilityStatus.Optional, ModCompatibilityStatus.Unofficial }) // if OK
 );
-
-/// <summary>Whether to normalize mod folders.</summary>
-public bool NormalizeFolders = true;
-
-/// <summary>Whether to allow normalizing a mod folder if it contains multiple mods. This is usually not intended (e.g. a download containing a SMAPI mod along with supporting content packs).</summary>
-public NormalizeMultipleFolderBehavior NormalizationForFoldersContainingMultipleMods = NormalizeMultipleFolderBehavior.Skip;
 
 /// <summary>Whether to perform update checks for mods installed locally.</summary>
 public bool UpdateCheckLocal = true;
@@ -131,108 +122,6 @@ public string[] IgnoreMissingLocalMods = new[]
 	"Pathoschild.NoDebugMode"    // No Debug Mode by Pathoschild: Nexus page deleted
 };
 
-/// <summary>Maps mod IDs to the equivalent mod page URLs, in cases where that can't be determined from the mod data.</summary>
-public IDictionary<string, string> OverrideModPageUrls = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
-{
-	// mods with only a forum thread ID
-	["ANDR55.AdvMachines"] = "https://community.playstarbound.com/threads/137132", // Advanced Machines
-	["AutoWater"] = "https://community.playstarbound.com/threads/129355",
-	["FAKE.AshleyMod"] = "https://community.playstarbound.com/threads/112077",
-	["FAKE.EvilPdor.WakeUp"] = "https://community.playstarbound.com/threads/111526",
-	["FAKE.EvilPdor.StaminaRegen"] = "https://community.playstarbound.com/threads/111526",
-	["FAKE.EvilPdor.WeatherController"] = "https://community.playstarbound.com/threads/111526",
-	["FAKE.FarmAutomation.ItemCollector"] = "https://community.playstarbound.com/threads/111931",
-	["FAKE.FarmAutomation.BarnDoorAutomation"] = "https://community.playstarbound.com/threads/111931",
-	["FAKE.RainRandomizer"] = "https://community.playstarbound.com/threads/111526",
-	["HappyAnimals"] = "https://community.playstarbound.com/threads/126655",
-	["HorseWhistle_SMAPI"] = "https://community.playstarbound.com/threads/111550", // Horse Whistle (Nabuma)
-	["KuroBear.SmartMod"] = "https://community.playstarbound.com/threads/108104",
-	["RoyLi.Fireballs"] = "https://community.playstarbound.com/threads/129346",
-	["RuyiLi.AutoCrop"] = "https://community.playstarbound.com/threads/129152",
-	["RuyiLi.BloodTrail"] = "https://community.playstarbound.com/threads/129308",
-	["RuyiLi.Emotes"] = "https://community.playstarbound.com/threads/129159",
-	["RuyiLi.InstantFishing"] = "https://community.playstarbound.com/threads/129163",
-	["RuyiLi.Kamikaze"] = "https://community.playstarbound.com/threads/129126",
-	["RuyiLi.SlimeSpawner"] = "https://community.playstarbound.com/threads/129326",
-	["Spouseroom"] = "https://community.playstarbound.com/threads/111636" // Spouse's Room Mod
-};
-
-/// <summary>Maps mod IDs to the folder name to use, overriding the name from the compatibility list.</summary>
-public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
-{
-	// prefixes for testing convenience
-	["aedenthorn.MobilePhone"] = "@Mobile Phone",
-	["bcmpinc.StardewHack"] = "@@Stardew Hack",
-	["bwdyworks"] = "@Bwdyworks",
-	["cat.Pong"] = "(1) Pong",
-	["Cherry.ExpandedPreconditionsUtility"] = "@Expanded Preconditions Utility",
-	["DIGUS.MailFrameworkMod"] = "@@Mail Framework Mod",
-	["Entoarox.AdvancedLocationLoader"] = "@Advanced Location Loader",
-	["Ilyaki.BattleRoyale"] = "(2) Battle Royalley",
-	["Platonymous.ArcadePong"] = "(1) Arcade Pong",
-	["Platonymous.PlatoTK"] = "@@PlatoTK",
-	["Platonymous.Toolkit"] = "@@PyTK",
-	["spacechase0.DynamicGameAssets"] = "@@Dynamic Game Assets",
-	["spacechase0.JsonAssets"] = "@@Json Assets",
-	["spacechase0.SpaceCore"] = "@@SpaceCore",
-	["TehPers.CoreMod"] = "@@TehCore",
-	["tylergibbs2.BattleRoyalleyYear2"] = "(2) Battle Royalley - Year 2",
-
-	// names for mods without a real ID
-	["FAKE.RainRandomizer"] = "Rain Randomizer",
-
-	// fix invalid names
-	["jahangmar.CompostPestsCultivation"] = "Compost, Pests, and Cultivation", // commas stripped by compatibility list
-	["leclair.bcbuildings"] = "Better Crafting - Buildings", // : replaced with _
-	["minervamaga.FeelingLucky"] = "Feeling Lucky", // ? replaced with _, just strip it instead
-
-	// fix duplicate IDs (Slime Minigame)
-	["Tofu.SlimeMinigame"] = "Slime Mods - Slime Minigame",
-	["Tofu.SlimeQOL"] = "Slime Mods - SlimeQoL Alt",
-
-	// fix ambiguous names
-	["pempi.addMoney"] = "Add Money (Pempi)",
-	["StephHoel.AddMoney"] = "Add Money (StephHoel)",
-
-	["cgifox.AutoAttack"] = "Auto-Attack (cgifox)",
-	["X3n0n182.AutoAttack"] = "Auto-Attack (X3n0n182)",
-	
-	["pickle.autowater"] = "Auto Water (Pickle)",
-	["StephHoel.AutoWater"] = "Auto Water (StephHoel)",
-	
-	["leclair.bettercrafting"] = "Better Crafting (Khloe Leclair)",
-	["RedstoneBoy.BetterCrafting"] = "Better Crafting (RedstoneBoy)",
-	
-	["ceruleandeep.bwdyworks"] = "Bwdyworks (ceruleandeep)",
-
-	["BayesianBandit.ConfigureMachineSpeed"] = "Configure Machine Speed (BayesianBandit)",
-	["StephHoel.ConfigureMachineSpeed"] = "Configure Machine Speed (StephHoel)",
-
-	["Vrakyas.CurrentLocation"] = "Current Location (Vrakyas)",
-	["CurrentLocation102120161203"] = "Current Location (Omegasis)",
-
-	["Thor.EnemyHealthBars"] = "Enemy Health Bars (TheThor59)",
-
-	["BlaDe.EventTester"] = "Event Tester (BlaDe)",
-	["sinZandAtravita.SinZsEventTester"] = "Event Tester (SinZ)",
-
-	["HappyBirthday"] = "Happy Birthday (Oxyligen)",
-	["Omegasis.HappyBirthday"] = "Happy Birthday (Omegasis)",
-
-	["HorseWhistle_SMAPI"] = "Horse Whistle (Nabuma)",
-	["icepuente.HorseWhistle"] = "Horse Whistle (Icepuente)",
-	
-	["6135.ProfitCalculator"] = "Profit Calculator (6135)",
-	["6135.ProfitCalculatorDGA"] = "Profit Calculator (6135) → DGA Support",
-	["spacechase0.ProfitCalculator"] = "Profit Calculator (spacechase0)",
-	
-	["stokastic.SmartCursor"] = "Smart Cursor (Stokastic)",
-	["DecidedlyHuman.SmartCursor"] = "Smart Cursor (DecidedlyHuman)",
-
-	// prefix sub-mods
-	["SilentOak.AutoQualityPatch"] = "Quality Products - Auto Quality Patch"
-};
-
 /// <summary>The mod versions to consider equivalent in update checks (indexed by mod ID to local/server versions).</summmary>
 public IDictionary<string, Tuple<string, string>> EquivalentModVersions = new Dictionary<string, Tuple<string, string>>(StringComparer.InvariantCultureIgnoreCase)
 {
@@ -279,13 +168,6 @@ async Task Main()
 	// data
 	var toolkit = this.ModToolkit;
 	var mods = new List<ModData>();
-
-	// check tokens
-	if (this.NormalizeFolders && File.Exists(ModFolderPathDoNotNormalizeToken))
-	{
-		Console.WriteLine("   WARNING: detected 'do not normalize' file, disabling folder normalising.");
-		this.NormalizeFolders = false;
-	}
 
 	/****
 	** Read local mod data
@@ -373,143 +255,6 @@ async Task Main()
 				// select latest version
 				mod.ApiRecord = result;
 			}
-		}
-	}
-
-	/****
-	** Normalize mod folders
-	****/
-	if (this.NormalizeFolders)
-	{
-		Console.WriteLine("Normalising mod folders...");
-
-		// get mods by top folder
-		var modsByTopFolder = new Dictionary<string, List<UserQuery.ModData>>();
-		foreach (ModData mod in mods)
-		{
-			string relativePath = PathUtilities.GetRelativePath(InstalledModsPath, mod.Folder.Directory.FullName);
-			string mainFolderName = PathUtilities.GetSegments(relativePath, 2).First();
-
-			if (!modsByTopFolder.TryGetValue(mainFolderName, out List<UserQuery.ModData> modsInFolder))
-				modsByTopFolder[mainFolderName] = modsInFolder = new List<UserQuery.ModData>();
-
-			modsInFolder.Add(mod);
-		}
-
-		// get mods in a multi-mod folder
-		HashSet<ModData> modsInGroupFolders = new();
-		foreach (var group in modsByTopFolder)
-		{
-			if (group.Value.Count > 1)
-			{
-				foreach (var mod in group.Value)
-					modsInGroupFolders.Add(mod);
-			}
-		}
-
-		// validate: don't allow normalizing multiple subfolders as separate mods (usually not intended)
-		if (this.NormalizationForFoldersContainingMultipleMods is NormalizeMultipleFolderBehavior.Error)
-		{
-			string[] foldersWithMultipleMods = modsByTopFolder.Where(p => p.Value.Count > 1).Select(p => p.Key).ToArray();
-			if (foldersWithMultipleMods.Any())
-			{
-				foldersWithMultipleMods.Dump("Found folders containing multiple mods, which can't be normalized per current settings.");
-				return;
-			}
-		}
-
-		// normalize
-		foreach (ModData mod in mods)
-		{
-			if (!mod.IsInstalled)
-				continue;
-
-			// get mod info
-			ModFolder folder = mod.Folder;
-			DirectoryInfo actualDir = folder.Directory;
-			string searchFolderName = PathUtilities
-				.GetSegments(folder.Directory.FullName)
-				.Skip(PathUtilities.GetSegments(InstalledModsPath).Length)
-				.First(); // the name of the folder immediately under Mods containing this mod
-			DirectoryInfo searchDir = new DirectoryInfo(Path.Combine(InstalledModsPath, searchFolderName));
-			string relativePath = PathUtilities.GetRelativePath(InstalledModsPath, actualDir.FullName);
-
-			// skip if shouldn't be normalized
-			if (this.NormalizationForFoldersContainingMultipleMods is NormalizeMultipleFolderBehavior.Skip && modsInGroupFolders.Contains(mod))
-				continue;
-
-			// get page url
-			string url = mod.GetModPageUrl(toolkit);
-			foreach (string id in mod.IDs)
-			{
-				if (this.OverrideModPageUrls.TryGetValue(id, out string @override))
-				{
-					url = @override;
-					break;
-				}
-			}
-
-			// normalize
-			if (!relativePath.StartsWith(ModCacheUtilities.TemporaryFolderPrefix))
-			{
-				string newName = null;
-				try
-				{
-					// get preferred name
-					newName = mod.GetRecommendedFolderName();
-					foreach (string id in mod.IDs)
-					{
-						if (this.OverrideFolderNames.TryGetValue(id, out string @override))
-						{
-							newName = @override;
-							break;
-						}
-					}
-
-					// mark unofficial versions
-					if (mod.InstalledVersion.IsPrerelease() && (mod.InstalledVersion.PrereleaseTag.Contains("unofficial") || mod.InstalledVersion.PrereleaseTag.Contains("update")))
-						newName += $" [unofficial]";
-
-					// sanitize name
-					foreach (char ch in Path.GetInvalidFileNameChars())
-					{
-						char replacementChar = ch is '"' && !newName.Contains('\'')
-							? '\'' // special case: change " to ' for readability
-							: '_';
-
-						newName = newName.Replace(ch, replacementChar);
-					}
-
-					// move to new name
-					DirectoryInfo newDir = new DirectoryInfo(Path.Combine(InstalledModsPath, newName));
-					newDir.Parent.Create();
-					if (actualDir.FullName != newDir.FullName)
-					{
-						string newRelativePath = PathUtilities.GetRelativePath(InstalledModsPath, newDir.FullName);
-
-						Console.WriteLine($"   Moving {relativePath} to {newRelativePath}...");
-						if (newDir.Exists)
-						{
-							actualDir.MoveTo(newDir.FullName + "__TEMP");
-							FileUtilities.ForceDelete(newDir);
-						}
-						actualDir.MoveTo(newDir.FullName);
-
-						relativePath = newRelativePath;
-					}
-				}
-				catch (Exception error)
-				{
-					new { error, newName, mod }.Dump("error normalising mod folder");
-				}
-			}
-		}
-
-		// delete empty folders
-		foreach (DirectoryInfo dir in new DirectoryInfo(InstalledModsPath).EnumerateDirectories())
-		{
-			if (this.IsEmptyFolder(dir))
-				FileUtilities.ForceDelete(dir);
 		}
 	}
 
@@ -949,40 +694,6 @@ private string TryFormatVersion(string version)
 		: version?.Trim();
 }
 
-/// <summary>Get whether a folder is empty, ignoring metadata files like the __MACOSX folder.</summary>
-/// <param name="directory">The directory to check.</param>
-private bool IsEmptyFolder(DirectoryInfo directory)
-{
-	foreach (FileSystemInfo info in directory.EnumerateFileSystemInfos())
-	{
-		if (info is DirectoryInfo subdir)
-		{
-			if (subdir.Name == "__MACOSX")
-				continue;
-
-			if (!this.IsEmptyFolder(subdir))
-				return false;
-		}
-		else
-			return false;
-	}
-	
-	return true;
-}
-
-/// <summary>How to normalize folders containing multiple mods.</summary>
-public enum NormalizeMultipleFolderBehavior
-{
-	/// <summary>Log an error and require the user to fix the folder before it's normalized.</summary>
-	Error,
-
-	/// <summary>Move the inner mods out of the folder and normalize those.</summary>
-	Normalize,
-
-	/// <summary>Leave folders containing multiple mods as-is.</summary>
-	Skip
-}
-
 /// <summary>The aggregated data for a mod.</summary>
 class ModData
 {
@@ -1074,37 +785,6 @@ class ModData
 		return this.ApiRecord?.Metadata.Unofficial?.Version;
 	}
 
-	/// <summary>Get the URL to this mod's web page.</summary>
-	/// <param name="toolkit">The mod toolkit with which to build URLs.</param>
-	public string GetModPageUrl(ModToolkit toolkit)
-	{
-		// Nexus ID
-		string nexusId = this.GetModID("Nexus", mustBeInt: true);
-		if (nexusId != null)
-			return toolkit.GetUpdateUrl(ModSiteKey.Nexus, nexusId);
-
-		// ModDrop ID
-		string modDropId = this.GetModID("ModDrop", mustBeInt: true);
-		if (modDropId != null)
-			return toolkit.GetUpdateUrl(ModSiteKey.ModDrop, modDropId);
-
-		// CurseForge key
-		if (this.ApiRecord?.Metadata?.CurseForgeID != null)
-			return toolkit.GetUpdateUrl(ModSiteKey.CurseForge, this.ApiRecord.Metadata.CurseForgeID.ToString());
-
-		// Chucklefish ID
-		string chucklefishId = this.GetModID("Chucklefish", mustBeInt: true);
-		if (chucklefishId != null)
-			return toolkit.GetUpdateUrl(ModSiteKey.Chucklefish, chucklefishId);
-
-		// GitHub key
-		string repo = this.GetModID("GitHub");
-		if (repo != null)
-			return toolkit.GetUpdateUrl(ModSiteKey.GitHub, repo);
-
-		return null;
-	}
-
 	/// <summary>Get the URL to the mod's code repository, if any.</summary>
 	public string GetSourceUrl()
 	{
@@ -1143,13 +823,6 @@ class ModData
 		}
 
 		return dependencies;
-	}
-
-	/// <summary>Get a recommended folder name based on the mod data.</summary>
-	public string GetRecommendedFolderName()
-	{
-		return (this.ApiRecord?.Metadata?.Name ?? this.Folder.DisplayName)
-			?.Replace("&#44;", ",");
 	}
 
 
