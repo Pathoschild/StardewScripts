@@ -231,7 +231,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		10626, // East Scarp (es)
 		25952, // EXP Control (zh)
 		10967, // Extra Fish Information (fr)
-		15717, // Extended Minecart (tr)
 		17027, // Farm Helper (es)
 		12045, // Farmer Helper (ru)
 		12097, // Farmer Helper (tr)
@@ -305,6 +304,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		5329,  // Prismatic Tools (pt)
 		20395, // Prismatic Tools (multiple languages)
 		11407, // Producer Framework Mod (fr)
+		30091, // Reverse Proposal (zh)
 		18010, // Resource Storage (pt)
 		8030,  // Ridgeside Village (es)
 		9942,  // Ridgeside Village (fr)
@@ -346,6 +346,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		7556,  // UI Info Suite (fr)
 		13389, // UI Info Suite (vi)
 		6637,  // Underground Secrets (ru)
+		29832, // Visible Fish (zh)
 		22366, // Visit Mount Vapius (es)
 		17684, // What Are You Missing (vi)
 		25953, // XP Display (zh)
@@ -374,6 +375,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 21264, manifestId: "hootless.BusLocations"),          // Bus Locations
 	new(ModSite.Nexus, 21137, manifestId: "Denifia.BuyRecipes"),             // Buy Cooking Recipes
 	new(ModSite.Nexus, 28591, manifestId: "funnysnek.ChangeCabinType"),      // Change Cabin Type
+	new(ModSite.Nexus, 30204, manifestId: "gaussfire.ConvenientInventory"),  // Convenient Inventory
 	new(ModSite.Nexus, 20781, manifestId: "aedenthorn.CropHarvestBubbles"),  // Crop Harvest Bubbles
 	new(ModSite.Nexus, 20783, manifestId: "aedenthorn.CropVariation"),       // Crop Variation
 	new(ModSite.Nexus, 28109, manifestId: "Aedenthorn.CustomMonsterFloors"), // Custom Dungeon Floors
@@ -451,7 +453,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 366, 2949),    // Siv's Marriage Mod, invalid version "0.0.0"
 	new(ModSite.Nexus, 1048, 3757),   // SmartMod, invalid version "0.0.0"
 	new(ModSite.Nexus, 6284, 28109),  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
-	new(ModSite.Nexus, 18388, 76292), // Van NPC
 	new(ModSite.Nexus, 5881, 26283),  // Void Pendant Replacer, UpdateKeys has {} instead of []
 	new(ModSite.Nexus, 5558, 24942),  // Zen Garden Desert Obelisk, unescaped quote in string
 
