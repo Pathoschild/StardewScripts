@@ -9,7 +9,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 ** Configuration
 *********/
 /// <summary>The absolute path for the compatibility list data file.</summary>
-private const string CompatDataPath = @"E:\source\_Stardew\_SmapiCompatibilityList\data\data.jsonc";
+private const string CompatDataPath = @"E:\source\_Stardew\_SmapiCompatibilityList\data\mods.jsonc";
 
 
 /*********
