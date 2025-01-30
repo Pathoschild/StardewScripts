@@ -67,13 +67,13 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 const string LocalCompatListRepoPath = null;
 
 /// <summary>The directory path in which to store cached mod data and downloads.</summary>
-const string ModDumpPath = @"C:\dev\mod-dump";
+const string ModDumpPath = @"E:\dev\mod-dump";
 
 /// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
 const string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
 
 /// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
-private readonly ModCacheUtilities ModCacheHelper = new(@"C:\dev\mod-dump", InstallModsToPath);
+private readonly ModCacheUtilities ModCacheHelper = new(ModDumpPath, InstallModsToPath);
 
 /// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
 readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
@@ -249,6 +249,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		6693,  // Happy Birthday (pt)
 		9117,  // Happy Birthday (ru)
 		26743, // Happy Home Designer (ru)
+		30646, // Home Barista (es)
 		6111,  // Immersive Characters - Shane (es)
 		12399, // Instant Tool Upgrades (tr)
 		26451, // Iridium Tools Patch (fr)
@@ -260,6 +261,7 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		17797, // Loan Mod (vi)
 		22518, // Lookup Anything (id)
 		18723, // Lookup Anything (vi)
+		30431, // Lookup Anything (vi)
 		10720, // Loved Labels (pl)
 		20568, // Loved Labels (pt)
 		18253, // Love Festival (ru)
@@ -300,10 +302,12 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		14821, // Personal Effects Redux (pt)
 		26441, // Polyamory Sweet (fr)
 		13244, // PPJA (vi)
+		30441, // Predictor (vi)
 		25965, // Predictor (zh)
 		5329,  // Prismatic Tools (pt)
 		20395, // Prismatic Tools (multiple languages)
 		11407, // Producer Framework Mod (fr)
+		31136, // Profession Books (es)
 		30091, // Reverse Proposal (zh)
 		18010, // Resource Storage (pt)
 		8030,  // Ridgeside Village (es)
@@ -346,6 +350,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 		7556,  // UI Info Suite (fr)
 		13389, // UI Info Suite (vi)
 		6637,  // Underground Secrets (ru)
+		30812, // Valley Talk (ru)
+		30572, // Vanilla Plus Professions (ru)
 		29832, // Visible Fish (zh)
 		22366, // Visit Mount Vapius (es)
 		17684, // What Are You Missing (vi)
@@ -375,7 +381,6 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 21264, manifestId: "hootless.BusLocations"),          // Bus Locations
 	new(ModSite.Nexus, 21137, manifestId: "Denifia.BuyRecipes"),             // Buy Cooking Recipes
 	new(ModSite.Nexus, 28591, manifestId: "funnysnek.ChangeCabinType"),      // Change Cabin Type
-	new(ModSite.Nexus, 30204, manifestId: "gaussfire.ConvenientInventory"),  // Convenient Inventory
 	new(ModSite.Nexus, 20781, manifestId: "aedenthorn.CropHarvestBubbles"),  // Crop Harvest Bubbles
 	new(ModSite.Nexus, 20783, manifestId: "aedenthorn.CropVariation"),       // Crop Variation
 	new(ModSite.Nexus, 28109, manifestId: "Aedenthorn.CustomMonsterFloors"), // Custom Dungeon Floors
@@ -408,6 +413,8 @@ readonly ModSearch[] IgnoreForAnalysis = [
 	new(ModSite.Nexus, 8386, manifestId: "Omegasis.SaveAnywhere"),           // Save Anywhere
 	new(ModSite.Nexus, 29377, manifestId: "Platonymous.SeedBag"),            // Seed Bag
 	new(ModSite.Nexus, 22275, manifestId: "Jonqora.ShowItemQuality"),        // Show Item Quality
+	new(ModSite.Nexus, 30635, manifestId: "alphablackwolf.skillPrestige"),   // Skill Prestige
+	new(ModSite.Nexus, 30635, manifestId: "CinderGarde.SpaceCoreSkillAdapter"), // Skill Prestige (SpaceCore Skill Adapter)
 	new(ModSite.Nexus, 22167, manifestId: "aedenthorn.SprinklerMod"),        // Sprinkler Mod
 	new(ModSite.Nexus, 24806, manifestId: "MiphasGrace.SurpriseBaby1"),      // Surprise Pregnancy
 	new(ModSite.Nexus, 23617, manifestId: "Ophaneom.Survivalistic"),         // Survivalist - Hunger and Thirst

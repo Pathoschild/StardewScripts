@@ -45,7 +45,7 @@ private const string GameFolderPath = @"C:\Program Files (x86)\Steam\steamapps\c
 private static string InstalledModsPath => Path.Combine(GameFolderPath, "Mods (test)");
 
 /// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
-private readonly ModCacheUtilities ModCacheHelper = new(@"C:\dev\mod-dump", InstalledModsPath);
+private readonly ModCacheUtilities ModCacheHelper = new(@"E:\dev\mod-dump", InstalledModsPath);
 
 /// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
 const string LocalCompatListRepoPath = null;
@@ -361,8 +361,8 @@ async Task Main()
 	****/
 	Lazy<Task<ModCompatibilityEntry[]>> compatListAsync = new(
 		() => LocalCompatListRepoPath != null
-		? toolkit.GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
-		: toolkit.GetCompatibilityListAsync()
+			? toolkit.GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
+			: toolkit.GetCompatibilityListAsync()
 	);
 	if (this.ShowMissingLocalMods)
 	{
