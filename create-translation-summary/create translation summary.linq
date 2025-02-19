@@ -30,6 +30,12 @@ readonly string[] IgnorePathSubstrings = new[]
 	Path.Combine("bin", "Release")
 };
 
+/// <summary>Override the manifest name for mods if needed.</summary>
+Dictionary<string, string> RenameMods = new()
+{
+	["Pathoschild.CentralStation.Content"] = "Central Station" // defaults to 'Central Station content'
+};
+
 
 /****
 ** Format settings
@@ -357,15 +363,19 @@ private IEnumerable<ModFolder> GetModFolders(DirectoryInfo solutionDir)
 			}
 
 			// find manifest.json
-			FileInfo manifest = modDir.GetFiles("manifest.json").FirstOrDefault();
-			if (manifest == null)
+			FileInfo manifestFile = modDir.GetFiles("manifest.json").FirstOrDefault();
+			if (manifestFile == null)
 			{
 				Console.WriteLine($"Ignored {relativePath}: contains an i18n subfolder, but no manifest.json.");
 				continue;
 			}
 
 			// build mod info
-			string modName = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifest.FullName)).Name;
+			Manifest manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestFile.FullName));
+			string modName = manifest.UniqueId != null
+				? RenameMods.GetValueOrDefault(manifest.UniqueId) ?? manifest.Name
+				: manifest.Name;
+
 			folder = new ModFolder(modDir, relativePath, modName);
 		}
 
@@ -546,8 +556,9 @@ private record ModFolder(DirectoryInfo ModDir, string RelativePath, string ModNa
 private record ModLanguage(string Name, bool Required = true, string Url = null);
 
 /// <summary>The minimal model for a <c>manifest.json</c> file.</summary>
+/// <param name="UniqueId">The mod's unique ID.</param>
 /// <param name="Name">The mod's display name.</param>
-private record Manifest(string Name);
+private record Manifest(string UniqueId, string Name);
 
 /// <summary>The layout to use for the translation summary table.</summary>
 private enum TableStyle
