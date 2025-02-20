@@ -427,5 +427,11 @@
 		// common unrelated links
 		"Pathoschild/SMAPI",
 		"Pathoschild/StardewMods"
-	]
+	],
+
+	/**
+	 * The GitHub or custom source URLs which redirect to a new name.
+	 */
+	"MapSourceLinks": {
+	}
 }

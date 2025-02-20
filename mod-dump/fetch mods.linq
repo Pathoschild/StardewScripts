@@ -1250,6 +1250,7 @@ private string MapSourceLink(IManifest manifest, string repoOrUrl)
 		return null;
 
 	repoOrUrl = repoOrUrl.Trim();
+	repoOrUrl = this.ModOverrides.MapSourceLinks.GetValueOrDefault(repoOrUrl) ?? repoOrUrl;
 
 	if (this.ModOverrides.IgnoreSourceLinks.Contains(repoOrUrl) || (manifest != null && this.ModOverrides.IgnoreSourceLinks.Contains($"{manifest.UniqueID}#{repoOrUrl}")))
 		return null;
@@ -1318,6 +1319,9 @@ private class ModOverridesData
 	/// <remarks>Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL. Either case can be prefixed with a mod ID like 'example.modId#repo' to only apply it to that mod.</remarks>
 	public HashSet<string> IgnoreSourceLinks { get; init; }
 
+	/// <summary>The GitHub or custom source URLs which redirect to a new name.</summary>
+	public Dictionary<string, string> MapSourceLinks { get; init; }
+
 
 	/*********
 	** Public methods
@@ -1349,12 +1353,14 @@ private class ModOverridesData
 
 		// read repo fields
 		var ignoreSourceLinks = new HashSet<string>(rawData["IgnoreSourceLinks"].ToObject<string[]>(), StringComparer.OrdinalIgnoreCase);
+		var mapSourceLinks = new Dictionary<string, string>(rawData["MapSourceLinks"].ToObject<Dictionary<string, string>>(), StringComparer.OrdinalIgnoreCase);
 
 		// build model
 		return new ModOverridesData
 		{
 			IgnoreForAnalysis = ignoreForAnalysis.ToArray(),
-			IgnoreSourceLinks = ignoreSourceLinks
+			IgnoreSourceLinks = ignoreSourceLinks,
+			MapSourceLinks = mapSourceLinks
 		};
 	}
 }
