@@ -1,0 +1,419 @@
+{
+	/**
+	 * The mods to ignore when validating mods or compiling statistics, indexed by site key.
+	 *
+	 * Format:
+	 *  - <mod page ID> [file ID] [@<manifest ID>]
+	 */
+	"IgnoreForAnalysis": {
+		"CurseForge": [
+			// mods marked abandoned
+			308067, // Custom Furniture
+			309743, // Pelican TTS
+			308058, // Plan Importer
+			308062, // Portraiture
+			306738, // PyTK
+			307726, // Seed Bag
+			310737, // Ship From Inventory
+			307654, // The Harp of Yoba
+
+			// reposts with same mod ID
+			"1145447 @cat.betterartisangoodicons",
+
+			// mods which include a copy of another mod for some reason
+			"877227 @Platonymous.PlatoUI", // Plato Warp Menu
+
+			// special cases
+			"868753 4769761" // accidentally uploaded wrong mod
+		],
+		"ModDrop": [
+			/****
+			** Mods
+			****/
+			// mod translations
+			1264767, // Always Raining in the Valley (es)
+			1258337, // East Scarp (es)
+			1190770, // Extra Fish Information (es)
+			1258338, // Juliet and Jessie the Joja Clerks (es)
+			1258750, // Lavril (es)
+			1258746, // Mister Ginger Cat NPC (es)
+			1267948, // Nagito - Custom NPC (es)
+			1264764, // Ridgeside Village (es)
+			1190547, // Stardew Valley Expanded (es)
+			1264765, // The Ranch Expansion Marnie and Jas (es)
+			1264766, // The Robin Romance Mod (es)
+			1258745, // Tristan (es)
+
+			// reposts with the same mod ID
+			"509776 @Adeel.ObjectProgressbars", // Object Progress Bars
+			"509780 @Coll1234567.RunningLate",  // Running Late
+
+			// mods which include a copy of another mod for some reason
+			"1240025 @Cherry.ExpandedPreconditionsUtility", // Little Witch Academia Constanze NPC
+			"1240025 @Cherry.ShopTileFramework",            // Little Witch Academia Constanze NPC
+			"1240025 @Pathoschild.ContentPatcher",          // Little Witch Academia Constanze NPC
+			"1240025 @Platonymous.CustomMusic",             // Little Witch Academia Constanze NPC
+			"1163121 @Cherry.ExpandedPreconditionsUtility", // Little Witch Academia Constanze NPC - (SVE)
+			"1163121 @Cherry.ShopTileFramework",            // Little Witch Academia Constanze NPC - (SVE)
+			"1163121 @Pathoschild.ContentPatcher",          // Little Witch Academia Constanze NPC - (SVE)
+			"1163121 @Platonymous.CustomMusic",             // Little Witch Academia Constanze NPC - (SVE)
+			"793920 @Platonymous.PlatoUI",                  // Plato Warp Menu
+
+			// special cases
+			580803,  // PPJA Home of Abandoned Mods - CFR Conversions
+			624116,  // Sprint Sprint Sprint, replaced by Sprint Sprint
+			1034925, // Better Tappers, duplicate mod page
+
+			/****
+			** Files
+			****/
+			// broken manifest
+			"580762 711129", // A Toned Down Stardew Valley, missing comma
+
+			// legacy pre-standardization content packs (SI = Seasonal Immersion)
+			"811243 820685" // Dutch Farm Buildings, for SI
+		],
+		"Nexus": [
+			/****
+			** Mods
+			****/
+			// mod translations
+			25959, // Advanced Fishing Treasure (zh)
+			23597, // Adventurer's Guild Expanded (es)
+			11463, // Always Raining in the Valley (es)
+			18036, // Alternate Textures (fr)
+			17337, // Ancient History - A Museum Expansion mod (es)
+			7932,  // Animals Need Water (fr)
+			23323, // Better Crafting (id)
+			16289, // Better Juninos (fr)
+			18968, // Better Juninos (uk)
+			20406, // Better Juninos (vh)
+			20767, // Bigger Backpack (es)
+			21548, // Bigger Backpack (vh)
+			29167, // Boss Battles (ru)
+			19337, // Buff Framework - Better Together - SVE Spouse Buffs (vh)
+			11417, // Bug Net (fr)
+			14960, // Bus Locations (fr)
+			15665, // Cape Stardew (es)
+			14724, // Child Age Up (id)
+			5879,  // Child Age Up (zh)
+			18168, // Child to NPC (ru/uk)
+			22514, // Chocobo Valley (es)
+			14119, // CJB Cheats Menu (es)
+			17649, // CJB Cheats Menu (vi)
+			17657, // CJB Cheats Menu (vi)
+			4305,  // Climates of Ferngill (pt)
+			4197,  // Companion NPCs (pt)
+			15932, // Convenient Inventory (pt)
+			14723, // Cooking Skill (ru)
+			9920,  // Crop Regrowth and Perennial Crops (pt)
+			18035, // Customize Anywhere (fr)
+			12968, // Custom NPC Belos (id)
+			5811,  // Custom NPC Riley (de)
+			14548, // Custom NPC Riley (tr)
+			18353, // Custom Spouse Patio Redux (es)
+			11851, // Custom Spouse Patio Redux (zh)
+			20428, // Daily Tasks Report (ru)
+			21168, // Deluxe Grabber Redux (zh)
+			15007, // Deluxe Journal (fr)
+			23825, // Deluxe Journal (ko)
+			25825, // Distant Lands (de)
+			22509, // Distant Lands (es)
+			15908, // Downtown Zuzu (fr)
+			11090, // Downtown Zuzu (it)
+			9901,  // Downtown Zuzu (ru)
+			18313, // Downtown Zuzu (th)
+			20556, // Dusty Overhaul - SVE (es)
+			5396,  // Dwarvish (pt)
+			5428,  // Dwarvish (zh)
+			10626, // East Scarp (es)
+			25952, // EXP Control (zh)
+			10967, // Extra Fish Information (fr)
+			17027, // Farm Helper (es)
+			12045, // Farmer Helper (ru)
+			12097, // Farmer Helper (tr)
+			23394, // Fashion Sense (es)
+			18034, // Fashion Sense (fr)
+			13106, // Festival of the Mundane (zh)
+			28397, // Fishing Trawler (ru)
+			13165, // Fishing Trawler (vi)
+			15286, // Fireworks Festival (zh)
+			6157,  // Garden Village Shops (ru)
+			6500,  // Garden Village Shops (ru)
+			18721, // Generic Mod Config Menu (vi)
+			18722, // Greenhouse Sprinklers (vi)
+			9874,  // Happy Birthday (fr)
+			4693,  // Happy Birthday (pt)
+			6693,  // Happy Birthday (pt)
+			9117,  // Happy Birthday (ru)
+			26743, // Happy Home Designer (ru)
+			30646, // Home Barista (es)
+			6111,  // Immersive Characters - Shane (es)
+			12399, // Instant Tool Upgrades (tr)
+			26451, // Iridium Tools Patch (fr)
+			17798, // Joys of Efficiency (vi)
+			10685, // Juliet and Jessie the Joja Clerks (es)
+			8946,  // Junimo Dialog (pt)
+			11282, // Lavril (es)
+			13866, // Line Sprinklers (fr)
+			17797, // Loan Mod (vi)
+			22518, // Lookup Anything (id)
+			18723, // Lookup Anything (vi)
+			30431, // Lookup Anything (vi)
+			10720, // Loved Labels (pl)
+			20568, // Loved Labels (pt)
+			18253, // Love Festival (ru)
+			18150, // Love Festival (tr)
+			4339,  // Lunar Disturbances (pt)
+			7082,  // Lunar Disturbances (pt)
+			4265,  // Magic (pt)
+			18747, // Magic (vi)
+			18746, // Mana Bar (vi)
+			28680, // Maritime Secrets (zh)
+			25520, // Market Town (zh)
+			15183, // Mermaid Island (es)
+			10804, // Mister Ginger Cat NPC (es)
+			16659, // Mobile Catalogues (vi)
+			10307, // Mobile Phone (pt)
+			16658, // Mobile Phone (vi)
+			11844, // Mobile Phone (zh)
+			20109, // More Lively Sewer Overhaul (ru)
+			15180, // More New Fish (es)
+			16987, // More Rings (ru)
+			18252, // Multiple Spouses (th)
+			10224, // Multiple Spouses (zh)
+			14478, // Never Ending Adventure - NPC Mateo (es)
+			28191, // Never Ending Adventure - NPC Mateo (vi)
+			6295,  // Nice Messages (ru)
+			24505, // Multiplayer Info (de)
+			8928,  // Multiple Spouse Dialogs (tr)
+			25212, // Mutant Rings (X-Men) (vh)
+			15327, // New Years Eve (tr)
+			5551,  // NPC Adventures (ru)
+			8767,  // NPC Adventures (tr)
+			23305, // NPC Map Locations (id)
+			13369, // NPC Map Locations (vi)
+			17659, // NPC Map Locations (vi)
+			14437, // NPC Map Locations (zh)
+			14878, // Ornithologist's Guild (ru)
+			8696,  // Personal Effects Redux (pt)
+			14821, // Personal Effects Redux (pt)
+			26441, // Polyamory Sweet (fr)
+			13244, // PPJA (vi)
+			30441, // Predictor (vi)
+			25965, // Predictor (zh)
+			5329,  // Prismatic Tools (pt)
+			20395, // Prismatic Tools (multiple languages)
+			11407, // Producer Framework Mod (fr)
+			31136, // Profession Books (es)
+			30091, // Reverse Proposal (zh)
+			18010, // Resource Storage (pt)
+			8030,  // Ridgeside Village (es)
+			9942,  // Ridgeside Village (fr)
+			19377, // Ridgeside Village (th)
+			18829, // Ridgeside Village (vi)
+			8170,  // Riley (de)
+			10349, // Robin Romance (es)
+			16432, // Rodney - a new NPC for East Scarp
+			16399, // Self Service (pt)
+			17658, // Self Service (vi)
+			20993, // Self Service for 1.6 (pt)
+			21102, // Self Service for 1.6 (tr)
+			18378, // Shiko NPC (id)
+			18662, // Shopping Show (vi)
+			18453, // Show Birthday (pt)
+			19242, // Socializing Skill (vi)
+			11140, // Spouses in Ginger Island (zh)
+			27012, // Stardew Notifications (pt)
+			20244, // Stardew Notifications (tr)
+			18691, // Stardew Realty (pt)
+			5259,  // Stardew Valley Expanded (de)
+			5272,  // Stardew Valley Expanded (es)
+			5509,  // Stardew Valley Expanded (es)
+			12867, // Stardew Valley Expanded (fr)
+			4206,  // Stardew Valley Expanded (pt)
+			6062,  // Stardew Valley Expanded (tr)
+			6332,  // Stardew Valley Expanded (tr)
+			19243, // Survivalist Skill (vi)
+			29736, // The Love of Cooking (pt)
+			10221, // The Ranch Expansion Marnie and Jas (es)
+			17727, // Time Before Harvest Enhanced (vi)
+			23498, // To-Dew (id)
+			8312,  // Town School Functions (tr)
+			6356,  // Town School Functions (zh)
+			23455, // Tractor Mod (id)
+			17666, // Tree Transplant (vi)
+			10785, // Tristan (es)
+			14398, // Tristan (es)
+			7556,  // UI Info Suite (fr)
+			13389, // UI Info Suite (vi)
+			6637,  // Underground Secrets (ru)
+			30812, // Valley Talk (ru)
+			30572, // Vanilla Plus Professions (ru)
+			29832, // Visible Fish (zh)
+			22366, // Visit Mount Vapius (es)
+			17684, // What Are You Missing (vi)
+			25953, // XP Display (zh)
+
+			// files to drop into another mod's folder
+			18729, // Bun's Datable Jodi Portraits (replaces files in Datable Jodi)
+			14360, // Facelift for CC's Horse Plus (replaces files in CC's Horse Plus)
+
+			// newer versions uploaded to a new page for some reason
+			3941,  // Daily Planner
+			8876,  // Map Editor (replaced by Map Editor Extended with the same mod ID)
+			2676,  // PokeMania
+			3294,  // Sprint Sprint Sprint (replaced by Sprint Sprint)
+
+			// reposts with same mod ID
+			"23271 @ChelseaBingiel.LuckyRabbitsFoot",   // Actually Lucky Rabbit's Foot
+			"24374 @aedenthorn.AdvancedMeleeFramework", // Advanced Melee Framework
+			"19034 @jwdred.AnimalSitter",            // Animal Sitter
+			"22479 @Permamiss.AutoEat",              // Auto-Eat
+			"21264 @hootless.BusLocations",          // Bus Locations
+			"21137 @Denifia.BuyRecipes",             // Buy Cooking Recipes
+			"28591 @funnysnek.ChangeCabinType",      // Change Cabin Type
+			"20781 @aedenthorn.CropHarvestBubbles",  // Crop Harvest Bubbles
+			"20783 @aedenthorn.CropVariation",       // Crop Variation
+			"28109 @Aedenthorn.CustomMonsterFloors", // Custom Dungeon Floors
+			"27888 @aedenthorn.DynamicFlooring",     // Dynamic Flooring
+			"29671 @Zamiel.EatDrinkFromInventory",   // Eat and Drink From Inventory
+			12920,                                   // Extra Map Layers (version for Android by original author)
+			"20910 @aedenthorn.FarmCaveFramework",   // Farm Cave Framework
+			"22201 @barteke22.FishingInfoOverlays",  // Fishing Info Overlays
+			"20726 @aedenthorn.FishSpotBait",        // Fish Spot Bait
+			"11297 @IsaacS.FriendsForever",          // Friends Forever
+			"28324 @aedenthorn.GemIsles",            // Gem Isles
+			"20723 @aedenthorn.GiftRejection",       // Gift Rejection
+			"28351 @atravita.IdentifiableCombinedRings", // Identifiable Combined Rings
+			"21286 @Slothsoft.Informant",            // Informant
+			"21635 @spacechase0.JunimosAcceptCash",  // Junimos Accept Cash
+			"27343 @d5a1lamdtd.MarketTown",          // Market Town
+			"16921 @Chikakoo.Randomizer",            // More Random Edition
+			"27953 @Akane.MotorcycleMod",            // Motorcycle Mod
+			"19817 @Multiplayer.Mod",                // Multiplayer Mod (for mobile)
+			"12369 @KCC.SnS",                        // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
+			"19291 @Omegasis.NightOwl",              // Night Owl
+			"20869 @cat.nofencedecay",               // No Fence Decay
+			"28203 @aedenthorn.ImportMap",           // Object Import Map
+			"27626 @aedenthorn.OutfitSets",          // Outfit Sets
+			"20706 @aedenthorn.PlantAll",            // Plant and Fertilize All
+			"1427 @Mucchan.PrairieKingMadeEasy",     // Prairie King Made Easy
+			"10916 @mizzion.qiexchanger",            // Qi Exchanger
+			"887 @Roc.Reseed",                       // Reseed
+			"28750 @aedenthorn.Restauranteer",       // Restauranteer
+			"28712 @aedenthorn.RobinWorkHours",      // Robin Work Hours
+			1363,                                    // Save Anywhere
+			"8386 @Omegasis.SaveAnywhere",           // Save Anywhere
+			"29377 @Platonymous.SeedBag",            // Seed Bag
+			"22275 @Jonqora.ShowItemQuality",        // Show Item Quality
+			"30635 @alphablackwolf.skillPrestige",   // Skill Prestige
+			"30635 @CinderGarde.SpaceCoreSkillAdapter", // Skill Prestige (SpaceCore Skill Adapter)
+			"22167 @aedenthorn.SprinklerMod",        // Sprinkler Mod
+			"24806 @MiphasGrace.SurpriseBaby1",      // Surprise Pregnancy
+			"23617 @Ophaneom.Survivalistic",         // Survivalist - Hunger and Thirst
+			"22135 @aedenthorn.StatueShorts",        // Statue Shorts
+			"22763 @SpicyKai.Tileman",               // Tileman Challenge
+			"28304 @Cherry.ToolUpgradeCosts",        // Tool Upgrade Costs
+			"28049 @aedenthorn.TrainTracks",         // Train Tracks
+			"23570 @TyoAtrosa.Treeshaker",           // Tree Shaker
+			"1077 @Demiacle.UiModSuite",             // UI Mod Suite
+			19879,                                   // Virtual Keyboard
+			"27425 @VirtualKeyboard",                // Virtual Keyboard
+			"27842 @VirtualKeyboard",                // Virtual Keyboard
+			"24119 @aedenthorn.WikiLinks",           // Wiki Links
+
+			// other
+			10622, // Bulk Staircases (author created a new account to post newer versions)
+			19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
+			19905, // XNB Archive (not a mod)
+
+			/****
+			** Files
+			****/
+			// broken manifests
+			"1632 10352",  // Birthstone Plants, missing comma
+			"4686 19998",  // Clint Removes Apron
+			"19007 78060", // Cooler Inverted Emotes, missing quote
+			"4608 22971",  // DC Burget Krobus for CP
+			"10800 49796", // Dodo's Dwarf replacement
+			"30 279",      // Enemy Health Bars, Storm mod
+			"17346 73218", // Ghosties Wildfood Retexture
+			"18027 75111", // Guinea Pig Pet for Alternative Textures
+			"17279 73016", // Helpful Spouses (pt)
+			"2602 10660",  // katkatpixels Portrait Overhauls, missing UniqueID field in ContentPackFor
+			"5202 22886",  // Minecraft Mobs as Rarecrows, missing quote
+			"237 929",     // No Soil Decay, invalid version "0.0.0"
+			"10463 48639", // Ouranio Recordings Music Pack, Custom Music pack with a SMAPI manifest
+			"7600 36539",  // Pink Tools Recolor, missing quotes in update keys
+			"19572 79639", // Prettier Cherry Tree, empty file
+			"19824 80426", // Roxullinar Cyanillar Fusionillar, various issues
+			"16448 70244", // S
+			"366 2949",    // Siv's Marriage Mod, invalid version "0.0.0"
+			"1048 3757",   // SmartMod, invalid version "0.0.0"
+			"6284 28109",  // Upgraded Seed Maker Fantasy Crops Addon, missing comma
+			"5881 26283",  // Void Pendant Replacer, UpdateKeys has {} instead of []
+			"5558 24942",  // Zen Garden Desert Obelisk, unescaped quote in string
+
+			// utility mods that are part of a larger mod
+			"2677 14752", // Always On Server for Multiplayer > Server Connection Reset
+			"2364 9477",  // Even More Secret Woods > Bush Reset
+			"1008 3858",  // Hope's Farmer Customization Mods > Hope's Character Customization Mods Improved [Demiacle.ExtraHair]
+			"3355 14167", // Village Map Mod > Village Console Commands
+			"20250 @MindMeltMax.SAMLTest", // demo for main mod
+
+			// legacy pre-standardization content packs (ALL = Advanced Location Loader, SI = Seasonal Immersion)
+			"1032 5771",  // Bus Interior Restored for ALL
+			"806 5996",   // Expanded Crevices for ALL
+			"588 3033",   // Extended Cellar for ALL
+			"588 3083",   // Extended Cellar for ALL
+			"1467 5656",  // F-SV Stable for SI
+			"1014 3650",  // Jungle Temple for ALL
+			"864 3149",   // Orbitz for ALL
+			"904 3208",   // Organized Corrosion Detection for ALL
+			"928 4752",   // Seasonal Vanilla Buildings for SI
+			"835 3030",   // VIP Visual Improvement Program for ALL
+			"835 3207",   // VIP Visual Improvement Program for ALL
+			"835 5994",   // VIP Visual Improvement Program for ALL
+			"1593 5998",  // Wax Key for ALL
+
+			// mods which include a copy of another mod for some reason
+			"29038 @alja.CustomCCB",                  // Aurora's Custom Bundles
+			"11228 @cat.betterfruittrees",            // Better Fruit Trees
+			"8097 @Paritee.BetterFarmAnimalVariety",  // Cotton the Sweetest Shopkeeper
+			"26746 @Platonymous.Portraiture",         // Expand Shane's CG events
+			"3496 @Esca.FarmTypeManager",             // Farm Extended
+			"6029 @Cherry.ToolUpgradeCosts",          // Hardew Valley
+			"6029 @jahangmar.LevelingAdjustment",     // Hardew Valley
+			"6029 @jahangmar.LevelingAdjustment2",    // Hardew Valley
+			"8563 @spacechase0.CustomNPCFixes",       // Harvest Valley Farm
+			"16426 @alja.CCCB",                       // Little Harder Community Center Bundles
+			"21954 @alja.CCCB",                       // Moonshine's Moderate Community Center Challange
+			"1692 @Platonymous.CustomElementHandler", // New NPC Alec
+			"1692 @Platonymous.CustomFarming",        // New NPC Alec
+			"1692 @Platonymous.CustomFurniture",      // New NPC Alec
+			"1692 @Platonymous.CustomNPC",            // New NPC Alec
+			"1128 @Advize.GetDressed",                // New Shirts and 2 new Skirts
+			"5004 @zazizu.darkUI",                    // Pathologic
+			"5384 @Platonymous.PlatoUI",              // Plato Warp Menu
+			"19225 @Platonymous.Portraiture",         // Portraiture
+			"11929 @Paritee.BetterFarmAnimalVariety", // -RU- Dark Club
+			"16904 @RukaBravo.portrait.mod.vanilla",  // RukaBravo's portrait mod (actually loads Portraiture.dll)
+			"12069 @Paritee.BetterFarmAnimalVariety", // -RU- Nude Farmer and Swimsuits
+			"20593 @Esca.FarmTypeManager",            // Standard Farm Expanded
+			"9509 @jahangmar.LevelingAdjustment",     // Stardew VallEasy - Easy Gold Everywhere
+			"9509 @jahangmar.LevelingAdjustment2",    // Stardew VallEasy - Easy Gold Everywhere
+
+			// downloads which replace files in other mods
+			"19236 78568",  // Anime Catboy Portrait Mod - Wizard SVE
+			"21191 86404",  // Auto Fish - Deutsch
+			"19698 80076",  // Vanilla Portrait Frame
+
+			// special cases
+			"23235 95378",                     // Daily Item Randomizer (blocked by Nexus antivirus check)
+			"23235 95390",                     // Daily Item Randomizer (blocked by Nexus antivirus check)
+			"9052 @Kryspur.HypnoValleyMantra", // Hypno Valley - Mantra Command (example mod)
+			"12824 79850"                      // Marry Morris (pre-1.6 version is C#, but newer versions are content packs)
+		]
+	}
+}

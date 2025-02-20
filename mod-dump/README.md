@@ -17,9 +17,10 @@ Usage:
 1. [Install SMAPI](https://smapi.io/).
 2. Open the script file in [LINQPad](https://www.linqpad.net).
 3. Edit the "Configuration" options at the top as needed.
-4. Fix the references to `SMAPI.Toolkit.CoreInterfaces.dll` and `SMAPI.Toolkit.dll` in the Stardew
+4. Edit the `mod-overrides.jsonc` file as needed.
+5. Fix the references to `SMAPI.Toolkit.CoreInterfaces.dll` and `SMAPI.Toolkit.dll` in the Stardew
    Valley folder.
-5. Run the script to begin downloading.
+6. Run the script to begin downloading.
 
 The script will handle API rate limits automatically, and will automatically continue from the last
 fetch when run again. The first run may take 2-3 days due to Nexus rate limits.
