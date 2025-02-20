@@ -415,5 +415,17 @@
 			"9052 @Kryspur.HypnoValleyMantra", // Hypno Valley - Mantra Command (example mod)
 			"12824 79850"                      // Marry Morris (pre-1.6 version is C#, but newer versions are content packs)
 		]
-	}
+	},
+
+	/**
+	 * The GitHub or custom source URLs to ignore when auto-detecting the source link for a mod.
+	 *
+	 * Format: repo name (like 'Pathoschild/StardewMods') or custom source URL. Either case can be prefixed with a mod
+	 * ID like 'example.modId#repo' to only apply it to that mod.
+	 */
+	"IgnoreSourceLinks": [
+		// common unrelated links
+		"Pathoschild/SMAPI",
+		"Pathoschild/StardewMods"
+	]
 }

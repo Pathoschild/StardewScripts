@@ -260,7 +260,7 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 		let authorNames = this.GetAuthorNames(manifest, mod)
 		let githubRepo = this.GetGitHubRepo(manifest, mod)
 		let customSourceUrl = githubRepo == null
-			? this.GetCustomSourceUrl(mod)
+			? this.GetCustomSourceUrl(manifest, mod)
 			: null
 
 		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
@@ -378,7 +378,7 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 		let authorNames = this.GetAuthorNames(manifest, mod)
 		let githubRepo = this.GetGitHubRepo(manifest, mod)
 		let customSourceUrl = githubRepo == null
-			? this.GetCustomSourceUrl(mod)
+			? this.GetCustomSourceUrl(manifest, mod)
 			: null
 		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
 
@@ -1174,7 +1174,11 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 		{
 			Match match = Regex.Match(updateKey, @"^GitHub\s*:\s*(.+)");
 			if (match.Success)
-				return match.Groups[1].Value;
+			{
+				string repo = this.MapSourceLink(manifest, match.Groups[1].Value);
+				if (repo is not null)
+					return repo;
+			}
 		}
 	}
 
@@ -1182,15 +1186,12 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 	string description = this.TryGetModDescription(mod);
 	if (!string.IsNullOrWhiteSpace(description))
 	{
-		MatchCollection matches = Regex.Matches(description, @"github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		MatchCollection matches = Regex.Matches(description, @"(?<!help\.)github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
 		foreach (Match match in matches)
 		{
-			string repo = match.Groups[1].Value;
-
-			if (repo.StartsWith("Pathoschild/", StringComparison.OrdinalIgnoreCase))
-				continue; // this is usually not the mod's source link (e.g. links to the Content Patcher docs, or copy/pasted without changing the link)
-
-			return repo;
+			string repo = this.MapSourceLink(manifest, match.Groups[1].Value);
+			if (repo is not null)
+				return repo;
 		}
 	}
 
@@ -1199,8 +1200,9 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 }
 
 /// <summary>Get the custom source code URL for a mod, if available.</summary>
+/// <param name="manifest">The downloaded mod manifest file.</param>
 /// <param name="mod">The mod metadata.</param>
-private string GetCustomSourceUrl(ParsedMod mod)
+private string GetCustomSourceUrl(IManifest manifest, ParsedMod mod)
 {
 	// from mod description
 	string description = this.TryGetModDescription(mod);
@@ -1208,7 +1210,11 @@ private string GetCustomSourceUrl(ParsedMod mod)
 	{
 		Match match = Regex.Match(description, @"(gitlab\.com/[a-z0-9_\-\.]+/[a-z0-9_\-\.]+|sourceforge\.net/p/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
 		if (match.Success)
-			return $"https://{match.Groups[1].Value}";
+		{
+			string url = this.MapSourceLink(manifest, $"https://{match.Groups[1].Value}");
+			if (url is not null)
+				return url;
+		}
 	}
 
 	// none found
@@ -1232,6 +1238,23 @@ private string TryGetModDescription(ParsedMod mod)
 	}
 
 	return null;
+}
+
+/// <summary>Get the source link for a mod after applying the <see cref="ModOverridesData.IgnoreSourceLinks"/> patterns.</summary>
+/// <param name="manifest">The mod manifest.</param>
+/// <param name="repoOrUrl">The GitHub repo name (like 'Pathoschild/SMAPI') or custom source URL to map.</param>
+/// <returns>Returns the source link to use, or <c>null</c> if it should be ignored.
+private string MapSourceLink(IManifest manifest, string repoOrUrl)
+{
+	if (string.IsNullOrWhiteSpace(repoOrUrl))
+		return null;
+
+	repoOrUrl = repoOrUrl.Trim();
+
+	if (this.ModOverrides.IgnoreSourceLinks.Contains(repoOrUrl) || (manifest != null && this.ModOverrides.IgnoreSourceLinks.Contains($"{manifest.UniqueID}#{repoOrUrl}")))
+		return null;
+
+	return repoOrUrl;
 }
 
 /// <summary>Build a human-readable file list for a directory path.</summary>
@@ -1291,6 +1314,10 @@ private class ModOverridesData
 	/// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
 	public ModSearch[] IgnoreForAnalysis { get; init; }
 
+	/// <summary>The GitHub or custom source URLs to ignore when auto-detecting the source link for a mod.</summary>
+	/// <remarks>Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL. Either case can be prefixed with a mod ID like 'example.modId#repo' to only apply it to that mod.</remarks>
+	public HashSet<string> IgnoreSourceLinks { get; init; }
+
 
 	/*********
 	** Public methods
@@ -1320,10 +1347,14 @@ private class ModOverridesData
 			}
 		}
 
+		// read repo fields
+		var ignoreSourceLinks = new HashSet<string>(rawData["IgnoreSourceLinks"].ToObject<string[]>(), StringComparer.OrdinalIgnoreCase);
+
 		// build model
 		return new ModOverridesData
 		{
-			IgnoreForAnalysis = ignoreForAnalysis.ToArray()
+			IgnoreForAnalysis = ignoreForAnalysis.ToArray(),
+			IgnoreSourceLinks = ignoreSourceLinks
 		};
 	}
 }
