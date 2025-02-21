@@ -196,6 +196,7 @@ async Task Main()
 				"none".Dump("SMAPI mods not on the compatibility list");
 		}
 		this.GetCompatibilityListModsNotInCache(modDump, compatList).Dump("Mods on the compatibility list which weren't found on the modding sites");
+		this.GetModsWithSourceNotOnCompatList(mods, compatList).Dump("Mods on the compatibility list whose source repo doesn't match cached data");
 
 		// mod issues
 		Util.RawHtml("<h3>Mod issues</h3>").Dump();
@@ -335,6 +336,92 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 
 		return json + ",";
 	}
+}
+
+/// <summary>Get SMAPI mods with a source URL which isn't on the mod compatibility list.</summary>
+/// <param name="mods">The mods to check.</param>
+/// <param name="compatList">The mod data from the mod compatibility list.</param>
+IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+{
+	// group compatibility list by ID
+	Dictionary<string, ModCompatibilityEntry> compatById = new();
+	foreach (ModCompatibilityEntry entry in compatList)
+	{
+		foreach (string id in entry.ID)
+			compatById[id] = entry;
+	}
+
+	// fetch report
+	const string oldStyle = "text-decoration: line-through;";
+	const string newStyle = "font-weight: bold;";
+	object FormatLink(string url, string text, string format)
+	{
+		return url != null
+			? Util.WithStyle(new Hyperlinq(url, text), format)
+			: "";
+	}
+	return (
+		from mod in mods
+		from folder in mod.ModFolders
+		orderby mod.Name
+
+		where
+			folder.ModType == ModType.Smapi
+			&& !string.IsNullOrWhiteSpace(folder.ModID)
+			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+
+		let compatEntry = compatById.GetValueOrDefault(folder.ModID)
+		where compatEntry is not null
+
+		let manifest = folder.RawFolder.Manifest
+		let githubRepo = this.GetGitHubRepo(manifest, mod)
+		let customSourceUrl = this.GetCustomSourceUrl(manifest, mod)
+
+		let githubRepoMismatch = (
+			githubRepo != null
+			&& !string.Equals(githubRepo.Trim(), compatEntry.GitHubRepo?.Trim(), StringComparison.OrdinalIgnoreCase)
+		)
+		let customSourceMismatch = (
+			customSourceUrl != null
+			&& !string.Equals(customSourceUrl.Trim(), compatEntry.CustomSourceUrl?.Trim(), StringComparison.OrdinalIgnoreCase)
+		)
+
+		where githubRepoMismatch || customSourceMismatch
+
+		select new
+		{
+			ModId = manifest.UniqueID,
+			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
+			SiteName = mod.Name,
+			SiteAuthor = mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
+				? $"{mod.Author}\n({mod.AuthorLabel})"
+				: mod.Author,
+			FileName = folder.DisplayName,
+			FileCategory = folder.Type,
+			GithubRepo = githubRepoMismatch
+				? Util.VerticalRun(
+					FormatLink(compatEntry.GitHubRepo != null ? $"https://github.com/{compatEntry.GitHubRepo}" : null, compatEntry.GitHubRepo, oldStyle),
+					FormatLink(githubRepo != null ? $"https://github.com/{githubRepo}" : null, githubRepo, newStyle)
+				)
+				: "",
+			CustomSourceUrl = customSourceMismatch
+				? Util.VerticalRun(
+					FormatLink(compatEntry.CustomSourceUrl, compatEntry.CustomSourceUrl, oldStyle),
+					FormatLink(customSourceUrl, customSourceUrl, newStyle)
+				)
+				: "",
+			Metadata = Util.OnDemand("expand", () => new
+			{
+				FileId = folder.ID,
+				FileType = folder.ModType,
+				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				Manifest = Util.OnDemand("expand", () => manifest),
+				Mod = Util.OnDemand("expand", () => mod),
+				Folder = Util.OnDemand("expand", () => folder)
+			}),
+		}
+	)
+	.ToArray();
 }
 
 /// <summary>Get SMAPI mods on the compatibility list which have been updated recently.</summary>
@@ -1186,7 +1273,7 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 	string description = this.TryGetModDescription(mod);
 	if (!string.IsNullOrWhiteSpace(description))
 	{
-		MatchCollection matches = Regex.Matches(description, @"(?<!help\.)github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		MatchCollection matches = Regex.Matches(description, @"(?<!help\.|gist\.)github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
 		foreach (Match match in matches)
 		{
 			string repo = this.MapSourceLink(manifest, match.Groups[1].Value);
@@ -1233,14 +1320,14 @@ private string TryGetModDescription(ParsedMod mod)
 
 	// Nexus
 	{
-		if (mod.RawData.TryGetValue("Description", out object rawValue) && rawValue is string description)
+		if (mod.RawData.TryGetValue(nameof(NexusModExport.Description), out object rawValue) && rawValue is string description)
 			return description;
 	}
 
 	return null;
 }
 
-/// <summary>Get the source link for a mod after applying the <see cref="ModOverridesData.IgnoreSourceLinks"/> patterns.</summary>
+/// <summary>Get the source link for a mod after applying the <see cref="ModOverridesData.IgnoreSourceLinks"/>, <see cref="ModOverridesData.IgnoreSourceLinksForSpecificMods"/>, and <see cref="ModOverridesData.MapSourceLinks"/> patterns.</summary>
 /// <param name="manifest">The mod manifest.</param>
 /// <param name="repoOrUrl">The GitHub repo name (like 'Pathoschild/SMAPI') or custom source URL to map.</param>
 /// <returns>Returns the source link to use, or <c>null</c> if it should be ignored.
@@ -1249,10 +1336,17 @@ private string MapSourceLink(IManifest manifest, string repoOrUrl)
 	if (string.IsNullOrWhiteSpace(repoOrUrl))
 		return null;
 
-	repoOrUrl = repoOrUrl.Trim();
-	repoOrUrl = this.ModOverrides.MapSourceLinks.GetValueOrDefault(repoOrUrl) ?? repoOrUrl;
+	repoOrUrl = repoOrUrl.Trim().TrimEnd('/').TrimEnd();
+	
+	// strip .git suffix
+	if (repoOrUrl.EndsWith(".git", true, null))
+		repoOrUrl = repoOrUrl.Substring(0, repoOrUrl.Length - 4).TrimEnd();
 
-	if (this.ModOverrides.IgnoreSourceLinks.Contains(repoOrUrl) || (manifest != null && this.ModOverrides.IgnoreSourceLinks.Contains($"{manifest.UniqueID}#{repoOrUrl}")))
+	// apply overrides
+	repoOrUrl = this.ModOverrides.MapSourceLinks.GetValueOrDefault(repoOrUrl) ?? repoOrUrl;
+	if (this.ModOverrides.IgnoreSourceLinks.Contains(repoOrUrl))
+		return null;
+	if (manifest?.UniqueID != null && this.ModOverrides.IgnoreSourceLinksForSpecificMods.GetValueOrDefault(manifest.UniqueID.Trim())?.Contains(repoOrUrl) is true)
 		return null;
 
 	return repoOrUrl;
@@ -1315,9 +1409,13 @@ private class ModOverridesData
 	/// <summary>Mods to ignore when validating mods or compiling statistics.</summary>
 	public ModSearch[] IgnoreForAnalysis { get; init; }
 
-	/// <summary>The GitHub or custom source URLs to ignore when auto-detecting the source link for a mod.</summary>
-	/// <remarks>Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL. Either case can be prefixed with a mod ID like 'example.modId#repo' to only apply it to that mod.</remarks>
+	/// <summary>The GitHub or custom source URLs to ignore globally when auto-detecting the source link for a mod.</summary>
+	/// <remarks>Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL.</remarks>
 	public HashSet<string> IgnoreSourceLinks { get; init; }
+
+	/// <summary>The GitHub or custom source URLs to ignore for specific mod IDs when auto-detecting the source link for a mod.</summary>
+	/// <remarks>Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL.</remarks>
+	public Dictionary<string, HashSet<string>> IgnoreSourceLinksForSpecificMods { get; init; }
 
 	/// <summary>The GitHub or custom source URLs which redirect to a new name.</summary>
 	public Dictionary<string, string> MapSourceLinks { get; init; }
@@ -1337,7 +1435,7 @@ private class ModOverridesData
 		var rawData = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(json);
 
 		// read ignore for analysis
-		List<ModSearch> ignoreForAnalysis = new();
+		var ignoreForAnalysis = new List<ModSearch>();
 		foreach ((string rawSiteKey, string[] entries) in rawData["IgnoreForAnalysis"].ToObject<Dictionary<string, string[]>>())
 		{
 			if (!Enum.TryParse(rawSiteKey, out ModSite siteKey))
@@ -1351,7 +1449,12 @@ private class ModOverridesData
 			}
 		}
 
-		// read repo fields
+		// read 'ignore source links for specific mods'
+		var ignoreSourceLinksForSpecificMods = new Dictionary<string, HashSet<string>>();
+		foreach ((string modId, string rawRepos) in rawData["IgnoreSourceLinksForSpecificMods"].ToObject<Dictionary<string, string>>())
+			ignoreSourceLinksForSpecificMods[modId] = new HashSet<string>(rawRepos.Split(',', StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
+
+		// read other fields
 		var ignoreSourceLinks = new HashSet<string>(rawData["IgnoreSourceLinks"].ToObject<string[]>(), StringComparer.OrdinalIgnoreCase);
 		var mapSourceLinks = new Dictionary<string, string>(rawData["MapSourceLinks"].ToObject<Dictionary<string, string>>(), StringComparer.OrdinalIgnoreCase);
 
@@ -1360,6 +1463,7 @@ private class ModOverridesData
 		{
 			IgnoreForAnalysis = ignoreForAnalysis.ToArray(),
 			IgnoreSourceLinks = ignoreSourceLinks,
+			IgnoreSourceLinksForSpecificMods = ignoreSourceLinksForSpecificMods,
 			MapSourceLinks = mapSourceLinks
 		};
 	}

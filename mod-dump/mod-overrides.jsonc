@@ -418,20 +418,163 @@
 	},
 
 	/**
-	 * The GitHub or custom source URLs to ignore when auto-detecting the source link for a mod.
+	 * The GitHub or custom source URLs to ignore globally when auto-detecting the source link for a mod.
 	 *
-	 * Format: repo name (like 'Pathoschild/StardewMods') or custom source URL. Either case can be prefixed with a mod
-	 * ID like 'example.modId#repo' to only apply it to that mod.
+	 * Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL.
 	 */
 	"IgnoreSourceLinks": [
 		// common unrelated links
+		"Annosz/UIInfoSuite2",
+		"cjsu/SMAPI",
+		"ClxS/SMAPI",
+		"ModOrganizer2/modorganizer-basic_games",
+		"pardeike/Harmony",
 		"Pathoschild/SMAPI",
-		"Pathoschild/StardewMods"
+		"Pathoschild/SMAPI-ModTranslationClassBuilder",
+		"Pathoschild/StardewMods",
+		"Pathoschild/StardewScripts",
+		"StardewModders/mod-ideas",
+		"StardewModders/mod-translations",
+
+		// repos which don't exist
+		"bwdymods/SDV-Moongates",                 // Moongates
+		"bwdymods/SDV-Sleepovers",                // Sleepovers
+		"bwdymods/SDV-Starbot",                   // Starbot
+		"calebstein1/StardewDisableBuildingFade", // Disable Building Fade
+		"CreeperzEdge/ItemTweaks",                // Item Tweaks
+		"DecidedlyHuman/GiveMeMyCursorBack",      // Give Me My Cursor Back     | merged into monorepo
+		"DecidedlyHuman/PlayerCoordinates",       // Player Coordinates         | merged into monorepo
+		"ebehar/CraftAnything",                   // Craft Anything
+		"ebehar/StardewValley-InfertileSoil",     // Infertile Soil
+		"idermailer/RiverlandFarmButYouNeedToBuildBridges", // Riverland Farm But You Need To Build Bridges
+		"jslattery26/stardew-chest-pooling-v2",   // Chest Pooling V2           | merged into monorepo
+		"Kalthramis/StardewValley",               // Multiplayer Speech Bubbles
+		"LeFauxMatt/CarryChest",                  // Carry Chest                | CurseForge has wrong update key
+		"LeFauxMatt/SDVCustomChores",             // Custom Chores
+		"MattDeDuck/StardewValleyMods",           // Buyable Dwarf Scrolls + Trash Bear Item Helper
+		"moriczgergo/RandomTastes",               // Random Tastes
+		"dawgeth/SDVTwitch",                      // SDV Twitch
+		"NolanEastburn/ProjectS",                 // ProjectS
+		"philosquare/SDVEnergyProtect",           // Energy Protect
+		"busisd/TrackerZoomFix",                  // Foraging Tracker Profession
+		"tlitookilakin/HDPortraits",              // HD Portraits
+		"TobinWilson/PelicanPostalService",       // Pelican Postal Service
+		"tylergibbs2/BattleRoyalley-Year2",       // Battle Royalley Year 2     | merged into monorepo
+		"tylergibbs2/StardewHitboxes",            // Stardew Hitboxes           | merged into monorepo
+		"tylergibbs2/StardewNametags",            // Stardew Nametags           | merged into monorepo
+		"tylergibbs2/StardewValleyRoguelike",     // Stardew Roguelike          | merged into monorepo
+		"Zamiell/AutomaticScreenshotTaker",       // Automatic Screenshot Taker | merged into monorepo
+		"Zamiell/SwapRings"                       // Swap Rings                 | merged into monorepo
 	],
 
 	/**
+	 * The GitHub or custom source URLs to ignore for specific mod IDs when auto-detecting the source link for a mod. These can be comma-delimited.
+	 *
+	 * Entries can be a GitHub repo name (like 'Pathoschild/StardewMods') or custom source URL.
+	 */
+	"IgnoreSourceLinksForSpecificMods": {
+		"Omegasis.AdvancedSaveBackup": "icsharpcode/SharpZipLib",                                    // Advanced Save Backup           | docs
+		"funny-snek.Always_On_Server": "funny-snek/server-bots, funny-snek/run-a-program-discord-bot", // Always On Server             | related tools
+		"pepoluan.ASDFGH": "https://sourceforge.net/p/sdvmod-asdfg, https://sourceforge.net/p/sdvmod-asdfgh, Ilyaki/ArtifactSystemFixed", // Artifact System Drop Framework & Geodes Handler | has multiple repos, older mod's repo
+		"macer.AuroraGSI": "antonpup/Aurora",                                                        // Aurora GSI                     | dependency
+		"Zamiel.AutomaticScreenshotTaker": "Zamiell/image-viewer",                                   // Automatic Screenshot Taker     | related tool
+		"BananaFruit.BulkStaircases": "BananaFruit1492/BulkStaircases",                              // Bulk Staircases                | duplicated repo for some reason
+		"skuldomg.catGifts": "StardewModders/Modding-Ideas",                                         // Cat Gifts                      | unrelated
+		"jslattery26.ChestPoolingV2": "mralbobo/stardew-chest-pooling",                              // Chest Pooling V2               | older mod
+		"Pathoschild.ChestsAnywhere": "VIspReaderUS/AccessChestAnywhere",                            // Chests Anywhere                | older mod
+		"sophie.ConfigurableBundleCosts": "dtomlinson-ga/ConfigurableBundleCosts",                   // Configurable Bundle Costs      | old repo
+		"Vertigon.ConfigurableSpecialOrdersUnlock": "dtomlinson-ga/ConfigurableSpecialOrdersUnlock", // Configural Special Orders Unlock | old repo
+		"prism99.aedenthorn.CustomPictureFrames": "aedenthorn/StardewValleyMods",                    // Custom Picture Frames          | older mod
+		"WojciechGraj.DoomValley": "ozkl/doomgeneric",                                               // Doom Valley                    | related tool
+		"datamancer.DynamicMapTiles": "aedenthorn/StardewValleyMods",                                // Dynamic Map Tiles Continued    | older mod
+		"shanks3042.StardewValleyEasyPrairieKing": "mucchan/sv-mod-prairie-king",                    // Easy Prairie King              | older mod
+		"Thor.EnemyHealthBars": "https://gitlab.com/speeder1/SMAPIHealthbarMod",                     // Enemies Health Bars            | older mod
+		"pepoluan.EvenBetterRNG": "dotnet/runtime, Zoryn4163/SMAPI-Mods",                            // Even Better RNG                | unrelated
+		"selph.ExtraAnimalConfig": "urbanyeti/stardew-better-ranching",                              // Extra Animal Config            | unrelated
+		"prism99.aedenthorn.FarmAnimalHarvestHelper": "aedenthorn/StardewValleyMods",                // Farm Animal Harvest Helper Redux | older mod
+		"atravita.ExpFromMonsterKillsOnFarm": "Annosz/UIInfoSuite2",                                 // Farm Combat Grants XP too      | mod link
+		"mistyspring.farmhousevisits": "misty-spring/FarmhouseVisits",                               // Farmhouse Visits               | merged into monorepo
+		"prism99.aedenthorn.FieldHarvest": "aedenthorn/StardewValleyMods",                           // Field Harvest Redux            | older mod
+		"mori_sensei.FreezeTime": "spacechase0/StardewValleyMods",                                   // Freeze Time Multiplayer        | unrelated link
+		"CF.SMAPI.GameTables": "CyanFireUK/StardewValleyMods",                                       // Game Tables                    | unofficial update
+		"JoXW.GiftTasteHelper": "Just-Chaldea/GiftTasteHelper",                                      // Gift Taste Helper Continued x2 | docs
+		"Kiddles.HASTweaks": "Zoryn4163/SMAPI-Mods",                                                 // Health and Stamina Tweaks      | unrelated
+		"Platonymous.InkStories": "inkle/ink",                                                       // Ink Stories                    | docs
+		"Doomnik.LoanMod": "ellipszist/StardewMods",                                                 // Loan Mod                       | unrelated
+		"mushymato.MachineControlPanel": "focustense/StardewUI",                                     // Machine Control Panel          | unrelated
+		"ceruleandeep.MarketDay": "ChroniclerCherry/stardew-valley-mods",                            // Market Day                     | unrelated
+		"alpeerkaraca.ShowMobHealthBars": "https://gitlab.com/speeder1/SMAPIHealthbarMod",           // Mob Health Bars                | older mod
+		"JoXW.Email": "aedenthorn/StardewValleyMods",                                                // Mobile Phone Continued         | older mod
+		"JoXW.MobileArcade": "aedenthorn/StardewValleyMods",                                         // Mobile Phone Continued         | older mod
+		"JoXW.MobileCalendar": "aedenthorn/StardewValleyMods",                                       // Mobile Phone Continued         | older mod
+		"JoXW.MobileCatalogues": "aedenthorn/StardewValleyMods",                                     // Mobile Phone Continued         | older mod
+		"JoXW.MobilePhone": "aedenthorn/StardewValleyMods",                                          // Mobile Phone Continued         | older mod
+		"JoXW.MobileTelevision": "aedenthorn/StardewValleyMods",                                     // Mobile Phone Continued         | older mod
+		"WisnuNug.MobileUI": "ZaneYork/SMAPI-Android-Installer",                                     // Mobile UI Android              | unrelated
+		"supergato664.Moolah": "aedenthorn/StardewValleyMods",                                       // Moola 1.6 Fix                  | older mod
+		"Nature.NatureInTheValley": "Xytronix/BusLocations",                                         // Nature in the Valley           | unrelated
+		"AairTheGreat.MoreBarnCoopAnimals": "AairTheGreat/StardewValleyMods",                        // More Barn & Coop Animals       | removed from repo
+		"Joco80.MoreWeapons": "MrOxity/MoreWeapons-Source-Code",                                     // More Weapons                   | multiple repos (this one is older)
+		"Pickysaurus.NexusModsButton": "Dphill10827/StardewMods",                                    // Nexus Mods Button              | unrelated
+		"DecidedlyHuman.ClownSharp": "fellowclown/PasserbyCemetery",                                 // Passerby Cemetery              | repo doesn't include C# mod
+		"mishmaash.PauseInMultiplayer": "jorgamun/PauseInMultiplayer",                               // Pause Time in Multiplayer Revived | older mod
+		"Sunken_Lace.PetsEnhancedCode": "SunkenLace/Pets-Enhanced-Mod-Content-Pack-Guide",           // Pets Enhanced                  | docs
+		"DLX.PIF": "https://gitlab.com/delixx/stardew-valley",                                       // PIF - Personal Rooms           | split into its own repo
+		"Platonymous.PlatoTK": "Platonymous/Stardew-Valley-Mods",                                    // PlatoTK                        | not in monorepo
+		"ApryllForever.PolyamorySweetBed": "ApryllForever/PolyamorySweet",                           // Polyamory Sweet - Bed          | in separate repo
+		"ApryllForever.PolyamorySweetKiss": "ApryllForever/PolyamorySweet",                          // Polyamory Sweet - Kiss         | in separate repo
+		"ApryllForever.PolyamorySweetLove": "ApryllForever/PolyamorySweet",                          // Polyamory Sweet - Love         | in separate repo
+		"ApryllForever.PolyamorySweetRooms": "ApryllForever/PolyamorySweet",                         // Polyamory Sweet - Rooms        | in separate repo
+		"ApryllForever.PolyamorySweetWedding": "ApryllForever/PolyamorySweet",                       // Polyamory Sweet - Wedding      | in separate repo
+		"JohnPeters.PublicAccessTV": "https://gitlab.com/kdau/predictivemods",                       // Public Access TV               | older mod
+		"DLX.QuickSave": "https://gitlab.com/delixx/stardew-valley/personal-indoor-farm",            // Quick Save                     | unrelated
+		"kakashigr.RadioactiveTools": "Pathoschild/PrismaticTools",                                  // Radioactive Tools              | unrelated
+		"prism99.aedenthorn.RealNames": "aedenthorn/StardewValleyMods",                              // Realistic Random Names Redux   | older mod
+		"platinummyr.CustomBackpackFramework": "aedenthorn/StardewValleyMods",                       // Return of Custom Backpack Framework | older mod
+		"SixthTitan.SDVWM": "laurensarah2022/SDVWM_Example_Addon",                                   // SDVMM - Real Weather           | docs
+		"SPDSlowFenceDecay": "https://gitlab.com/speeder1/SMAPISprinklerMod",                        // Slower Fence Decay             | unrelated
+		"flqzzzz.SevenDeadlySins-SMAPI": "ricehit/SevenDeadlySins",                                  // Seven Deadly Sins              | empty repo
+		"ricehit.SevenDeadlySinsSAMPI": "ricehit/SevenDeadlySins",                                   // Seven Deadly Sins              | empty repo
+		"7e474181-e1a0-40f9-9c11-d08a3dcefaf3": "ManApart/StardewBinTrackerSite",                    // Shipment Tracker               | repo doesn't include C# mod
+		"Nature.1011108": "8AwA8/StardewValley.SkillfulClothesRevamp",                               // Skillful Clothes Revamp        | repo doesn't include C# code
+		"alphablackwolf.skillPrestige": "drbirbdev/StardewValley, Pet-Slime/StardewValley",          // Skill Prestige                 | unrelated
+		"CinderGarde.SpaceCoreSkillAdapter": "drbirbdev/StardewValley, Pet-Slime/StardewValley",     // Skill Prestige                 | unrelated
+		"mistyspring.spousesisland": "misty-spring/SpousesIsland",                                   // Spouses in Ginger Island       | merged into monorepo
+		"shoaib.stardewaccess": "Flameborn/libspeak, khanshoaib3/libspeechdwrapper, ndarilek/tolk",  // Stardew Access                 | related tools
+		"Slothsoft.Informant.Aquarium": "slothsoft/stardew-informant",                               // Stardew Informant - Aquarium   | older mod
+		"herebecush.SVNotepad": "https://gitlab.com/hbc-mods/stardew-valley",                        // SVNotepad                      | link to repo group
+		"TehPers.Core": "ninject/ninject",                                                           // TehCore                        | docs
+		"mouahrara.TrainStation": "user-attachments/assets, mouahrara/TransportFramework",           // Train Station Iterum           | example code (and broken link) + unrelated
+		"Pereclaw.ukrutilities": "ZaneYork/SMAPI-Android-Installer",                                 // Ukrainizacija (Ukrainian Localization for SDV) | unrelated
+		"prism99.aedenthorn.UndergroundSecrets": "aedenthorn/StardewValleyMods",                     // Underground Secrets            | older mod
+		"DLX.Bundles": "https://gitlab.com/delixx/stardew-valley/personal-indoor-farm",              // Unlockable Bundles             | unrelated
+		"DoubleZ.VirtualKeyboard": "NRTnarathip/SMAPILoader",                                        // Virtual Keyboard               | unrelated
+		"Shockah.XPDisplay": "daleao/modular-overhaul, Pet-Slime/StardewValley"                      // XP Display                     | unrelated
+	},
+
+	/**
 	 * The GitHub or custom source URLs which redirect to a new name.
+	 *
+	 * This is only needed when mod pages still refer to the old name, to avoid being flagged as a discrepency in the fetch-mod reports.
 	 */
 	"MapSourceLinks": {
+		"AlphaMeece/StardewSkillRings": "AlphaMeece/StardewMods",
+		"AndyCrocker/StardewMods": "Sonozuki/StardewMods",
+		"bwdy/SDVModding": "Haphestia/SDVModding",
+		"DespairScent/AlwaysSpecialTitle": "DespairScent-SDV/AlwaysSpecialTitle",
+		"DespairScent/PrecisionWheel": "DespairScent-SDV/PrecisionWheel",
+		"DecidedlyHuman/StardewValleyMods": "AlanDavison/StardewValleyMods",
+		"Dem1se/SDVMods": "nithssh/SDVMods",
+		"JessebotX/StardewMods": "JessebotX/StardewValleyMods",
+		"judeman222/HeartLevelNotifier": "JudeRV/Stardew-HeartLevelNotifier",
+		"khanshoaib3/stardew-access": "stardew-access/stardew-access",
+		"purrplingcat/StardewModsSolution": "purrplingcat/StardewMods",
+
+		"https://gitlab.com/delixx/stardew-valley-coop-cursor": "https://gitlab.com/delixx/stardew-valley/coop-cursor",
+		"https://gitlab.com/delixx/stardew-valley-custom-farm-loader": "https://gitlab.com/delixx/stardew-valley/custom-farm-loader",
+		"https://gitlab.com/delixx/stardew-valley-desert-bloom-farm": "https://gitlab.com/delixx/stardew-valley/desert-bloom-farm",
+		"https://gitlab.com/delixx/stardew-valley-gacha-geodes": "https://gitlab.com/delixx/stardew-valley/gacha-geodes",
+		"https://gitlab.com/delixx/stardew-valley-lenient-window-resize": "https://gitlab.com/delixx/stardew-valley/lenient-window-resize",
+		"https://gitlab.com/delixx/stardew-valley": "https://gitlab.com/delixx/stardew-valley/personal-indoor-farm"
 	}
 }
