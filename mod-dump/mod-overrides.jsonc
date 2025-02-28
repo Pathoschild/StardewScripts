@@ -106,12 +106,12 @@
 			4197,  // Companion NPCs (pt)
 			15932, // Convenient Inventory (pt)
 			14723, // Cooking Skill (ru)
+			31852, // Cook Showdown (en)
 			9920,  // Crop Regrowth and Perennial Crops (pt)
 			18035, // Customize Anywhere (fr)
 			12968, // Custom NPC Belos (id)
 			5811,  // Custom NPC Riley (de)
 			14548, // Custom NPC Riley (tr)
-			18353, // Custom Spouse Patio Redux (es)
 			11851, // Custom Spouse Patio Redux (zh)
 			20428, // Daily Tasks Report (ru)
 			21168, // Deluxe Grabber Redux (zh)
@@ -132,6 +132,7 @@
 			17027, // Farm Helper (es)
 			12045, // Farmer Helper (ru)
 			12097, // Farmer Helper (tr)
+			31935, // Farmhouse Visit (id)
 			23394, // Fashion Sense (es)
 			18034, // Fashion Sense (fr)
 			13106, // Festival of the Mundane (zh)
@@ -171,6 +172,7 @@
 			18746, // Mana Bar (vi)
 			28680, // Maritime Secrets (zh)
 			25520, // Market Town (zh)
+			24445, // Mastery Extended (zh)
 			15183, // Mermaid Island (es)
 			10804, // Mister Ginger Cat NPC (es)
 			16659, // Mobile Catalogues (vi)
@@ -194,11 +196,12 @@
 			23305, // NPC Map Locations (id)
 			13369, // NPC Map Locations (vi)
 			17659, // NPC Map Locations (vi)
-			14437, // NPC Map Locations (zh)
 			14878, // Ornithologist's Guild (ru)
 			8696,  // Personal Effects Redux (pt)
 			14821, // Personal Effects Redux (pt)
 			26441, // Polyamory Sweet (fr)
+			21029, // Polyamory Sweet (pt)
+			31727, // Polyamory Sweet (zh)
 			13244, // PPJA (vi)
 			30441, // Predictor (vi)
 			25965, // Predictor (zh)
@@ -291,6 +294,7 @@
 			"27343 @d5a1lamdtd.MarketTown",          // Market Town
 			"16921 @Chikakoo.Randomizer",            // More Random Edition
 			"27953 @Akane.MotorcycleMod",            // Motorcycle Mod
+			"31365 @aedenthorn.MoveableMailbox",     // Moveable Mailbox (as optional file)
 			"19817 @Multiplayer.Mod",                // Multiplayer Mod (for mobile)
 			"12369 @KCC.SnS",                        // Never Ending Adventure asd Circle of Thorns - NPCs Mateo and Hector
 			"19291 @Omegasis.NightOwl",              // Night Owl
@@ -318,7 +322,6 @@
 			"28049 @aedenthorn.TrainTracks",         // Train Tracks
 			"23570 @TyoAtrosa.Treeshaker",           // Tree Shaker
 			"1077 @Demiacle.UiModSuite",             // UI Mod Suite
-			19879,                                   // Virtual Keyboard
 			"27425 @VirtualKeyboard",                // Virtual Keyboard
 			"27842 @VirtualKeyboard",                // Virtual Keyboard
 			"24119 @aedenthorn.WikiLinks",           // Wiki Links

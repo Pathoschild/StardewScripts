@@ -21,7 +21,7 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 readonly string SolutionFolder = @"E:\source\_Stardew\Mods.Pathoschild";
 
 /// <summary>The relative paths within <see cref="SolutionFolder"/> to ignore when scanning for mod folders, using the system default separators (e.g. <c>\</c> on Windows).</summary>
-readonly string[] IgnoreRelativePaths = new[] { "_archived", "_Archived" };
+readonly string[] IgnoreRelativePaths = new[] { "_archived", "_Archived", "TestDataLayersMod" };
 
 /// <summary>Path substrings within <see cref="SolutionFolder"/> to ignore when scanning for mod folders, using the system default separators (e.g. <c>\</c> on Windows).</summary>
 readonly string[] IgnorePathSubstrings = new[]
