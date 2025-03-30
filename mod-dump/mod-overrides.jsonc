@@ -84,6 +84,7 @@
 			18036, // Alternate Textures (fr)
 			17337, // Ancient History - A Museum Expansion mod (es)
 			7932,  // Animals Need Water (fr)
+			32017, // Auto Forager (zh)
 			23323, // Better Crafting (id)
 			16289, // Better Juninos (fr)
 			18968, // Better Juninos (uk)
@@ -127,6 +128,7 @@
 			5396,  // Dwarvish (pt)
 			5428,  // Dwarvish (zh)
 			10626, // East Scarp (es)
+			32362, // Event Lookup (uk)
 			25952, // EXP Control (zh)
 			10967, // Extra Fish Information (fr)
 			17027, // Farm Helper (es)
@@ -135,6 +137,7 @@
 			31935, // Farmhouse Visit (id)
 			23394, // Fashion Sense (es)
 			18034, // Fashion Sense (fr)
+			32730, // Fast Animations (uk)
 			13106, // Festival of the Mundane (zh)
 			28397, // Fishing Trawler (ru)
 			13165, // Fishing Trawler (vi)
@@ -142,6 +145,7 @@
 			6157,  // Garden Village Shops (ru)
 			6500,  // Garden Village Shops (ru)
 			18721, // Generic Mod Config Menu (vi)
+			32295, // Gift Taste Helper Continued x2 (vh)
 			18722, // Greenhouse Sprinklers (vi)
 			9874,  // Happy Birthday (fr)
 			4693,  // Happy Birthday (pt)
@@ -201,6 +205,7 @@
 			14821, // Personal Effects Redux (pt)
 			26441, // Polyamory Sweet (fr)
 			21029, // Polyamory Sweet (pt)
+			29247, // Polyamory Sweet (zh)
 			31727, // Polyamory Sweet (zh)
 			13244, // PPJA (vi)
 			30441, // Predictor (vi)
@@ -279,6 +284,7 @@
 			"20781 @aedenthorn.CropHarvestBubbles",  // Crop Harvest Bubbles
 			"20783 @aedenthorn.CropVariation",       // Crop Variation
 			"28109 @Aedenthorn.CustomMonsterFloors", // Custom Dungeon Floors
+			"32136 @datamancer.CustomSpouseRooms",   // Custom Spouse Rooms Continued
 			"27888 @aedenthorn.DynamicFlooring",     // Dynamic Flooring
 			"29671 @Zamiel.EatDrinkFromInventory",   // Eat and Drink From Inventory
 			12920,                                   // Extra Map Layers (version for Android by original author)
@@ -481,6 +487,7 @@
 		"pepoluan.ASDFGH": "https://sourceforge.net/p/sdvmod-asdfg, https://sourceforge.net/p/sdvmod-asdfgh, Ilyaki/ArtifactSystemFixed", // Artifact System Drop Framework & Geodes Handler | has multiple repos, older mod's repo
 		"macer.AuroraGSI": "antonpup/Aurora",                                                        // Aurora GSI                     | dependency
 		"Zamiel.AutomaticScreenshotTaker": "Zamiell/image-viewer",                                   // Automatic Screenshot Taker     | related tool
+		"bGames.bGamesPointsMod": "MoisesGodoy17/sensor-steam-react",                                // bGames Points Mod              | related tool
 		"BananaFruit.BulkStaircases": "BananaFruit1492/BulkStaircases",                              // Bulk Staircases                | duplicated repo for some reason
 		"skuldomg.catGifts": "StardewModders/Modding-Ideas",                                         // Cat Gifts                      | unrelated
 		"jslattery26.ChestPoolingV2": "mralbobo/stardew-chest-pooling",                              // Chest Pooling V2               | older mod
@@ -506,6 +513,7 @@
 		"Doomnik.LoanMod": "ellipszist/StardewMods",                                                 // Loan Mod                       | unrelated
 		"mushymato.MachineControlPanel": "focustense/StardewUI",                                     // Machine Control Panel          | unrelated
 		"ceruleandeep.MarketDay": "ChroniclerCherry/stardew-valley-mods",                            // Market Day                     | unrelated
+		"AlanBF.MasteryExtended": "Pet-Slime/StardewValley",                                         // Mastery Extended               | split into polyrepo
 		"alpeerkaraca.ShowMobHealthBars": "https://gitlab.com/speeder1/SMAPIHealthbarMod",           // Mob Health Bars                | older mod
 		"JoXW.Email": "aedenthorn/StardewValleyMods",                                                // Mobile Phone Continued         | older mod
 		"JoXW.MobileArcade": "aedenthorn/StardewValleyMods",                                         // Mobile Phone Continued         | older mod

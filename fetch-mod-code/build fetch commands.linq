@@ -40,7 +40,6 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	// simplify names to avoid `~author` format for main mod + sub-mods
 	["https://github.com/6135/StardewValley.ProfitCalculator.git"] = "ProfitCalculator",
 	["https://github.com/Alphablackwolf/SkillPrestige.git"] = "SkillPrestige",
-	["https://github.com/ApryllForever/PolyamorySweetLove.git"] = "PolyamorySweet",
 	["https://github.com/b-b-blueberry/BlueberryMushroomMachine.git"] = "MushroomPropagator",
 	["https://github.com/b-b-blueberry/CustomCommunityCentre.git"] = "CustomCommunityCentre",
 	["https://github.com/Dawilly/SAAT.git"] = "SAAT",
@@ -50,7 +49,19 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["https://github.com/Floogen/IslandGatherers.git"] = "IslandGatherers",
 	["https://github.com/Floogen/SolidFoundations.git"] = "SolidFoundations",
 	["https://github.com/jltaylor-us/StardewJsonProcessor.git"] = "Json Processor",
-	["https://github.com/slothsoft/stardew-challenger.git"] = "Challenger"
+	["https://github.com/JoXW100/SW_Predictor.git"] = "Predictor",
+	["https://github.com/LeFauxMatt/CustomBush.git"] = "Custom Bush",
+	["https://github.com/slothsoft/stardew-challenger.git"] = "Challenger",
+
+	// simplify names for mods with multiple repos
+	["https://github.com/kqrse/StardewValleyMods-aedenthorn.git"] = "~kqrse (aedenthorn mods)",
+
+	// disambiguate conflicting names
+	["https://github.com/LeFauxMatt/ColorfulChests.git"] = "Colorful Chests (LeFauxMatt)",
+	["https://github.com/spacechase0/ColorfulChests.git"] = "Colorful Chests (spacechase0)",
+
+	["https://github.com/oliverpl/SprintingMod.git"] = "Sprinting (oliverpl)",
+	["https://github.com/thiagomasson/Sprinting.git"] = "Sprinting (thiagomasson)",
 };
 
 /// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
