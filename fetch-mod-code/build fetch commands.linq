@@ -53,6 +53,9 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["https://github.com/slothsoft/stardew-challenger.git"] = "Challenger"
 };
 
+/// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
+const string LocalCompatListRepoPath = null;
+
 
 /*********
 ** Script
@@ -72,7 +75,14 @@ async Task Main()
 	ConsoleHelper.Print("Fetching repository URLs...");
 	{
 		// fetch mods
-		ModCompatibilityEntry[] mods = (await toolkit.GetCompatibilityListAsync()).Where(p => p.ContentPackFor == null).ToArray();
+		ModCompatibilityEntry[] mods = 
+			(
+				LocalCompatListRepoPath != null
+					? await toolkit.GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
+					: await toolkit.GetCompatibilityListAsync()
+			)
+			.Where(p => p.ContentPackFor == null)
+			.ToArray();
 		int totalMods = mods.Length;
 		mods = mods
 			.Where(mod => !this.IgnoreSourceUrls.Contains(mod.GitHubRepo) && !this.IgnoreSourceUrls.Contains(mod.CustomSourceUrl))
