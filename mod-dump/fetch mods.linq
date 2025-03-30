@@ -38,9 +38,9 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 /*********
 ** Configuration
 *********/
-/// <summary>The user agent sent to the mod site APIs.</summary>
-const string UserAgent = "PathoschildModDump/20240901 (+https://github.com/Pathoschild/StardewScripts)";
-
+/*****
+** Authentication
+*****/
 /// <summary>The mod site clients from which to fetch mods.</summary>
 readonly IModSiteClient[] ModSites = new IModSiteClient[]
 {
@@ -63,21 +63,12 @@ readonly IModSiteClient[] ModSites = new IModSiteClient[]
 	)
 };
 
-/// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
-const string LocalCompatListRepoPath = null;
+/// <summary>The user agent sent to the mod site APIs.</summary>
+const string UserAgent = "PathoschildModDump/202504 (+https://github.com/Pathoschild/StardewScripts)";
 
-/// <summary>The directory path in which to store cached mod data and downloads.</summary>
-const string ModDumpPath = @"E:\dev\mod-dump";
-
-/// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
-const string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
-
-/// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
-private readonly ModCacheUtilities ModCacheHelper = new(ModDumpPath, InstallModsToPath);
-
-/// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
-readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
-
+/*****
+** Behavior
+*****/
 /// <summary>Whether to fetch any updated mods from the remote mod sites. If false, the script will skip to analysis with the last cached mods.</summary>
 readonly bool FetchMods = true;
 
@@ -86,6 +77,27 @@ readonly bool DeleteRemovedMods = false; // NOTE: this can instantly delete many
 
 /// <summary>The date from which to list updated mods.</summary>
 readonly DateTimeOffset ListModsUpdatedSince = GetStartOfMonth().AddDays(-3);
+
+/*****
+** Folder paths
+*****/
+/// <summary>The directory path in which to store cached mod data and downloads.</summary>
+const string ModDumpPath = @"E:\dev\mod-dump";
+
+/// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
+const string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
+
+/// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
+readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
+
+/// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
+const string LocalCompatListRepoPath = null;
+
+/*****
+** Internal
+*****/
+/// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
+private readonly ModCacheUtilities ModCacheHelper = new(ModDumpPath, InstallModsToPath);
 
 /// <summary>The maximum age in hours for which a mod export is considered valid.</summary>
 const int MaxExportAge = 5;
