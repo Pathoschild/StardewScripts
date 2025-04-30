@@ -176,9 +176,11 @@
 			18746, // Mana Bar (vi)
 			28680, // Maritime Secrets (zh)
 			25520, // Market Town (zh)
+			31580, // Market Town (zh)
 			24445, // Mastery Extended (zh)
 			15183, // Mermaid Island (es)
 			10804, // Mister Ginger Cat NPC (es)
+			33011, // Mob Health Bars (zh)
 			16659, // Mobile Catalogues (vi)
 			10307, // Mobile Phone (pt)
 			16658, // Mobile Phone (vi)
@@ -188,13 +190,13 @@
 			16987, // More Rings (ru)
 			18252, // Multiple Spouses (th)
 			10224, // Multiple Spouses (zh)
+			33075, // Nature in the Valley (zh)
 			14478, // Never Ending Adventure - NPC Mateo (es)
 			28191, // Never Ending Adventure - NPC Mateo (vi)
 			6295,  // Nice Messages (ru)
 			24505, // Multiplayer Info (de)
 			8928,  // Multiple Spouse Dialogs (tr)
 			25212, // Mutant Rings (X-Men) (vh)
-			15327, // New Years Eve (tr)
 			5551,  // NPC Adventures (ru)
 			8767,  // NPC Adventures (tr)
 			23305, // NPC Map Locations (id)
@@ -205,6 +207,7 @@
 			14821, // Personal Effects Redux (pt)
 			26441, // Polyamory Sweet (fr)
 			21029, // Polyamory Sweet (pt)
+			33115, // Polyamory Sweet (vi)
 			29247, // Polyamory Sweet (zh)
 			31727, // Polyamory Sweet (zh)
 			13244, // PPJA (vi)
@@ -232,6 +235,7 @@
 			18453, // Show Birthday (pt)
 			19242, // Socializing Skill (vi)
 			11140, // Spouses in Ginger Island (zh)
+			33595, // Stardew Druid (pt)
 			27012, // Stardew Notifications (pt)
 			20244, // Stardew Notifications (tr)
 			18691, // Stardew Realty (pt)
@@ -322,7 +326,6 @@
 			"22167 @aedenthorn.SprinklerMod",        // Sprinkler Mod
 			"24806 @MiphasGrace.SurpriseBaby1",      // Surprise Pregnancy
 			"23617 @Ophaneom.Survivalistic",         // Survivalist - Hunger and Thirst
-			"22135 @aedenthorn.StatueShorts",        // Statue Shorts
 			"22763 @SpicyKai.Tileman",               // Tileman Challenge
 			"28304 @Cherry.ToolUpgradeCosts",        // Tool Upgrade Costs
 			"28049 @aedenthorn.TrainTracks",         // Train Tracks
@@ -412,6 +415,7 @@
 			"20593 @Esca.FarmTypeManager",            // Standard Farm Expanded
 			"9509 @jahangmar.LevelingAdjustment",     // Stardew VallEasy - Easy Gold Everywhere
 			"9509 @jahangmar.LevelingAdjustment2",    // Stardew VallEasy - Easy Gold Everywhere
+			"32992 @CF.ChangeHorseSounds",            // Wave125 Motorcycle
 
 			// downloads which replace files in other mods
 			"19236 78568",  // Anime Catboy Portrait Mod - Wizard SVE
@@ -484,8 +488,10 @@
 	"IgnoreSourceLinksForSpecificMods": {
 		"Omegasis.AdvancedSaveBackup": "icsharpcode/SharpZipLib",                                    // Advanced Save Backup           | docs
 		"funny-snek.Always_On_Server": "funny-snek/server-bots, funny-snek/run-a-program-discord-bot", // Always On Server             | related tools
+		"Zeux2K.More_Ancient_Seeds_C": "chsiao58/EvenBetterArtisanGoodIcons",                        // Ancient Seeds Expanded         | mod link
 		"pepoluan.ASDFGH": "https://sourceforge.net/p/sdvmod-asdfg, https://sourceforge.net/p/sdvmod-asdfgh, Ilyaki/ArtifactSystemFixed", // Artifact System Drop Framework & Geodes Handler | has multiple repos, older mod's repo
 		"macer.AuroraGSI": "antonpup/Aurora",                                                        // Aurora GSI                     | dependency
+		"HedgehogTechnologies.AutoTrasher": "jag3dagster/AutoShaker",                                // Auto Trasher                   | old repo name
 		"Zamiel.AutomaticScreenshotTaker": "Zamiell/image-viewer",                                   // Automatic Screenshot Taker     | related tool
 		"bGames.bGamesPointsMod": "MoisesGodoy17/sensor-steam-react",                                // bGames Points Mod              | related tool
 		"BananaFruit.BulkStaircases": "BananaFruit1492/BulkStaircases",                              // Bulk Staircases                | duplicated repo for some reason
@@ -504,8 +510,11 @@
 		"prism99.aedenthorn.FarmAnimalHarvestHelper": "aedenthorn/StardewValleyMods",                // Farm Animal Harvest Helper Redux | older mod
 		"atravita.ExpFromMonsterKillsOnFarm": "Annosz/UIInfoSuite2",                                 // Farm Combat Grants XP too      | mod link
 		"mistyspring.farmhousevisits": "misty-spring/FarmhouseVisits",                               // Farmhouse Visits               | merged into monorepo
+		"com.boneskull.farm-tablet": "Floogen/AlternativeTextures",                                  // Farm Tablet                    | mod link
 		"prism99.aedenthorn.FieldHarvest": "aedenthorn/StardewValleyMods",                           // Field Harvest Redux            | older mod
 		"mori_sensei.FreezeTime": "spacechase0/StardewValleyMods",                                   // Freeze Time Multiplayer        | unrelated link
+		"Abs0rbed.FroggyFilter": "Abs0rbed/FroggyFilter",                                            // Froggy Filter                  | old repo name
+		"HedgehogTechnologies.FullFishingBar": "jag3dagster/AutoShaker",                             // Full Fishing Bar               | old repo name
 		"CF.SMAPI.GameTables": "CyanFireUK/StardewValleyMods",                                       // Game Tables                    | unofficial update
 		"JoXW.GiftTasteHelper": "Just-Chaldea/GiftTasteHelper",                                      // Gift Taste Helper Continued x2 | docs
 		"Kiddles.HASTweaks": "Zoryn4163/SMAPI-Mods",                                                 // Health and Stamina Tweaks      | unrelated
@@ -572,6 +581,7 @@
 		"AlphaMeece/StardewSkillRings": "AlphaMeece/StardewMods",
 		"AndyCrocker/StardewMods": "Sonozuki/StardewMods",
 		"bwdy/SDVModding": "Haphestia/SDVModding",
+		"chiccenFL/StardewValleyMods": "chiccendev/StardewValleyMods",
 		"DespairScent/AlwaysSpecialTitle": "DespairScent-SDV/AlwaysSpecialTitle",
 		"DespairScent/PrecisionWheel": "DespairScent-SDV/PrecisionWheel",
 		"DecidedlyHuman/StardewValleyMods": "AlanDavison/StardewValleyMods",
