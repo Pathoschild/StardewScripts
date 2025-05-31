@@ -1113,9 +1113,34 @@ async Task DownloadAndCacheModDataAsync(ModCache modDump, GenericMod mod, Func<G
 	{
 		foreach (GenericFile file in mod.Files)
 		{
+			// get download sources
+			Queue<Uri> sources;
+			while (true)
+			{
+				try
+				{
+					sources = new Queue<Uri>(await getDownloadLinks(file));
+					break;
+				}
+				catch (Exception ex)
+				{
+					ConsoleHelper.Print($"File {mod.ID} > {file.ID}: could not fetch download links due to an unexpected error.", Severity.Error);
+					new Lazy<Exception>(() => ex).Dump(ex.Message);
+					if (ConsoleHelper.GetChoice("Do you want to [r]etry or [s]kip this file?", ["r", "s"]) == "r")
+						continue;
+					else
+					{
+						ConsoleHelper.Print($"Skipped file.", Severity.Info);
+						sources = null;
+						break;
+					}
+				}
+			}
+			if (sources is null)
+				continue;
+
 			// download file from first working CDN
 			FileInfo localFile = new FileInfo(modDump.GetModFilePath(mod.Site, mod.ID, file));
-			Queue<Uri> sources = new Queue<Uri>(await getDownloadLinks(file));
 			bool skipped = false;
 			while (true)
 			{
