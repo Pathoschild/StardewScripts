@@ -22,6 +22,7 @@
   <Namespace>System.Dynamic</Namespace>
   <Namespace>System.Net</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
+  <Namespace>System.Web</Namespace>
 </Query>
 
 /*
@@ -202,7 +203,7 @@ async Task Main()
 			if (notOnCompatList.Length > 0)
 			{
 				notOnCompatList.Dump("SMAPI mods not on the compatibility list");
-				new Lazy<dynamic>(() => Util.WithStyle(string.Join("\n", notOnCompatList.Select(p => ((Lazy<string>)p.CompatEntry).Value)), "font-family: monospace;")).Dump("SMAPI mods not on the compatibility list (JSON format)");
+				new Lazy<object>(() => Util.RawHtml("<pre>" + HttpUtility.HtmlEncode(string.Join("\n", notOnCompatList.Select(p => ((Lazy<string>)p.CompatEntry).Value))) + "</pre>")).Dump("SMAPI mods not on the compatibility list (JSON format)");
 			}
 			else
 				"none".Dump("SMAPI mods not on the compatibility list");
@@ -345,6 +346,10 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 		// remove empty optional fields
 		json = Regex.Replace(json, @"^\s*""(?:curse|moddrop|source)"": null,?" + Environment.NewLine, "", RegexOptions.Multiline);
 		json = Regex.Replace(json, $",({Environment.NewLine}}})", "$1");
+
+		// indent to match JSON file
+		json = Regex.Replace(json, @"^([\{\}])", "\t\t$1", RegexOptions.Multiline);
+		json = Regex.Replace(json, @"^  """, "\t\t\t\"", RegexOptions.Multiline);
 
 		return json + ",";
 	}
