@@ -82,6 +82,7 @@
 			23597, // Adventurer's Guild Expanded (es)
 			11463, // Always Raining in the Valley (es)
 			18036, // Alternate Textures (fr)
+			34056, // Alternative Textures (vi)
 			17337, // Ancient History - A Museum Expansion mod (es)
 			7932,  // Animals Need Water (fr)
 			32017, // Auto Forager (zh)
@@ -104,6 +105,7 @@
 			17649, // CJB Cheats Menu (vi)
 			17657, // CJB Cheats Menu (vi)
 			4305,  // Climates of Ferngill (pt)
+			34214, // Cobold AI Valley (en)
 			4197,  // Companion NPCs (pt)
 			15932, // Convenient Inventory (pt)
 			14723, // Cooking Skill (ru)
@@ -156,6 +158,7 @@
 			6111,  // Immersive Characters - Shane (es)
 			12399, // Instant Tool Upgrades (tr)
 			26451, // Iridium Tools Patch (fr)
+			34111, // Item Extensions (vi)
 			17798, // Joys of Efficiency (vi)
 			10685, // Juliet and Jessie the Joja Clerks (es)
 			8946,  // Junimo Dialog (pt)
@@ -175,6 +178,7 @@
 			18747, // Magic (vi)
 			18746, // Mana Bar (vi)
 			28680, // Maritime Secrets (zh)
+			33908, // Market Day (vi)
 			25520, // Market Town (zh)
 			31580, // Market Town (zh)
 			24445, // Mastery Extended (zh)
@@ -207,7 +211,7 @@
 			14821, // Personal Effects Redux (pt)
 			26441, // Polyamory Sweet (fr)
 			21029, // Polyamory Sweet (pt)
-			33115, // Polyamory Sweet (vi)
+			33083, // Polyamory Sweet (pt)
 			29247, // Polyamory Sweet (zh)
 			31727, // Polyamory Sweet (zh)
 			13244, // PPJA (vi)
@@ -415,6 +419,7 @@
 			"20593 @Esca.FarmTypeManager",            // Standard Farm Expanded
 			"9509 @jahangmar.LevelingAdjustment",     // Stardew VallEasy - Easy Gold Everywhere
 			"9509 @jahangmar.LevelingAdjustment2",    // Stardew VallEasy - Easy Gold Everywhere
+			"34207 @jltaylor-us.GMCMOptions",         // Water Depth Overlay
 			"32992 @CF.ChangeHorseSounds",            // Wave125 Motorcycle
 
 			// downloads which replace files in other mods
@@ -552,6 +557,7 @@
 		"prism99.aedenthorn.RealNames": "aedenthorn/StardewValleyMods",                              // Realistic Random Names Redux   | older mod
 		"platinummyr.CustomBackpackFramework": "aedenthorn/StardewValleyMods",                       // Return of Custom Backpack Framework | older mod
 		"SixthTitan.SDVWM": "laurensarah2022/SDVWM_Example_Addon",                                   // SDVMM - Real Weather           | docs
+		"chiccen.Skateboard": "aedenthorn/StardewValleyMods",                                        // Skateboard for 1.6             | original repo
 		"SPDSlowFenceDecay": "https://gitlab.com/speeder1/SMAPISprinklerMod",                        // Slower Fence Decay             | unrelated
 		"flqzzzz.SevenDeadlySins-SMAPI": "ricehit/SevenDeadlySins",                                  // Seven Deadly Sins              | empty repo
 		"ricehit.SevenDeadlySinsSAMPI": "ricehit/SevenDeadlySins",                                   // Seven Deadly Sins              | empty repo
