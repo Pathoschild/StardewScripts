@@ -157,6 +157,7 @@
 			30646, // Home Barista (es)
 			6111,  // Immersive Characters - Shane (es)
 			12399, // Instant Tool Upgrades (tr)
+			34713, // Interactive Emotes (zh)
 			26451, // Iridium Tools Patch (fr)
 			34111, // Item Extensions (vi)
 			17798, // Joys of Efficiency (vi)
@@ -215,6 +216,7 @@
 			29247, // Polyamory Sweet (zh)
 			31727, // Polyamory Sweet (zh)
 			13244, // PPJA (vi)
+			34645, // Precise Furniture (zh)
 			30441, // Predictor (vi)
 			25965, // Predictor (zh)
 			5329,  // Prismatic Tools (pt)
@@ -239,6 +241,7 @@
 			18453, // Show Birthday (pt)
 			19242, // Socializing Skill (vi)
 			11140, // Spouses in Ginger Island (zh)
+			34388, // Stardew Debt (zh)
 			33595, // Stardew Druid (pt)
 			27012, // Stardew Notifications (pt)
 			20244, // Stardew Notifications (tr)
@@ -269,6 +272,7 @@
 			29832, // Visible Fish (zh)
 			22366, // Visit Mount Vapius (es)
 			17684, // What Are You Missing (vi)
+			34853, // Wind Effects (zh)
 			25953, // XP Display (zh)
 
 			// files to drop into another mod's folder
@@ -413,13 +417,13 @@
 			"5004 @zazizu.darkUI",                    // Pathologic
 			"5384 @Platonymous.PlatoUI",              // Plato Warp Menu
 			"19225 @Platonymous.Portraiture",         // Portraiture
+			"29369 @spacechase0.GenericModConfigMenu", // Purple Galaxy UI
 			"11929 @Paritee.BetterFarmAnimalVariety", // -RU- Dark Club
 			"16904 @RukaBravo.portrait.mod.vanilla",  // RukaBravo's portrait mod (actually loads Portraiture.dll)
 			"12069 @Paritee.BetterFarmAnimalVariety", // -RU- Nude Farmer and Swimsuits
 			"20593 @Esca.FarmTypeManager",            // Standard Farm Expanded
 			"9509 @jahangmar.LevelingAdjustment",     // Stardew VallEasy - Easy Gold Everywhere
 			"9509 @jahangmar.LevelingAdjustment2",    // Stardew VallEasy - Easy Gold Everywhere
-			"34207 @jltaylor-us.GMCMOptions",         // Water Depth Overlay
 			"32992 @CF.ChangeHorseSounds",            // Wave125 Motorcycle
 
 			// downloads which replace files in other mods
@@ -568,6 +572,7 @@
 		"mistyspring.spousesisland": "misty-spring/SpousesIsland",                                   // Spouses in Ginger Island       | merged into monorepo
 		"shoaib.stardewaccess": "Flameborn/libspeak, khanshoaib3/libspeechdwrapper, ndarilek/tolk",  // Stardew Access                 | related tools
 		"Slothsoft.Informant.Aquarium": "slothsoft/stardew-informant",                               // Stardew Informant - Aquarium   | older mod
+		"dylanjames.storebells": "doodlum/nexusmods-widgets",                                        // Store Entrance Doorbells       | unrelated
 		"herebecush.SVNotepad": "https://gitlab.com/hbc-mods/stardew-valley",                        // SVNotepad                      | link to repo group
 		"TehPers.Core": "ninject/ninject",                                                           // TehCore                        | docs
 		"mouahrara.TrainStation": "user-attachments/assets, mouahrara/TransportFramework",           // Train Station Iterum           | example code (and broken link) + unrelated
