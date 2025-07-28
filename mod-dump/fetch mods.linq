@@ -210,6 +210,7 @@ async Task Main()
 		}
 		this.GetCompatibilityListModsNotInCache(modDump, compatList).Dump("Mods on the compatibility list which weren't found on the modding sites");
 		this.GetModsWithSourceNotOnCompatList(mods, compatList).Dump("Mods on the compatibility list whose source repo doesn't match cached data");
+		this.GetModsMarkedHiddenWhichAreNot(mods, compatList).Dump("Mods on the compatibility list marked deleted/hidden which were found on a mod site");
 
 		// mod issues
 		Util.RawHtml("<h3>Mod issues</h3>").Dump();
@@ -361,7 +362,7 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
 {
 	// group compatibility list by ID
-	Dictionary<string, ModCompatibilityEntry> compatById = new();
+	Dictionary<string, ModCompatibilityEntry> compatById = new(StringComparer.OrdinalIgnoreCase);
 	foreach (ModCompatibilityEntry entry in compatList)
 	{
 		foreach (string id in entry.ID)
@@ -427,6 +428,57 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 					FormatLink(customSourceUrl, customSourceUrl, newStyle)
 				)
 				: "",
+			Metadata = Util.OnDemand("expand", () => new
+			{
+				FileId = folder.ID,
+				FileType = folder.ModType,
+				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				Manifest = Util.OnDemand("expand", () => manifest),
+				Mod = Util.OnDemand("expand", () => mod),
+				Folder = Util.OnDemand("expand", () => folder)
+			}),
+		}
+	)
+	.ToArray();
+}
+
+/// <summary>Get SMAPI mods which are marked deleted or hidden on the mod compatibility list, but which were found on a mod site.</summary>
+/// <param name="mods">The mods to check.</param>
+/// <param name="compatList">The mod data from the mod compatibility list.</param>
+IEnumerable<dynamic> GetModsMarkedHiddenWhichAreNot(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+{
+	// group compatibility list by ID
+	Dictionary<string, ModCompatibilityEntry> compatById = new(StringComparer.OrdinalIgnoreCase);
+	foreach (ModCompatibilityEntry entry in compatList)
+	{
+		foreach (string id in entry.ID)
+			compatById[id] = entry;
+	}
+
+	// fetch report
+	return (
+		from mod in mods
+		from folder in mod.ModFolders
+		orderby mod.Name
+
+		where
+			!string.IsNullOrWhiteSpace(folder.ModID)
+			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+			&& compatById.TryGetValue(folder.ModID, out ModCompatibilityEntry compatEntry)
+			&& compatEntry.Compatibility is { Status: ModCompatibilityStatus.Abandoned, AbandonedReason: ModCompatibilityReasonAbandoned.Deleted or ModCompatibilityReasonAbandoned.Hidden }
+
+		let manifest = folder.RawFolder.Manifest
+
+		select new
+		{
+			ModId = manifest.UniqueID,
+			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
+			SiteName = mod.Name,
+			SiteAuthor = mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
+				? $"{mod.Author}\n({mod.AuthorLabel})"
+				: mod.Author,
+			FileName = folder.DisplayName,
+			FileCategory = folder.Type,
 			Metadata = Util.OnDemand("expand", () => new
 			{
 				FileId = folder.ID,
