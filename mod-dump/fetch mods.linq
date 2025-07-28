@@ -77,7 +77,7 @@ readonly bool FetchMods = true;
 readonly bool DeleteRemovedMods = false; // NOTE: this can instantly delete many mods, which may take a long time to refetch. Consider only enabling it after you double-check the list it prints with it off.
 
 /// <summary>The date from which to list updated mods.</summary>
-readonly DateTimeOffset ListModsUpdatedSince = GetStartOfMonth().AddDays(-3);
+readonly DateTimeOffset ListModsUpdatedSince = GetStartOfMonth().AddDays(-6);
 
 /*****
 ** Folder paths

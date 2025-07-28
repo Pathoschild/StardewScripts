@@ -60,6 +60,8 @@ public IDictionary<string, string> OverrideFolderNames = new Dictionary<string, 
 	["https://github.com/LeFauxMatt/ColorfulChests.git"] = "Colorful Chests (LeFauxMatt)",
 	["https://github.com/spacechase0/ColorfulChests.git"] = "Colorful Chests (spacechase0)",
 
+	["https://github.com/chippokiddo/sdvmods.git"] = "~chippokiddo", // Custom Winter Star Gifts
+
 	["https://github.com/oliverpl/SprintingMod.git"] = "Sprinting (oliverpl)",
 	["https://github.com/thiagomasson/Sprinting.git"] = "Sprinting (thiagomasson)",
 };

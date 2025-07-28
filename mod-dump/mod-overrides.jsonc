@@ -8,14 +8,24 @@
 	"IgnoreForAnalysis": {
 		"CurseForge": [
 			// mods marked abandoned
+			871836, // Better Chests
 			308067, // Custom Furniture
+			871827, // Cycle Tools
+			998273, // FauxCore
+			871839, // Help for Hire
+			307729, // Notes
+			871831, // Ordinary Capsule
 			309743, // Pelican TTS
 			308058, // Plan Importer
 			308062, // Portraiture
 			306738, // PyTK
 			307726, // Seed Bag
 			310737, // Ship From Inventory
+			871829, // Shopping Cart
+			871830, // Smack Dat Scarecrow
+			871828, // Stack Quality (Experimental)
 			307654, // The Harp of Yoba
+			871833, // Too Many Animals
 
 			// reposts with same mod ID
 			"1145447 @cat.betterartisangoodicons",
@@ -30,6 +40,13 @@
 			/****
 			** Mods
 			****/
+			// mods marked abandoned
+			1547210, // Better Chests
+			124612,  // Casks Anywhere
+			1035899, // Dialogue Tester
+			1547213, // FauxCore
+			793905,  // Notes
+
 			// mod translations
 			1264767, // Always Raining in the Valley (es)
 			1258337, // East Scarp (es)
@@ -115,6 +132,7 @@
 			12968, // Custom NPC Belos (id)
 			5811,  // Custom NPC Riley (de)
 			14548, // Custom NPC Riley (tr)
+			18353, // Custom Spouse Patio Redux (es)
 			11851, // Custom Spouse Patio Redux (zh)
 			20428, // Daily Tasks Report (ru)
 			21168, // Deluxe Grabber Redux (zh)
@@ -177,6 +195,7 @@
 			7082,  // Lunar Disturbances (pt)
 			4265,  // Magic (pt)
 			18747, // Magic (vi)
+			35688, // Mail Services Mod (es)
 			18746, // Mana Bar (vi)
 			28680, // Maritime Secrets (zh)
 			33908, // Market Day (vi)
@@ -291,6 +310,7 @@
 			"19034 @jwdred.AnimalSitter",            // Animal Sitter
 			"22479 @Permamiss.AutoEat",              // Auto-Eat
 			"21264 @hootless.BusLocations",          // Bus Locations
+			"36089 @hootless.BusLocations",          // Bus Locations
 			"21137 @Denifia.BuyRecipes",             // Buy Cooking Recipes
 			"28591 @funnysnek.ChangeCabinType",      // Change Cabin Type
 			"20781 @aedenthorn.CropHarvestBubbles",  // Crop Harvest Bubbles
@@ -347,6 +367,7 @@
 			10622, // Bulk Staircases (author created a new account to post newer versions)
 			19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
 			19905, // XNB Archive (not a mod)
+			35344, // bundles 23 mods, a SMAPI log, and random SMAPI internal files (???)
 
 			/****
 			** Files
@@ -521,6 +542,7 @@
 		"mistyspring.farmhousevisits": "misty-spring/FarmhouseVisits",                               // Farmhouse Visits               | merged into monorepo
 		"com.boneskull.farm-tablet": "Floogen/AlternativeTextures",                                  // Farm Tablet                    | mod link
 		"prism99.aedenthorn.FieldHarvest": "aedenthorn/StardewValleyMods",                           // Field Harvest Redux            | older mod
+		"barteke22.FishingInfoOverlays": "Sparky56p/StardewMods",                                    // Fishing Info Overlays          | changed update key accidentally?
 		"mori_sensei.FreezeTime": "spacechase0/StardewValleyMods",                                   // Freeze Time Multiplayer        | unrelated link
 		"Abs0rbed.FroggyFilter": "Abs0rbed/FroggyFilter",                                            // Froggy Filter                  | old repo name
 		"HedgehogTechnologies.FullFishingBar": "jag3dagster/AutoShaker",                             // Full Fishing Bar               | old repo name
@@ -528,10 +550,13 @@
 		"JoXW.GiftTasteHelper": "Just-Chaldea/GiftTasteHelper",                                      // Gift Taste Helper Continued x2 | docs
 		"Kiddles.HASTweaks": "Zoryn4163/SMAPI-Mods",                                                 // Health and Stamina Tweaks      | unrelated
 		"Platonymous.InkStories": "inkle/ink",                                                       // Ink Stories                    | docs
+		"Unidarkshin.LevelExtender": "F1r3w477/Stardew-Level-Extender",                              // Level Extender                 | broken update key
 		"Doomnik.LoanMod": "ellipszist/StardewMods",                                                 // Loan Mod                       | unrelated
 		"mushymato.MachineControlPanel": "focustense/StardewUI",                                     // Machine Control Panel          | unrelated
+		"aedenthorn.RandomNPC": "ChroniclerCherry/stardew-valley-mods, ceruleandeep/CeruleanStardewMods",// Market Day (bundles Random NPC) | unrelated
 		"ceruleandeep.MarketDay": "ChroniclerCherry/stardew-valley-mods",                            // Market Day                     | unrelated
 		"AlanBF.MasteryExtended": "Pet-Slime/StardewValley",                                         // Mastery Extended               | split into polyrepo
+		"acidicNic.SpecialOrdersAnywhere": "spacechase0/StardewValleyMods",                          // Menu Anywhere                  | unrelated
 		"alpeerkaraca.ShowMobHealthBars": "https://gitlab.com/speeder1/SMAPIHealthbarMod",           // Mob Health Bars                | older mod
 		"JoXW.Email": "aedenthorn/StardewValleyMods",                                                // Mobile Phone Continued         | older mod
 		"JoXW.MobileArcade": "aedenthorn/StardewValleyMods",                                         // Mobile Phone Continued         | older mod
@@ -568,6 +593,7 @@
 		"7e474181-e1a0-40f9-9c11-d08a3dcefaf3": "ManApart/StardewBinTrackerSite",                    // Shipment Tracker               | repo doesn't include C# mod
 		"Nature.1011108": "8AwA8/StardewValley.SkillfulClothesRevamp",                               // Skillful Clothes Revamp        | repo doesn't include C# code
 		"alphablackwolf.skillPrestige": "drbirbdev/StardewValley, Pet-Slime/StardewValley",          // Skill Prestige                 | unrelated
+		"alphablackwolf.LuckSkillPrestigeAdapter": "drbirbdev/StardewValley, Pet-Slime/StardewValley",// Skill Prestige                 | unrelated
 		"CinderGarde.SpaceCoreSkillAdapter": "drbirbdev/StardewValley, Pet-Slime/StardewValley",     // Skill Prestige                 | unrelated
 		"mistyspring.spousesisland": "misty-spring/SpousesIsland",                                   // Spouses in Ginger Island       | merged into monorepo
 		"shoaib.stardewaccess": "Flameborn/libspeak, khanshoaib3/libspeechdwrapper, ndarilek/tolk",  // Stardew Access                 | related tools
