@@ -102,15 +102,17 @@
 			34056, // Alternative Textures (vi)
 			17337, // Ancient History - A Museum Expansion mod (es)
 			7932,  // Animals Need Water (fr)
+			36750, // Arcanian Animal Reserve (zh)
 			32017, // Auto Forager (zh)
 			23323, // Better Crafting (id)
 			16289, // Better Juninos (fr)
 			18968, // Better Juninos (uk)
-			20406, // Better Juninos (vh)
+			20406, // Better Juninos (vi)
 			20767, // Bigger Backpack (es)
-			21548, // Bigger Backpack (vh)
+			21548, // Bigger Backpack (vi)
+			36444, // Bigger Backpack (zh)
 			29167, // Boss Battles (ru)
-			19337, // Buff Framework - Better Together - SVE Spouse Buffs (vh)
+			19337, // Buff Framework - Better Together - SVE Spouse Buffs (vi)
 			11417, // Bug Net (fr)
 			14960, // Bus Locations (fr)
 			15665, // Cape Stardew (es)
@@ -159,13 +161,14 @@
 			18034, // Fashion Sense (fr)
 			32730, // Fast Animations (uk)
 			13106, // Festival of the Mundane (zh)
+			36854, // Fishing Info Overlays (pt)
 			28397, // Fishing Trawler (ru)
 			13165, // Fishing Trawler (vi)
 			15286, // Fireworks Festival (zh)
 			6157,  // Garden Village Shops (ru)
 			6500,  // Garden Village Shops (ru)
 			18721, // Generic Mod Config Menu (vi)
-			32295, // Gift Taste Helper Continued x2 (vh)
+			32295, // Gift Taste Helper Continued x2 (vi)
 			18722, // Greenhouse Sprinklers (vi)
 			9874,  // Happy Birthday (fr)
 			4693,  // Happy Birthday (pt)
@@ -195,6 +198,7 @@
 			7082,  // Lunar Disturbances (pt)
 			4265,  // Magic (pt)
 			18747, // Magic (vi)
+			36862, // Magic Stardew (pt)
 			35688, // Mail Services Mod (es)
 			18746, // Mana Bar (vi)
 			28680, // Maritime Secrets (zh)
@@ -220,13 +224,15 @@
 			6295,  // Nice Messages (ru)
 			24505, // Multiplayer Info (de)
 			8928,  // Multiple Spouse Dialogs (tr)
-			25212, // Mutant Rings (X-Men) (vh)
+			25212, // Mutant Rings (X-Men) (vi)
 			5551,  // NPC Adventures (ru)
 			8767,  // NPC Adventures (tr)
 			23305, // NPC Map Locations (id)
+			19757, // NPC Map Locations (ja)
 			13369, // NPC Map Locations (vi)
 			17659, // NPC Map Locations (vi)
 			14878, // Ornithologist's Guild (ru)
+			36827, // Penny Ever After (pt)
 			8696,  // Personal Effects Redux (pt)
 			14821, // Personal Effects Redux (pt)
 			26441, // Polyamory Sweet (fr)
@@ -234,6 +240,7 @@
 			33083, // Polyamory Sweet (pt)
 			29247, // Polyamory Sweet (zh)
 			31727, // Polyamory Sweet (zh)
+			36577, // Polyamory Sweet (zh)
 			13244, // PPJA (vi)
 			34645, // Precise Furniture (zh)
 			30441, // Predictor (vi)
@@ -273,6 +280,7 @@
 			6062,  // Stardew Valley Expanded (tr)
 			6332,  // Stardew Valley Expanded (tr)
 			19243, // Survivalist Skill (vi)
+			35501, // Sword & Sorcery (zh)
 			29736, // The Love of Cooking (pt)
 			10221, // The Ranch Expansion Marnie and Jas (es)
 			17727, // Time Before Harvest Enhanced (vi)
@@ -287,9 +295,12 @@
 			13389, // UI Info Suite (vi)
 			6637,  // Underground Secrets (ru)
 			30812, // Valley Talk (ru)
+			36704, // Vampire Sebastian (en)
 			30572, // Vanilla Plus Professions (ru)
 			29832, // Visible Fish (zh)
 			22366, // Visit Mount Vapius (es)
+			36246, // Warp to Friends (zh)
+			36799, // Wedding Anniversaries (vi)
 			17684, // What Are You Missing (vi)
 			34853, // Wind Effects (zh)
 			25953, // XP Display (zh)
@@ -306,14 +317,12 @@
 
 			// reposts with same mod ID
 			"23271 @ChelseaBingiel.LuckyRabbitsFoot",   // Actually Lucky Rabbit's Foot
-			"24374 @aedenthorn.AdvancedMeleeFramework", // Advanced Melee Framework
 			"19034 @jwdred.AnimalSitter",            // Animal Sitter
 			"22479 @Permamiss.AutoEat",              // Auto-Eat
 			"21264 @hootless.BusLocations",          // Bus Locations
 			"36089 @hootless.BusLocations",          // Bus Locations
 			"21137 @Denifia.BuyRecipes",             // Buy Cooking Recipes
 			"28591 @funnysnek.ChangeCabinType",      // Change Cabin Type
-			"20781 @aedenthorn.CropHarvestBubbles",  // Crop Harvest Bubbles
 			"20783 @aedenthorn.CropVariation",       // Crop Variation
 			"28109 @Aedenthorn.CustomMonsterFloors", // Custom Dungeon Floors
 			"32136 @datamancer.CustomSpouseRooms",   // Custom Spouse Rooms Continued
@@ -322,10 +331,8 @@
 			12920,                                   // Extra Map Layers (version for Android by original author)
 			"20910 @aedenthorn.FarmCaveFramework",   // Farm Cave Framework
 			"22201 @barteke22.FishingInfoOverlays",  // Fishing Info Overlays
-			"20726 @aedenthorn.FishSpotBait",        // Fish Spot Bait
 			"11297 @IsaacS.FriendsForever",          // Friends Forever
 			"28324 @aedenthorn.GemIsles",            // Gem Isles
-			"20723 @aedenthorn.GiftRejection",       // Gift Rejection
 			"28351 @atravita.IdentifiableCombinedRings", // Identifiable Combined Rings
 			"21286 @Slothsoft.Informant",            // Informant
 			"21635 @spacechase0.JunimosAcceptCash",  // Junimos Accept Cash
@@ -347,6 +354,7 @@
 			"28712 @aedenthorn.RobinWorkHours",      // Robin Work Hours
 			1363,                                    // Save Anywhere
 			"8386 @Omegasis.SaveAnywhere",           // Save Anywhere
+			"36813 @Platonymous.ScaleUp",            // Scale Up
 			"29377 @Platonymous.SeedBag",            // Seed Bag
 			"22275 @Jonqora.ShowItemQuality",        // Show Item Quality
 			"30635 @alphablackwolf.skillPrestige",   // Skill Prestige
@@ -367,7 +375,6 @@
 			10622, // Bulk Staircases (author created a new account to post newer versions)
 			19079, // Lusif1's NPC Template (not a mod itself, instructions + template for creating a mod)
 			19905, // XNB Archive (not a mod)
-			35344, // bundles 23 mods, a SMAPI log, and random SMAPI internal files (???)
 
 			/****
 			** Files
@@ -429,6 +436,7 @@
 			"6029 @jahangmar.LevelingAdjustment2",    // Hardew Valley
 			"8563 @spacechase0.CustomNPCFixes",       // Harvest Valley Farm
 			"16426 @alja.CCCB",                       // Little Harder Community Center Bundles
+			"36694 @YS.TeleportMod",                  // Luxurious Yellow Villa
 			"21954 @alja.CCCB",                       // Moonshine's Moderate Community Center Challange
 			"1692 @Platonymous.CustomElementHandler", // New NPC Alec
 			"1692 @Platonymous.CustomFarming",        // New NPC Alec
@@ -436,6 +444,7 @@
 			"1692 @Platonymous.CustomNPC",            // New NPC Alec
 			"1128 @Advize.GetDressed",                // New Shirts and 2 new Skirts
 			"5004 @zazizu.darkUI",                    // Pathologic
+			"35333 @YS.TeleportMod",                  // Pink Sweety Amusement Park
 			"5384 @Platonymous.PlatoUI",              // Plato Warp Menu
 			"19225 @Platonymous.Portraiture",         // Portraiture
 			"29369 @spacechase0.GenericModConfigMenu", // Purple Galaxy UI
@@ -470,6 +479,7 @@
 		"Annosz/UIInfoSuite2",
 		"cjsu/SMAPI",
 		"ClxS/SMAPI",
+		"Floogen/AlternativeTextures",
 		"ModOrganizer2/modorganizer-basic_games",
 		"pardeike/Harmony",
 		"Pathoschild/SMAPI",
@@ -477,6 +487,7 @@
 		"Pathoschild/StardewMods",
 		"Pathoschild/StardewScripts",
 		"StardewModders/mod-ideas",
+		"StardewModders/Modding-Ideas",
 		"StardewModders/mod-translations",
 
 		// repos which don't exist
@@ -519,13 +530,13 @@
 		"Omegasis.AdvancedSaveBackup": "icsharpcode/SharpZipLib",                                    // Advanced Save Backup           | docs
 		"funny-snek.Always_On_Server": "funny-snek/server-bots, funny-snek/run-a-program-discord-bot", // Always On Server             | related tools
 		"Zeux2K.More_Ancient_Seeds_C": "chsiao58/EvenBetterArtisanGoodIcons",                        // Ancient Seeds Expanded         | mod link
+		"HeyImAmethyst.ArsVenefici": "HeyImAmethyst/ArsVeneficiSpellPartModTemplate",                // Ars Venefici                   | not source code
 		"pepoluan.ASDFGH": "https://sourceforge.net/p/sdvmod-asdfg, https://sourceforge.net/p/sdvmod-asdfgh, Ilyaki/ArtifactSystemFixed", // Artifact System Drop Framework & Geodes Handler | has multiple repos, older mod's repo
 		"macer.AuroraGSI": "antonpup/Aurora",                                                        // Aurora GSI                     | dependency
 		"HedgehogTechnologies.AutoTrasher": "jag3dagster/AutoShaker",                                // Auto Trasher                   | old repo name
 		"Zamiel.AutomaticScreenshotTaker": "Zamiell/image-viewer",                                   // Automatic Screenshot Taker     | related tool
 		"bGames.bGamesPointsMod": "MoisesGodoy17/sensor-steam-react",                                // bGames Points Mod              | related tool
 		"BananaFruit.BulkStaircases": "BananaFruit1492/BulkStaircases",                              // Bulk Staircases                | duplicated repo for some reason
-		"skuldomg.catGifts": "StardewModders/Modding-Ideas",                                         // Cat Gifts                      | unrelated
 		"jslattery26.ChestPoolingV2": "mralbobo/stardew-chest-pooling",                              // Chest Pooling V2               | older mod
 		"Pathoschild.ChestsAnywhere": "VIspReaderUS/AccessChestAnywhere",                            // Chests Anywhere                | older mod
 		"sophie.ConfigurableBundleCosts": "dtomlinson-ga/ConfigurableBundleCosts",                   // Configurable Bundle Costs      | old repo
@@ -537,10 +548,10 @@
 		"Thor.EnemyHealthBars": "https://gitlab.com/speeder1/SMAPIHealthbarMod",                     // Enemies Health Bars            | older mod
 		"pepoluan.EvenBetterRNG": "dotnet/runtime, Zoryn4163/SMAPI-Mods",                            // Even Better RNG                | unrelated
 		"selph.ExtraAnimalConfig": "urbanyeti/stardew-better-ranching",                              // Extra Animal Config            | unrelated
+		"selph.ExtraMachineConfig": "NRTnarathip/zombifier-StardewMods",                             // Extra Machine Config           | unrelated
 		"prism99.aedenthorn.FarmAnimalHarvestHelper": "aedenthorn/StardewValleyMods",                // Farm Animal Harvest Helper Redux | older mod
 		"atravita.ExpFromMonsterKillsOnFarm": "Annosz/UIInfoSuite2",                                 // Farm Combat Grants XP too      | mod link
 		"mistyspring.farmhousevisits": "misty-spring/FarmhouseVisits",                               // Farmhouse Visits               | merged into monorepo
-		"com.boneskull.farm-tablet": "Floogen/AlternativeTextures",                                  // Farm Tablet                    | mod link
 		"prism99.aedenthorn.FieldHarvest": "aedenthorn/StardewValleyMods",                           // Field Harvest Redux            | older mod
 		"barteke22.FishingInfoOverlays": "Sparky56p/StardewMods",                                    // Fishing Info Overlays          | changed update key accidentally?
 		"mori_sensei.FreezeTime": "spacechase0/StardewValleyMods",                                   // Freeze Time Multiplayer        | unrelated link
@@ -610,7 +621,7 @@
 	},
 
 	/**
-	 * The GitHub or custom source URLs which redirect to a new name.
+	 * The GitHub or custom source URLs which redirect to or were replaced by a new name.
 	 *
 	 * This is only needed when mod pages still refer to the old name, to avoid being flagged as a discrepency in the fetch-mod reports.
 	 */
@@ -625,6 +636,7 @@
 		"Dem1se/SDVMods": "nithssh/SDVMods",
 		"JessebotX/StardewMods": "JessebotX/StardewValleyMods",
 		"judeman222/HeartLevelNotifier": "JudeRV/Stardew-HeartLevelNotifier",
+		"Kantrip-Mods/StardewMods": "Kantrip-Mods/SDV",
 		"khanshoaib3/stardew-access": "stardew-access/stardew-access",
 		"purrplingcat/StardewModsSolution": "purrplingcat/StardewMods",
 
