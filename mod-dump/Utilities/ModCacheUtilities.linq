@@ -1,6 +1,7 @@
 <Query Kind="Program">
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
 </Query>
@@ -67,9 +68,10 @@ public class ModCacheUtilities
 	/// <summary>Install a mod from the mod dump.</summary>
 	/// <param name="mod">The mod ID to install.</param>
 	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
-	public List<object> TryInstall(string id, string folderNamePrefix = null)
+	/// <param name="compatibilityEntry">If set, the mod data from the compatibility entry to use to help select the correct mod.</param>
+	public List<object> TryInstall(string id, string folderNamePrefix = null, ModCompatibilityEntry compatibilityEntry = null)
 	{
-		TryInstall(id, out List<object> log, folderNamePrefix);
+		TryInstall(id, out List<object> log, folderNamePrefix, compatibilityEntry);
 		return log;
 	}
 
@@ -77,22 +79,21 @@ public class ModCacheUtilities
 	/// <param name="mod">The mod ID to install.</param>
 	/// <param name="log">A formatted list of log messages to display.</param>
 	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
+	/// <param name="compatibilityEntry">If set, the mod data from the compatibility entry to use to help select the correct mod.</param>
 	/// <returns>Returns whether the mod was successfully installed (or was already installed).</returns>
-	public bool TryInstall(string id, out List<object> log, string folderNamePrefix = null)
+	public bool TryInstall(string id, out List<object> log, string folderNamePrefix = null, ModCompatibilityEntry compatibilityEntry = null)
 	{
 		log = new();
 
-		// get latest version from mod dump
-		ParsedFile selectedMod = null;
+		// get candidates
+		List<(ParsedMod Mod, ParsedFile File, ISemanticVersion Version)> candidates = [];
 		{
 			if (!this.ModCacheImpl.IsValueCreated)
 				log.Add(Util.WithStyle("Reading mod dump...", ConsoleHelper.TraceStyle));
 
 			ILookup<string, ParsedMod> modFoldersBySiteId = this.ModFoldersBySiteId.Value;
 
-			// find latest version of the target mod
 			log.Add(Util.WithStyle($"Scanning for ID '{id}'...", ConsoleHelper.TraceStyle));
-			ISemanticVersion latestVersion = null;
 			foreach (ParsedMod modPage in modFoldersBySiteId.SelectMany(p => p))
 			{
 				foreach (ParsedFile modFolder in modPage.ModFolders)
@@ -100,18 +101,61 @@ public class ModCacheUtilities
 					if (!string.Equals(modFolder.ModID, id, StringComparison.OrdinalIgnoreCase) || !SemanticVersion.TryParse(modFolder.Version, out ISemanticVersion curVersion))
 						continue;
 
-					if (latestVersion?.IsOlderThan(curVersion) is false)
-						continue;
-
-					latestVersion = curVersion;
-					selectedMod = modFolder;
+					candidates.Add(
+						(modPage, modFolder, curVersion)
+					);
 				}
 			}
-			if (selectedMod is null)
+		}
+
+		// sort by priority order
+		candidates.Sort((a, b) =>
+		{
+			// official pages first
+			if (compatibilityEntry != null)
 			{
-				log.Add(Util.WithStyle($"No matching mod found in the mod dump.", ConsoleHelper.ErrorStyle));
-				return false;
+				bool left = compatibilityEntry.HasSiteId((ModSiteKey)a.Mod.Site, (int)a.Mod.ID);
+				bool right = compatibilityEntry.HasSiteId((ModSiteKey)b.Mod.Site, (int)b.Mod.ID);
+
+				if (left != right)
+					return right.CompareTo(left);
 			}
+
+			// then by version number
+			if (a.Version != null || b.Version != null)
+			{
+				if (a.Version is null)
+					return 1;
+				if (b.Version is null)
+					return -1;
+
+				int comparison = b.Version.CompareTo(a.Version);
+				if (comparison != 0)
+					return comparison;
+			}
+
+			// then by site ID (lowest first)
+			if (a.Mod.Site == b.Mod.Site)
+				return a.Mod.ID.CompareTo(b.Mod.ID);
+
+			return 0;
+		});
+
+		// select best match
+		ParsedFile selectedMod = candidates.FirstOrDefault().File;
+		if (selectedMod is null)
+		{
+			log.Add(Util.WithStyle($"No matching mod found in the mod dump.", ConsoleHelper.ErrorStyle));
+			return false;
+		}
+		else
+		{
+			log.Add(
+				Util.WithStyle(
+					$"Found {candidates.Count} matches. In priority order:\n" + string.Join("\n", candidates.Select((p, index) => $"  {index + 1}. {p.Mod.Site}:{p.Mod.ID} {p.Mod.Name} -- {p.File.DisplayName} -- {p.Version}")),
+					ConsoleHelper.TraceStyle
+				)
+			);
 		}
 
 		bool success = TryInstall(selectedMod, out var innerLog, folderNamePrefix);

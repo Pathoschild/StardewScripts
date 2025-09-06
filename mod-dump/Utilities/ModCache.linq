@@ -6,6 +6,7 @@
   <Namespace>Newtonsoft.Json</Namespace>
   <Namespace>Newtonsoft.Json.Linq</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Serialization</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
   <Namespace>SevenZip</Namespace>
@@ -349,13 +350,13 @@ private static Dictionary<string, object> CloneToDictionary(object data)
 public enum ModSite
 {
 	/// <summary>The CurseForge site.</summary>
-	CurseForge,
+	CurseForge = ModSiteKey.CurseForge,
 
 	/// <summary>The CurseForge site.</summary>
-	ModDrop,
+	ModDrop = ModSiteKey.ModDrop,
 
 	/// <summary>The Nexus Mods site.</summary>
-	Nexus
+	Nexus = ModSiteKey.Nexus
 }
 
 /// <summary>Metadata for a mod from any mod site.</summary>

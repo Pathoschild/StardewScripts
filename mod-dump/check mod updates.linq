@@ -449,7 +449,7 @@ async Task Main()
 						() => new object[] // returning an array allows collapsing the log in the LINQPad output
 						{
 							Util.WithStyle(
-								Util.VerticalRun(this.ModCacheHelper.TryInstall(requiredId, folderNamePrefix: ModCacheUtilities.TemporaryFolderPrefix)),
+								Util.VerticalRun(this.ModCacheHelper.TryInstall(requiredId, folderNamePrefix: ModCacheUtilities.TemporaryFolderPrefix, compatibilityEntry: compatModsById.Value.GetValueOrDefault(requiredId))),
 								"font-style: monospace; font-size: 0.9em;"
 							)
 						}
