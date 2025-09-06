@@ -359,6 +359,11 @@ async Task Main()
 	/****
 	** Report mods on the compatibility list not installed locally
 	****/
+	// get mods installed locally
+	ISet<string> installedModIds = new HashSet<string>(
+		mods.Select(p => p.Folder.Manifest.UniqueID),
+		StringComparer.InvariantCultureIgnoreCase
+	);
 	Lazy<Task<ModCompatibilityEntry[]>> compatListAsync = new(
 		() => LocalCompatListRepoPath != null
 			? toolkit.GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
@@ -366,12 +371,6 @@ async Task Main()
 	);
 	if (this.ShowMissingLocalMods)
 	{
-		// get mods installed locally
-		ISet<string> localIds = new HashSet<string>(
-			mods.Select(p => p.Folder.Manifest.UniqueID),
-			StringComparer.InvariantCultureIgnoreCase
-		);
-
 		// fetch mods on the compatibility list that aren't installed
 		ModCompatibilityEntry[] compatList = await compatListAsync.Value;
 		var missing =
@@ -389,7 +388,7 @@ async Task Main()
 					&& mod.ContentPackFor == null
 
 					// isn't installed locally
-					&& !mod.ID.Any(id => localIds.Contains(id))
+					&& !mod.ID.Any(id => installedModIds.Contains(id))
 				
 				let links = this.GetReportLinks(mod)
 
@@ -435,12 +434,9 @@ async Task Main()
 				from mod in mods
 				from dependency in mod.GetRequiredDependencies()
 				group mod by dependency into modGroup
+				where !installedModIds.Contains(modGroup.Key)
 
 				let requiredId = modGroup.Key
-				let installed = mods.Any(p => p.IDs.Contains(requiredId))
-
-				where !installed
-
 				let requiredName = compatModsById.Value.GetValueOrDefault(requiredId)?.Name.FirstOrDefault() ?? "???"
 				orderby requiredName
 
