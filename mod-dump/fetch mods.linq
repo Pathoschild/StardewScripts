@@ -94,6 +94,10 @@ readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable(
 /// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
 const string LocalCompatListRepoPath = null;
 
+/// <summary>The full path to the file containing mod data analysis overrides.</summary>
+/// <remarks>This should be the <c>scripts/metadata/mod-analysis-overrides.jsonc</c> file from the <a href="https://github.com/Pathoschild/SmapiCompatibilityList">Pathoschild/SmapiCompatibilityList repo</a>.</remarks>
+const string ModDataOverridesFilePath = @"E:\source\_Stardew\_SmapiCompatibilityList\scripts\metadata\mod-analysis-overrides.jsonc";
+
 /*****
 ** Internal
 *****/
@@ -107,7 +111,6 @@ const int MaxExportAge = 5;
 readonly int ModFetchesPerSave = 10;
 
 /// <summary>The manual overrides for specific mods or source repos when analyzing them with this script.</summary>
-/// <remarks>These are loaded from the adjacent <c>mod-overrides.jsonc</c> file.</remarks>
 private ModOverridesData ModOverrides;
 
 /// <summary>The <see cref="IgnoreForAnalysis"/> entries indexed by mod site/ID, like <c>"Nexus:2400"</c>.</summary>
@@ -131,9 +134,7 @@ async Task Main()
 		.Dump();
 
 	// load mod data file
-	this.ModOverrides = ModOverridesData.LoadFrom(
-		Path.Combine(Path.GetDirectoryName(Util.CurrentQueryPath), "mod-overrides.jsonc")
-	);
+	this.ModOverrides = ModOverridesData.LoadFrom(ModDataOverridesFilePath);
 
 	// build optimized mod search lookup
 	this.IgnoreForAnalysisBySiteId = this.ModOverrides.IgnoreForAnalysis

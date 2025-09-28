@@ -15,9 +15,9 @@ updated incrementally with new and updated mods.
 
 Usage:
 1. [Install SMAPI](https://smapi.io/).
-2. Open the script file in [LINQPad](https://www.linqpad.net).
-3. Edit the "Configuration" options at the top as needed.
-4. Edit the `mod-overrides.jsonc` file as needed.
+2. Fetch the [`Pathoschild/SmapiCompatibilityList` repo](https://github.com/Pathoschild/SmapiCompatibilityList).
+3. Open the script file in [LINQPad](https://www.linqpad.net).
+4. Edit the "Configuration" options at the top as needed.
 5. Fix the references to `SMAPI.Toolkit.CoreInterfaces.dll` and `SMAPI.Toolkit.dll` in the Stardew
    Valley folder.
 6. Run the script to begin downloading.
