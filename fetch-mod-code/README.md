@@ -8,7 +8,7 @@ through mod code and perform analyses.
 3. Open a terminal in your new folder.
 4. Run these commands:
    ```sh
-   # last updated 2025-08-30.
+   # last updated 2025-09-27.
 
    hg clone http://hg.code.sf.net/p/sdvmod-24h-harmony/code "24-Hour Clock Patcher" # 1 mod: 24-Hour Clock Patcher
    hg clone http://hg.code.sf.net/p/sdvmod-damage-overlay/code "Bloody Damage Overlay" # 1 mod: Bloody Damage Overlay
@@ -53,7 +53,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/AdvizeGH/FarmExpansion.git "Farm Expansion" # 1 mod: Farm Expansion
    git clone -q https://github.com/AdvizeGH/GetDressed.git "Get Dressed" # 1 mod: Get Dressed
    git clone -q https://github.com/AdvizeGH/LovedLabels.git "Loved Labels" # 1 mod: Loved Labels
-   git clone -q https://github.com/aedenthorn/StardewValleyMods.git "~aedenthorn" # 240 mods: Additional Mine Maps, Advanced Cooking, Advanced Flute Blocks, Advanced Loot Framework, Advanced Melee Framework, Advanced Menu Positioning, AFK Pause, Alarms, All Chests Menu, Animal Dialogue Framework, Animated Parrot and Perch, Another Jump Mod, April Bug Fix Suite, Bat Form, Bed Tweaks, Bee Paths, Better Elevator, Better Lightning Rods, Birthday Buff, Birthday Friendship, Boss Creatures, Buff Framework, Bulk Animal Purchase, Catalogue Filter, Chess Boards, Coin Collector, Connected Garden Pots, Content Patcher Editor, Cooperative Egg Hunt, Craft and Build from Containers, Craftable Butterfly Hutches, Craftable Terrarium, Crop Growth Info, Crop Harvest Bubbles, Crop Hat, Crop Markers, Crop Variation, Crop Watering Bubbles, Crops Survive Season Change, Custom Achievements, Custom Backpack Framework, Custom Chest Types, Custom Decoration Areas, Custom Dungeon Floors, Custom Fixed Dialogue, Custom Gift Limits, Custom Hay, Custom Locks, Custom Mine Cart Steam, Custom Mounts, Custom Object Production, Custom Ore Nodes, Custom Pet Beds, Custom Picture Frames, Custom Renovations, Custom Resource Clumps, Custom Signs, Custom Spouse Patio, Custom Spouse Patio Redux, Custom Spouse Patio Wizard, Custom Spouse Rooms, Custom Starter Furniture, Custom Starter Package, Custom Toolbar, Custom Tree Tweaks, Custom Wallpaper Framework, Custom Warp Points, Death Tweaks, Dialogue Display Framework, Dialogue New Line, Dialogue Trees, Dino Form, Dreamscape, Dungeon Merchants, Dynamic Flooring, Dynamic Map Tiles, Dynamic Map Tiles Extended, Email App, Emily for Stardew Impact, Enhanced Loot Magnet, Expert Sitting, Extra Map Layers, Familiars, Farm Animal Harvest Helper, Farm Cave Framework, Farmer Helper, Farmer Portraits, Farmer Portraits for 1.6, Field Harvest, Fire Breath, Fish Spot Bait, Fishing Chests Expanded, Floating Garden Pots, Flowing Mine Rocks, Food on the Table, Free Love, Friendly Divorce, Friendship Tweaks, Fruit Tree Shaker, Fruit Tree Tweaks, Furniture Adjustment, Furniture Display Framework, Furniture Placement Tweaks, Furniture Recolor, Galaxy Weapon Choice, Garden Pot Tweaks, Gem Isles, Genie Lamp, Gift Rejection, Groundhog Day, Harvest Seeds, Help Wanted, Here Fishy, Hugs and Kisses, Immersive Scarecrows, Immersive Sprinklers, In-Game SMAPI Log Uploader, Infallible Fishing, Instant Building Construction and Upgrade, Instant Growth Powder, Krobus Roommate Shop, Light Mod, Like a Duck to Water, Livestock Choices, Log Spam Filter, Longer Seasons, Loose Audio Files, Mailbox Menu, Map Editor Extended, Map Teleport, Mayo Mart, Meteor Defence, Mobile Arcade, Mobile Audio Player, Mobile Calendar, Mobile Catalogues, Mobile Phone, Mobile Television, Modify This, Moolah Money Mod, Move Greenhouse Plot, Move It, Moveable Mailbox, Moveable Pet Bowl, Movie Theatre Tweaks, Multi Save, Multiple Floor Farmhouse, Multiple Spouses, Murdercrows, Musical Paths, Napalm Mummies, Night Event Chance Tweak, Non-Random Prairie King, NPC Clothing Framework, Object Import Map, Object Product Display, OK Night Check, Omni Tools, Outfit Sets, Overworld Chests, Pacifist Valley, Painting Display, Partial Hearts, Particle Effects, Pelican xVASynth, Persistent Grange Display, Personal Traveling Cart, Pet Hats, Pipe Irrigation, Placeable Mine Shafts, Planned Parenthood, Plant and Fertilize All, Planter Trees, Play Prairie King With NPCs, Playground Mod, Poop Framework, Prismatic Fire, Prismatic Furniture, Purist Mod, Quest Time Limits, Quick Chest Color, Quick Load, Quick Responses, Quick Responses (1.6 Updated), Quotes, Rainbow Trail, Random NPCs, Realistic Random Names, Resource Storage, Restauranteer, Roasting Marshmallows, Robin Work Hours, Secret Hedge Maze, Seed Info, Seed Maker Tweaks, Self Serve, Sewer Slimes, Show Players Behind Buildings, Simple Screenshots, Sixty-Nine Shirt, Skateboard, Slime Hutch Water Spots, Social Page Order Button, Social Page Order Menu, Sound Effect Replacement, Sound Tweaker, Spoilage, Sprinkler Mod, Stacked Item Icons, Stardew Impact, Stardew Open World, Stardew RPG, Statue Shorts, Submerged Crab Pots, Swim, Take All, Tappable Palm Trees, Tile Transparency, Tool Smart Switch, Train Tracks, Trampoline, Transparent Objects, Trash Can Reactions, Trash Cans On Horse, Treasure Chests Expanded, Underground Secrets, Unique Valley, Utility Grid, Video Player, Wall Planters, Wall Televisions, Watering Can Tweaks, Weapons Ignore Grass, Weather Totem, Wedding Tweaks, Week Starts Sunday, Wiki Links, Wild Flowers, Witcher Mod, Zombie Outbreak
+   git clone -q https://github.com/aedenthorn/StardewValleyMods.git "~aedenthorn" # 241 mods: Additional Mine Maps, Advanced Cooking, Advanced Flute Blocks, Advanced Loot Framework, Advanced Melee Framework, Advanced Menu Positioning, AFK Pause, Alarms, All Chests Menu, Animal Dialogue Framework, Animated Parrot and Perch, Another Jump Mod, April Bug Fix Suite, Bat Form, Bed Tweaks, Bee Paths, Better Elevator, Better Lightning Rods, Birthday Buff, Birthday Friendship, Boss Creatures, Buff Framework, Bulk Animal Purchase, Catalogue Filter, Chess Boards, Coin Collector, Connected Garden Pots, Content Patcher Editor, Cooperative Egg Hunt, Craft and Build from Containers, Craftable Butterfly Hutches, Craftable Terrarium, Crop Growth Info, Crop Harvest Bubbles, Crop Hat, Crop Markers, Crop Variation, Crop Watering Bubbles, Crops Survive Season Change, Custom Achievements, Custom Backpack Framework, Custom Chest Types, Custom Decoration Areas, Custom Dungeon Floors, Custom Fixed Dialogue, Custom Gift Limits, Custom Hay, Custom Locks, Custom Mine Cart Steam, Custom Mounts, Custom Object Production, Custom Ore Nodes, Custom Pet Beds, Custom Picture Frames, Custom Renovations, Custom Resource Clumps, Custom Signs, Custom Spouse Patio, Custom Spouse Patio Redux, Custom Spouse Patio Wizard, Custom Spouse Rooms, Custom Starter Furniture, Custom Starter Package, Custom Toolbar, Custom Tree Tweaks, Custom Wallpaper Framework, Custom Warp Points, Death Tweaks, Dialogue Display Framework, Dialogue New Line, Dialogue Trees, Dino Form, Dreamscape, Dungeon Merchants, Dynamic Flooring, Dynamic Map Tiles, Dynamic Map Tiles Extended, Email App, Emily for Stardew Impact, Enhanced Loot Magnet, Expert Sitting, Extra Map Layers, Familiars, Farm Animal Harvest Helper, Farm Cave Framework, Farmer Helper, Farmer Portraits, Farmer Portraits for 1.6, Field Harvest, Fire Breath, Fish Spot Bait, Fishing Chests Expanded, Floating Garden Pots, Flowing Mine Rocks, Food on the Table, Free Love, Friendly Divorce, Friendship Tweaks, Fruit Tree Shaker, Fruit Tree Tweaks, Furniture Adjustment, Furniture Display Framework, Furniture Placement Tweaks, Furniture Recolor, Galaxy Weapon Choice, Garden Pot Tweaks, Gem Isles, Genie Lamp, Gift Rejection, Groundhog Day, Harvest Seeds, Help Wanted, Here Fishy, Hugs and Kisses, Immersive Scarecrows, Immersive Sprinklers, In-Game SMAPI Log Uploader, Infallible Fishing, Instant Building Construction and Upgrade, Instant Growth Powder, Inventory Indicators, Krobus Roommate Shop, Light Mod, Like a Duck to Water, Livestock Choices, Log Spam Filter, Longer Seasons, Loose Audio Files, Mailbox Menu, Map Editor Extended, Map Teleport, Mayo Mart, Meteor Defence, Mobile Arcade, Mobile Audio Player, Mobile Calendar, Mobile Catalogues, Mobile Phone, Mobile Television, Modify This, Moolah Money Mod, Move Greenhouse Plot, Move It, Moveable Mailbox, Moveable Pet Bowl, Movie Theatre Tweaks, Multi Save, Multiple Floor Farmhouse, Multiple Spouses, Murdercrows, Musical Paths, Napalm Mummies, Night Event Chance Tweak, Non-Random Prairie King, NPC Clothing Framework, Object Import Map, Object Product Display, OK Night Check, Omni Tools, Outfit Sets, Overworld Chests, Pacifist Valley, Painting Display, Partial Hearts, Particle Effects, Pelican xVASynth, Persistent Grange Display, Personal Traveling Cart, Pet Hats, Pipe Irrigation, Placeable Mine Shafts, Planned Parenthood, Plant and Fertilize All, Planter Trees, Play Prairie King With NPCs, Playground Mod, Poop Framework, Prismatic Fire, Prismatic Furniture, Purist Mod, Quest Time Limits, Quick Chest Color, Quick Load, Quick Responses, Quick Responses (1.6 Updated), Quotes, Rainbow Trail, Random NPCs, Realistic Random Names, Resource Storage, Restauranteer, Roasting Marshmallows, Robin Work Hours, Secret Hedge Maze, Seed Info, Seed Maker Tweaks, Self Serve, Sewer Slimes, Show Players Behind Buildings, Simple Screenshots, Sixty-Nine Shirt, Skateboard, Slime Hutch Water Spots, Social Page Order Button, Social Page Order Menu, Sound Effect Replacement, Sound Tweaker, Spoilage, Sprinkler Mod, Stacked Item Icons, Stardew Impact, Stardew Open World, Stardew RPG, Statue Shorts, Submerged Crab Pots, Swim, Take All, Tappable Palm Trees, Tile Transparency, Tool Smart Switch, Train Tracks, Trampoline, Transparent Objects, Trash Can Reactions, Trash Cans On Horse, Treasure Chests Expanded, Underground Secrets, Unique Valley, Utility Grid, Video Player, Wall Planters, Wall Televisions, Watering Can Tweaks, Weapons Ignore Grass, Weather Totem, Wedding Tweaks, Week Starts Sunday, Wiki Links, Wild Flowers, Witcher Mod, Zombie Outbreak
    git clone -q https://github.com/aEnigmatic/ConvenientChests.git "Convenient Chests" # 1 mod: Convenient Chests
    git clone -q https://github.com/aeremyns/AdoptWithKrobus.git "Adopt With Krobus" # 1 mod: Adopt With Krobus
    git clone -q https://github.com/aeremyns/GNMTokensMod.git "Gender Neutrality Mod Tokens" # 1 mod: Gender Neutrality Mod Tokens
@@ -98,6 +98,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/AnotherPillow/No-Meteors.git "No Meteors" # 1 mod: No Meteors
    git clone -q https://github.com/AnotherPillow/NoGreenRain.git "No Green Rain" # 1 mod: No Green Rain
    git clone -q https://github.com/AnotherPillow/RelocateSaves.git "Relocate Saves" # 1 mod: Relocate Saves
+   git clone -q https://github.com/AnotherPillow/SummitPatches.git "Summit Patches" # 1 mod: Summit Patches
    git clone -q https://github.com/AnotherPillow/WarpParsnip.git "Warp Parsnip" # 1 mod: Warp Parsnip
    git clone -q https://github.com/ApryllForever/ArmorBuffs.git "Clothes Give Buffs" # 1 mod: Clothes Give Buffs
    git clone -q https://github.com/ApryllForever/NuclearBombLocations.git "Nuclear Valley - PG" # 1 mod: Nuclear Valley - PG
@@ -133,6 +134,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/b-b-blueberry/GiftWrapper.git "Gift Wrapper" # 1 mod: Gift Wrapper
    git clone -q https://github.com/b-b-blueberry/GreenhouseEntryPatch.git "Greenhouse Entry Begone!" # 1 mod: Greenhouse Entry Begone!
    git clone -q https://github.com/b-b-blueberry/Halloween2024.git "Halloween Puzzle Dreams" # 1 mod: Halloween Puzzle Dreams
+   git clone -q https://github.com/b-b-blueberry/HideBuildingShadows.git "Hide Building Shadows" # 1 mod: Hide Building Shadows
    git clone -q https://github.com/b-b-blueberry/InstantPets.git "Instant Pets" # 1 mod: Instant Pets
    git clone -q https://github.com/b-b-blueberry/RaisedGardenBeds.git "Raised Garden Beds" # 1 mod: Raised Garden Beds
    git clone -q https://github.com/b-b-blueberry/SeedsUnboxed.git "Seeds Unpacked" # 1 mod: Seeds Unpacked
@@ -233,6 +235,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/dailyxcz/StardewValleyMods.git "Voice Chat" # 1 mod: Voice Chat
    git clone -q https://github.com/daleao/bagi-meads.git "Better Artisan Good Icons For Meads" # 1 mod: Better Artisan Good Icons For Meads
    git clone -q https://github.com/daleao/sdv.git "~daleao" # 8 mods: Aquarism, Chargeable Resource Tools, DaLionheart, Gemstone Harmonics, Serfdom, Springmyst, Walk Of Life - Rebirth, Wildcat
+   git clone -q https://github.com/dandm1/ValleyTalk.git "Valley Talk" # 1 mod: Valley Talk
    git clone -q https://github.com/dantheman999301/StardewMods.git "Variable Grass" # 1 mod: Variable Grass
    git clone -q https://github.com/danvolchek/StardewMods.git "~danvolchek" # 30 mods: Auto Stacker, Better Artisan Good Icons, Better Doors, Better Fruit Trees, Better Garden Pots, Better Hay, Better Slingshots, Better Workbenches, Cacti Hurt You, Casks Everywhere, Chat Commands, Copy Invite Code, Custom Transparency, Custom Warp Locations, Customizable Death Penalty, Desert Obelisk, Flowery Tools, Geode Info Menu, Giant Crop Ring, Hold to Break Geodes, Mod Update Menu, No Crows, No Fence Decay, Pong, Range Display, Removable Horse Hats, Safe Lightning, Stack Everything, Wind Effects, Winter Grass
    git clone -q https://github.com/davicr/StardewHypnos.git "Stardew Hypnos - Sleeping Overhaul" # 1 mod: Stardew Hypnos - Sleeping Overhaul
@@ -327,6 +330,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/Enaium-StardewValleyMods/SimpleHUD.git "Simple HUD" # 1 mod: Simple HUD
    git clone -q https://github.com/Enaium-StardewValleyMods/TeleportNpc.git "Teleport NPC" # 1 mod: Teleport NPC
    git clone -q https://github.com/Enaium-StardewValleyMods/TeleportPoint.git "Teleport Point" # 1 mod: Teleport Point
+   git clone -q https://github.com/EnderTedi/ConfusedTortilla.git "Confused Tortillas" # 1 mod: Confused Tortillas
    git clone -q https://github.com/EnderTedi/DefaultOnCheats.git "Default On Cheats" # 1 mod: Default On Cheats
    git clone -q https://github.com/EnderTedi/No-Fence-Decay-Redux.git "No Fence Decay Redux" # 1 mod: No Fence Decay Redux
    git clone -q https://github.com/EnderTedi/Tree-Size-Framework.git "Tree Size Framework" # 1 mod: Tree Size Framework
@@ -464,6 +468,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/ichortower/Nightshade.git "Nightshade" # 1 mod: Nightshade
    git clone -q https://github.com/ichortower/NPCGeometry.git "NPC Geometry" # 1 mod: NPC Geometry
    git clone -q https://github.com/ichortower/PortableHole.git "Portable Hole" # 1 mod: Portable Hole
+   git clone -q https://github.com/ichortower/PositionalAudio.git "Positional Audio" # 1 mod: Positional Audio
    git clone -q https://github.com/ichortower/SecretNoteFramework.git "Secret Note Framework" # 1 mod: Secret Note Framework
    git clone -q https://github.com/ichortower/SecretWoodsSnorlax.git "Secret Woods Snorlax" # 1 mod: Secret Woods Snorlax
    git clone -q https://github.com/ichortower/TaterToss.git "Tater Toss - Throw Your Toddlers" # 1 mod: Tater Toss - Throw Your Toddlers
@@ -507,6 +512,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/JacquePott/StardewValleyMods.git "Mass Production" # 1 mod: Mass Production
    git clone -q https://github.com/JadeTheavas/MoreMineLadders.git "More Mine Ladders" # 1 mod: More Mine Ladders
    git clone -q https://github.com/jahangmar/StardewValleyMods.git "~jahangmar" # 9 mods: Compost&#44; Pests&#44; and Cultivation, Dismantle Craftables, Don't Eat That, Fall To Autumn, Interaction Tweaks, Leveling Adjustment, Pet Interaction, Seeds are Rare, Working Fireplace
+   git clone -q https://github.com/jakee417/Fog-Mod.git "Foggy Grouse" # 1 mod: Foggy Grouse
    git clone -q https://github.com/Jaksha6472/ChallengingCommunityCenterBundles.git "~Jaksha6472" # 2 mods: Challenging Community Center Bundles, Custom Community Center Bundles
    git clone -q https://github.com/Jaksha6472/MiningShack.git "Alvadea's Farm Maps - Goldrush" # 1 mod: Alvadea's Farm Maps - Goldrush
    git clone -q https://github.com/Jaksha6472/WitchTower.git "Alvadea's Farm Maps - Walpurgisnacht" # 1 mod: Alvadea's Farm Maps - Walpurgisnacht
@@ -525,6 +531,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/jaredtjahjadi/LogMenu.git "Log Menu" # 1 mod: Log Menu
    git clone -q https://github.com/Jarvie8176/StardewMods.git "~Jarvie8176" # 2 mods: Rented Tools, Self Service
    git clone -q https://github.com/jasisco5/UncannyValleyMod.git "Uncanny Valley" # 1 mod: Uncanny Valley
+   git clone -q https://github.com/JaVonox/Stardew-Spellbook.git "Runescape Spellbook" # 1 mod: Runescape Spellbook
    git clone -q https://github.com/jbossjaslow/Stardew_Mods.git "~jbossjaslow" # 3 mods: Chatter, Villager Compass, Windowed Borderless
    git clone -q https://github.com/jbtheshadow/StardewValleyMods.git "Time Freezes at Midnight" # 1 mod: Time Freezes at Midnight
    git clone -q https://github.com/jdusbabek/stardewvalley.git "~jdusbabek" # 6 mods: Animal Sitter, Crab Net, Mail Order Pigs, Pelican Fiber, Point and Plant, Replanter
@@ -775,6 +782,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/Mushymato/CompactSearchableShopMenu.git "Compact Searchable Shop Menu" # 1 mod: Compact Searchable Shop Menu
    git clone -q https://github.com/Mushymato/CueSwap.git "Cue Swap" # 1 mod: Cue Swap
    git clone -q https://github.com/Mushymato/FishPondering.git "Fish Pondering" # 1 mod: Fish Pondering
+   git clone -q https://github.com/Mushymato/GrassVariety.git "Grass Variety" # 1 mod: Grass Variety
    git clone -q https://github.com/Mushymato/LivestockBazaar.git "Livestock Bazaar" # 1 mod: Livestock Bazaar
    git clone -q https://github.com/Mushymato/MachineControlPanel.git "Machine Control Panel" # 1 mod: Machine Control Panel
    git clone -q https://github.com/Mushymato/MiscMapActionsProperties.git "Misc Map Actions & Properties" # 1 mod: Misc Map Actions & Properties
@@ -851,7 +859,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/pepoluan/StackSplitRedux.git "Stack Split Redux" # 1 mod: Stack Split Redux
    git clone -q https://github.com/perkmi/Always-On-Server-for-Multiplayer.git "Unlimited Community Center" # 1 mod: Unlimited Community Center
    git clone -q https://github.com/Permamiss/Auto-Eat.git "Auto-Eat" # 1 mod: Auto-Eat
-   git clone -q https://github.com/Pet-Slime/StardewValley.git "~Pet-Slime" # 7 mods: Archaeology Skill for 1.6, Archaeology Skill for Stardew 1.5, Exp Control, Scaring - Thieving Skill, Shovel Tool Upgrades, Spacecore Luck Skill, Yet Another Cooking Skill
+   git clone -q https://github.com/Pet-Slime/StardewValley.git "~Pet-Slime" # 8 mods: Archaeology Skill for 1.6, Archaeology Skill for Stardew 1.5, Exp Control, Scaring - Thieving Skill, Shovel Tool Upgrades, Spacecore Luck Skill, Total Level Affected by Spacecore Skill, Yet Another Cooking Skill
    git clone -q https://github.com/PhantomGamers/StardewPortChanger.git "Server Port Changer" # 1 mod: Server Port Changer
    git clone -q https://github.com/pheaux-prometheus/customcatalogues.git "Custom Catalogues and Dressers" # 1 mod: Custom Catalogues and Dressers
    git clone -q https://github.com/pheaux-prometheus/SDV-Mods.git "Mannequin Roulette" # 1 mod: Mannequin Roulette
@@ -964,7 +972,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/simonbru/WarpAnimals.git "Warp Animals" # 1 mod: Warp Animals
    git clone -q https://github.com/SimonK1122/More-Lively-Sewer-Overhaul-code-patches.git "More Lively Sewer Overhaul" # 1 mod: More Lively Sewer Overhaul
    git clone -q https://github.com/SimonK1122/WitchSwampOverhaulPatches.git "Distant Lands - A Small Witch Swamp Expansion" # 1 mod: Distant Lands - A Small Witch Swamp Expansion
-   git clone -q https://github.com/SinZ163/StardewMods.git "~SinZ163" # 5 mods: Automate Chests, Profiler, SinZational Several Spouse Spots, SinZational Shared Spaces, SinZational Spending Services
+   git clone -q https://github.com/SinZ163/StardewMods.git "~SinZ163" # 6 mods: Automate Chests, Profiler, SinZational Several Spouse Spots, SinZational Shared Spaces, SinZational Speedy Solutions, SinZational Spending Services
    git clone -q https://github.com/siweipancc/InstantAnimals.git "Instant Animals 1.6" # 1 mod: Instant Animals 1.6
    git clone -q https://github.com/siweipancc/StardewMods.git "No Crows Revisited" # 1 mod: No Crows Revisited
    git clone -q https://github.com/siweipancc/TreeTransplant.git "Tree Transplant (Fix)" # 1 mod: Tree Transplant (Fix)
@@ -974,6 +982,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/skuldomg/freeDusty.git "Free Dusty" # 1 mod: Free Dusty
    git clone -q https://github.com/skuldomg/petChoicePerks.git "Pet Choice Perks" # 1 mod: Pet Choice Perks
    git clone -q https://github.com/skuldomg/priceDrops.git "Price Drops" # 1 mod: Price Drops
+   git clone -q https://github.com/Sleepingoff/DialogueExpander.git "Dialogue Expander" # 1 mod: Dialogue Expander
    git clone -q https://github.com/slimerrain/stardew-mods.git "Uncle Iroh Approved Tea" # 1 mod: Uncle Iroh Approved Tea
    git clone -q https://github.com/SlivaStari/BuildableForge.git "Buildable Enchanting Forge" # 1 mod: Buildable Enchanting Forge
    git clone -q https://github.com/SlivaStari/CombineManyRings.git "Combine Many Rings" # 1 mod: Combine Many Rings
@@ -1055,7 +1064,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/Strrato/StardewWrapMultiplayer.git "Warp Multiplayer" # 1 mod: Warp Multiplayer
    git clone -q https://github.com/su226/StardewValleyMods.git "Stay Up" # 1 mod: Stay Up
    git clone -q https://github.com/subNa2CO3/ScriptCommandPlus.git "Script Command Plus" # 1 mod: Script Command Plus
-   git clone -q https://github.com/SummerFleur2997/StardewMods.git "~SummerFleur2997" # 3 mods: Better Retaining Soils, Bigger Containers, Convenient Chests Unofficial
+   git clone -q https://github.com/SummerFleur2997/StardewMods.git "~SummerFleur2997" # 5 mods: Better Retaining Soils, Bigger Containers, Convenient Chests Unofficial, Skull Cavern Floor Capping, Why Not Jump In That Mine Shaft
    git clone -q https://github.com/sunsst/Stardew-Valley-IPv6.git "IPv6" # 1 mod: IPv6
    git clone -q https://github.com/super-aardvark/AardvarkMods-SDV.git "~super-aardvark" # 2 mods: Anti-Social NPCs, SDV Game of Life
    git clone -q https://github.com/supercam19/DPS-Stat.git "DPS Stat" # 1 mod: DPS Stat
@@ -1067,7 +1076,7 @@ through mod code and perform analyses.
    git clone -q https://github.com/taggartaa/AutoAnimalDoors.git "Auto Animal Doors" # 1 mod: Auto Animal Doors
    git clone -q https://github.com/tbonehunter/resist.git "No Collision" # 1 mod: No Collision
    git clone -q https://github.com/Tbonetomtom/StardewMods.git "Money Management Mod" # 1 mod: Money Management Mod
-   git clone -q https://github.com/TechnicalityCreations/StardewMods.git "~TechnicalityCreations" # 2 mods: Hay Subscription, Spoiler-Free Gift Indicator
+   git clone -q https://github.com/TechnicalityCreations/StardewMods.git "~TechnicalityCreations" # 3 mods: Hay Subscription, Spoiler-Free Gift Indicator, Yearly Night Market Pearl
    git clone -q https://github.com/TehPers/StardewValleyMods.git "~TehPers" # 5 mods: Shroom Spotter, Stardew Content Compatibility Layer (SCCL), Teh's Festive Slimes, Teh's Fishing Overhaul, TehCore
    git clone -q https://github.com/tekladis/sv-rollback.git "Rollback" # 1 mod: Rollback
    git clone -q https://github.com/telshin/twitch-for-stardew.git "Twitch in Stardew Valley" # 1 mod: Twitch in Stardew Valley
