@@ -212,6 +212,7 @@ async Task Main()
 		this.GetCompatibilityListModsNotInCache(modDump, compatList).Dump("Mods on the compatibility list which weren't found on the modding sites");
 		this.GetModsWithSourceNotOnCompatList(mods, compatList).Dump("Mods on the compatibility list whose source repo doesn't match cached data");
 		this.GetModsMarkedHiddenWhichAreNot(mods, compatList).Dump("Mods on the compatibility list marked deleted/hidden which were found on a mod site");
+		//this.GetModsWhichAreContentPacks(mods, compatList).Dump("Mods on the compatibility list which are actually content packs (may have false positives with multiple versions)");
 
 		// mod issues
 		Util.RawHtml("<h3>Mod issues</h3>").Dump();
@@ -362,15 +363,8 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 /// <param name="compatList">The mod data from the mod compatibility list.</param>
 IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
 {
-	// group compatibility list by ID
-	Dictionary<string, ModCompatibilityEntry> compatById = new(StringComparer.OrdinalIgnoreCase);
-	foreach (ModCompatibilityEntry entry in compatList)
-	{
-		foreach (string id in entry.ID)
-			compatById[id] = entry;
-	}
+	Dictionary<string, ModCompatibilityEntry> compatById = this.GetCompatibilityEntriesByModId(compatList);
 
-	// fetch report
 	const string oldStyle = "text-decoration: line-through;";
 	const string newStyle = "font-weight: bold;";
 	object FormatLink(string url, string text, string format)
@@ -448,15 +442,8 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 /// <param name="compatList">The mod data from the mod compatibility list.</param>
 IEnumerable<dynamic> GetModsMarkedHiddenWhichAreNot(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
 {
-	// group compatibility list by ID
-	Dictionary<string, ModCompatibilityEntry> compatById = new(StringComparer.OrdinalIgnoreCase);
-	foreach (ModCompatibilityEntry entry in compatList)
-	{
-		foreach (string id in entry.ID)
-			compatById[id] = entry;
-	}
+	Dictionary<string, ModCompatibilityEntry> compatById = this.GetCompatibilityEntriesByModId(compatList);
 
-	// fetch report
 	return (
 		from mod in mods
 		from folder in mod.ModFolders
@@ -492,6 +479,66 @@ IEnumerable<dynamic> GetModsMarkedHiddenWhichAreNot(IEnumerable<ParsedMod> mods,
 		}
 	)
 	.ToArray();
+}
+
+/// <summary>Get SMAPI mods on the compatibility list which are actually content packs.</summary>
+/// <param name="mods">The mods to check.</param>
+/// <param name="compatList">The mod data from the compatibility list.</param>
+IEnumerable<dynamic> GetModsWhichAreContentPacks(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+{
+	// get lookup of mods by ID
+	Dictionary<string, (ParsedMod Mod, ParsedFile Folder)> modsById = new(StringComparer.OrdinalIgnoreCase);
+	foreach (ParsedMod mod in mods)
+	{
+		foreach (ParsedFile folder in mod.ModFolders)
+		{
+			if (string.IsNullOrWhiteSpace(folder.ModID))
+				continue;
+
+			modsById[folder.ModID] = (mod, folder);
+		}
+	}
+
+	// list mods
+	foreach (ModCompatibilityEntry entry in compatList)
+	{
+		// skip: deliberate content pack
+		if (entry.ContentPackFor != null)
+			continue;
+
+		// skip: mod not found (handled separately)
+		(ParsedMod mod, ParsedFile folder) = entry.ID.Select(p => modsById.GetValueOrDefault(p)).FirstOrDefault(p => p.Mod != null);
+		if (mod is null)
+			continue;
+
+		// skip: has a C# mod
+		if (folder.RawFolder.Type is ModType.Smapi)
+			continue;
+
+		// return match
+		string url = entry.GetModPageUrls().FirstOrDefault().Value;
+		string linkText = $"{mod.Site}:{mod.ID}";
+		yield return new
+		{
+			Link = url != null
+				? new Hyperlinq(url, linkText)
+				: (object)linkText,
+			Mod =
+				$"{mod.Name}\n   by "
+				+ (mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
+					? $"{mod.Author} ({mod.AuthorLabel})"
+					: mod.Author
+				),
+			Metadata = Util.OnDemand("expand", () => new
+			{
+				Mod = mod,
+				Folder = folder,
+				Entry = entry
+			})
+		};
+	}
+	
+	yield break;
 }
 
 /// <summary>Get SMAPI mods on the compatibility list which have been updated recently.</summary>
@@ -1432,7 +1479,7 @@ private string MapSourceLink(IManifest manifest, string repoOrUrl)
 		return null;
 
 	repoOrUrl = repoOrUrl.Trim().TrimEnd('/').TrimEnd();
-	
+
 	// strip .git suffix
 	if (repoOrUrl.EndsWith(".git", true, null))
 		repoOrUrl = repoOrUrl.Substring(0, repoOrUrl.Length - 4).TrimEnd();
@@ -1493,6 +1540,19 @@ private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
 
 	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {ConsoleHelper.GetFormattedTime(resumeDelay)} ({resumeTime:HH:mm:ss} local time).");
 	Thread.Sleep(resumeDelay);
+}
+
+/// <summary>Get a lookup of mod compatibility entries by mod ID.</summary>
+/// <param name="compatList">The compatibility entries to index.</param>
+private Dictionary<string, ModCompatibilityEntry> GetCompatibilityEntriesByModId(ModCompatibilityEntry[] compatList)
+{
+	Dictionary<string, ModCompatibilityEntry> entriesById = new(StringComparer.OrdinalIgnoreCase);
+	foreach (ModCompatibilityEntry entry in compatList)
+	{
+		foreach (string id in entry.ID)
+			entriesById[id] = entry;
+	}
+	return entriesById;
 }
 
 /// <summary>The manual overrides for specific mods or source repos when analyzing them with this script.</summary>
