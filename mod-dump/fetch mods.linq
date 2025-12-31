@@ -591,7 +591,6 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 
 		orderby
 			(highlightType || highlightStatus) descending, // mods with issues first
-			uploadedStr descending, // then newest first
 			mod.Name
 
 		select new
