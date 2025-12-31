@@ -275,10 +275,8 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 		let manifest = folder.RawFolder.Manifest
 		let names = this.GetModNames(folder, mod)
 		let authorNames = this.GetAuthorNames(manifest, mod)
-		let githubRepo = this.GetGitHubRepo(manifest, mod)
-		let customSourceUrl = githubRepo == null
-			? this.GetCustomSourceUrl(manifest, mod)
-			: null
+		let githubRepos = this.GetGitHubRepos(manifest, mod)
+		let customSourceUrls = this.GetCustomSourceUrls(manifest, mod)
 
 		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
 
@@ -322,15 +320,16 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 				Folder = Util.OnDemand("expand", () => folder)
 			}),
 			CompatEntry = new Lazy<string>(() => // can't be in Metadata since it's accessed by the main script
-				BuildCompatibilityEntry(mod, manifest, names, authorNames, githubRepo, customSourceUrl)
+				BuildCompatibilityEntry(mod, manifest, names, authorNames, githubRepos, customSourceUrls)
 			)
 		}
 	)
 	.ToArray();
 	
-	static string BuildCompatibilityEntry(ParsedMod mod, IManifest manifest, string[] names, string[] authorNames, string githubRepo, string customSourceUrl)
+	static string BuildCompatibilityEntry(ParsedMod mod, IManifest manifest, string[] names, string[] authorNames, HashSet<string> githubRepos, HashSet<string> customSourceUrls)
 	{
 		// build JSON
+		bool hasMultipleSourceUrls = (githubRepos.Count + customSourceUrls.Count) > 1;
 		string json = JsonConvert.SerializeObject(
 			new
 			{
@@ -340,8 +339,8 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 				curse = mod.Site == ModSite.CurseForge ? mod.ID : null as long?,
 				moddrop = mod.Site == ModSite.ModDrop ? mod.ID : null as long?,
 				nexus = mod.Site == ModSite.Nexus ? mod.ID : null as long?,
-				github = githubRepo,
-				source = customSourceUrl
+				github = FormatSourceField(githubRepos),
+				source = FormatSourceField(customSourceUrls)
 			},
 			Newtonsoft.Json.Formatting.Indented
 		);
@@ -355,6 +354,18 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 		json = Regex.Replace(json, @"^  """, "\t\t\t\"", RegexOptions.Multiline);
 
 		return json + ",";
+
+		string FormatSourceField(HashSet<string> entries)
+		{
+			string field = entries.Count > 0
+				? string.Join(", ", entries)
+				: null;
+
+			if (hasMultipleSourceUrls && entries.Count > 0)
+				field += " # TODO: choose one";
+
+			return field;
+		}
 	}
 }
 
@@ -387,17 +398,21 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 		where compatEntry is not null
 
 		let manifest = folder.RawFolder.Manifest
-		let githubRepo = this.GetGitHubRepo(manifest, mod)
-		let customSourceUrl = this.GetCustomSourceUrl(manifest, mod)
+		let githubRepos = this.GetGitHubRepos(manifest, mod)
+		let customSourceUrls = this.GetCustomSourceUrls(manifest, mod)
 
-		let githubRepoMismatch = (
-			githubRepo != null
-			&& !string.Equals(githubRepo.Trim(), compatEntry.GitHubRepo?.Trim(), StringComparison.OrdinalIgnoreCase)
-		)
-		let customSourceMismatch = (
-			customSourceUrl != null
-			&& !string.Equals(customSourceUrl.Trim(), compatEntry.CustomSourceUrl?.Trim(), StringComparison.OrdinalIgnoreCase)
-		)
+		let githubRepoMismatch =
+			githubRepos.Count > 0
+			&& (
+				string.IsNullOrWhiteSpace(compatEntry.GitHubRepo?.Trim())
+				|| !githubRepos.Contains(compatEntry.GitHubRepo.Trim())
+			)
+		let customSourceMismatch =
+			customSourceUrls.Count > 0
+			&& (
+				string.IsNullOrWhiteSpace(compatEntry.CustomSourceUrl?.Trim())
+				|| !customSourceUrls.Contains(compatEntry.CustomSourceUrl.Trim())
+			)
 
 		where githubRepoMismatch || customSourceMismatch
 
@@ -412,16 +427,16 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 			FileName = folder.DisplayName,
 			FileCategory = folder.Type,
 			GithubRepo = githubRepoMismatch
-				? Util.VerticalRun(
+				? Util.VerticalRun([
 					FormatLink(compatEntry.GitHubRepo != null ? $"https://github.com/{compatEntry.GitHubRepo}" : null, compatEntry.GitHubRepo, oldStyle),
-					FormatLink(githubRepo != null ? $"https://github.com/{githubRepo}" : null, githubRepo, newStyle)
-				)
+					..githubRepos.Select(repo => FormatLink($"https://github.com/{repo}", repo, newStyle))
+				])
 				: "",
 			CustomSourceUrl = customSourceMismatch
-				? Util.VerticalRun(
+				? Util.VerticalRun([
 					FormatLink(compatEntry.CustomSourceUrl, compatEntry.CustomSourceUrl, oldStyle),
-					FormatLink(customSourceUrl, customSourceUrl, newStyle)
-				)
+					..customSourceUrls.Select(sourceUrl => FormatLink(sourceUrl, sourceUrl, newStyle))
+				])
 				: "",
 			Metadata = Util.OnDemand("expand", () => new
 			{
@@ -578,12 +593,6 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 
 		let uploadedStr = folder.Uploaded.ToString("yyyy-MM-dd")
 		let manifest = folder.RawFolder.Manifest
-		let names = this.GetModNames(folder, mod)
-		let authorNames = this.GetAuthorNames(manifest, mod)
-		let githubRepo = this.GetGitHubRepo(manifest, mod)
-		let customSourceUrl = githubRepo == null
-			? this.GetCustomSourceUrl(manifest, mod)
-			: null
 		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
 
 		let highlightType = folder.ModType is not (ModType.Smapi or ModType.ContentPack)
@@ -1392,8 +1401,10 @@ private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
 /// <summary>Get the GitHub repository name for a mod, if available.</summary>
 /// <param name="manifest">The downloaded mod manifest file.</param>
 /// <param name="mod">The mod metadata.</param>
-private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
+private HashSet<string> GetGitHubRepos(IManifest manifest, ParsedMod mod)
 {
+	HashSet<string> repos = new(StringComparer.OrdinalIgnoreCase);
+
 	// from update key
 	foreach (string rawUpdateKey in manifest?.UpdateKeys ?? Array.Empty<string>())
 	{
@@ -1405,7 +1416,7 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 			{
 				string repo = this.MapSourceLink(manifest, match.Groups[1].Value);
 				if (repo is not null)
-					return repo;
+					repos.Add(repo);
 			}
 		}
 	}
@@ -1419,34 +1430,34 @@ private string GetGitHubRepo(IManifest manifest, ParsedMod mod)
 		{
 			string repo = this.MapSourceLink(manifest, match.Groups[1].Value);
 			if (repo is not null)
-				return repo;
+				repos.Add(repo);
 		}
 	}
 
-	// none found
-	return null;
+	return repos;
 }
 
 /// <summary>Get the custom source code URL for a mod, if available.</summary>
 /// <param name="manifest">The downloaded mod manifest file.</param>
 /// <param name="mod">The mod metadata.</param>
-private string GetCustomSourceUrl(IManifest manifest, ParsedMod mod)
+private HashSet<string> GetCustomSourceUrls(IManifest manifest, ParsedMod mod)
 {
+	HashSet<string> sourceUrls = new(StringComparer.OrdinalIgnoreCase);
+
 	// from mod description
 	string description = this.TryGetModDescription(mod);
 	if (!string.IsNullOrWhiteSpace(description))
 	{
-		Match match = Regex.Match(description, @"(gitlab\.com/[a-z0-9_\-\.]+/[a-z0-9_\-\.]+|sourceforge\.net/p/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
-		if (match.Success)
+		MatchCollection matches = Regex.Matches(description, @"(gitlab\.com/[a-z0-9_\-\.]+/[a-z0-9_\-\.]+|sourceforge\.net/p/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		foreach (Match match in matches)
 		{
 			string url = this.MapSourceLink(manifest, $"https://{match.Groups[1].Value}");
 			if (url is not null)
-				return url;
+				sourceUrls.Add(url);
 		}
 	}
 
-	// none found
-	return null;
+	return sourceUrls;
 }
 
 /// <summary>Get the raw mod page description, if available.</summary>
