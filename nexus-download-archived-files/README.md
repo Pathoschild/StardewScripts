@@ -8,6 +8,8 @@ provide support for them.
 To use this script:
 
 1. Click the mod's "Files" tab on Nexus.
-2. Click the "File Archive" button at the bottom (if it has any archived files).
+2. Click the "File Archive" button at the bottom (if it has any archived files).  
+   _If it says "archived file(s) ... are unavailable to browse", just add `&category=archived` to
+   the URL._
 3. Run the script as a bookmarklet or in the JavaScript console.
 4. Click a download button to download that mod file.
