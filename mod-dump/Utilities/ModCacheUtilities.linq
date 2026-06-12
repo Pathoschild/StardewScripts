@@ -1,15 +1,17 @@
 <Query Kind="Program">
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
+  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.ModDataset</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
+  <Namespace>System.Text.Json</Namespace>
 </Query>
 
 #load "ConsoleHelper.linq"
 #load "FileHelper.linq"
-#load "IncrementalProgressBar.linq"
-#load "ModCache.linq"
 
 /// <summary>Provides higher-level utilities for syncing mods between the mod cache (containing mods downloaded automatically mod sites) and installed mods (for the installed version of Stardew Valley).</summary>
 public class ModCacheUtilities
@@ -24,87 +26,121 @@ public class ModCacheUtilities
 	/*********
 	** Fields
 	*********/
-	/// <summary>The absolute path for the folder containing the mod cache.</summary>
-	private readonly string ModCachePath;
+	/// <summary>The absolute path for the folder containing the mod data repo.</summary>
+	private readonly string ModDataRepoPath;
 
 	/// <summary>The absolute path for the folder containing installed mods.</summary>
 	private readonly string InstalledModsPath;
-
-	/// <summary>The backing field for <see cref="Cache"/>.</summary>
-	private readonly Lazy<ModCache> ModCacheImpl;
-
-	/// <summary>The mod folders in the underlying mod cache, indexed by site and mod ID (like "Nexus:2400" for SMAPI's Nexus page).</summary>
-	private Lazy<ILookup<string, ParsedMod>> ModFoldersBySiteId;
-
-
-	/*********
-	** Properties
-	*********/
-	/// <summary>The underlying mod cache.</summary>
-	public ModCache Cache => this.ModCacheImpl.Value;
 
 
 	/*********
 	** Public methods
 	*********/
 	/// <summary>Construct an instance.</summary>
-	/// <param name="modCachePath">The absolute path for the folder containing the mod cache.</param>
+	/// <param name="modDataRepoPath">The absolute path for the folder containing the mod data repo.</param>
 	/// <param name="installedModsPath">The absolute path for the folder containing installed mods.</param>
-	public ModCacheUtilities(string modCachePath, string installedModsPath)
+	public ModCacheUtilities(string modDataRepoPath, string installedModsPath)
 	{
-		this.ModCachePath = modCachePath;
+		this.ModDataRepoPath = modDataRepoPath;
 		this.InstalledModsPath = installedModsPath;
-		this.ModCacheImpl = new(() => new ModCache(modCachePath));
-
-		this.ReloadFromModCache();
 	}
 
-	/// <summary>Reset higher-level caches if the underlying mod cache changed.</summary>
-	public void ReloadFromModCache()
+	/// <summary>Get the full path to a mod's downloaded files in the mod dump.</summary>
+	/// <param name="modPage">The mod page record.</param>
+	/// <param name="download">The download record.</param>
+	public string GetModDumpFolder(ModPageRecord modPage, ModPageDownloadRecord download)
 	{
-		this.ModFoldersBySiteId = new(() => this.ModCacheImpl.Value.ReadUnpackedModFolders().ToLookup(mod => $"{mod.Site}:{mod.ID}"));
+		string relativePath = this.GetModDataRelativePath(modPage.Site, modPage.Id, download.Id);
+		return Path.Combine(this.ModDataRepoPath, "mod-dump", relativePath);
+	}
+
+	/// <summary>Get the full path to a mod's downloaded files in the mod dump.</summary>
+	/// <param name="modPage">The mod page record.</param>
+	/// <param name="download">The download record.</param>
+	/// <param name="mod">The mod within the download.</param>
+	public string GetModDumpFolder(ModPageRecord modPage, ModPageDownloadRecord download, ModFolderRecord mod)
+	{
+		return Path.Combine(
+			this.GetModDumpFolder(modPage, download),
+			mod.RelativePath ?? ""
+		);
+	}
+
+	/// <summary>Get the relative path to a mod's folder within the mod data or mod dump.</summary>
+	/// <param name="modSite">The mod site.</param>
+	/// <param name="modPageId">The mod page ID within the site.</param>
+	/// <param name="downloadId">The download ID, or <c>null</c> to get the folder for the mod page.</param>
+	public string GetModDataRelativePath(ModSite modSite, long modPageId, long? downloadId)
+	{
+		long bucket = modSite switch
+		{
+			ModSite.CurseForge or ModSite.ModDrop => modPageId / 10_000,
+			_ => modPageId / 1_000
+		};
+
+		return Path.Combine(
+			modSite.ToString(),
+			bucket.ToString(),
+			modPageId.ToString(),
+			downloadId?.ToString() ?? ""
+		);
 	}
 
 	/// <summary>Install a mod from the mod dump.</summary>
 	/// <param name="mod">The mod ID to install.</param>
 	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
 	/// <param name="compatibilityEntry">If set, the mod data from the compatibility entry to use to help select the correct mod.</param>
-	public List<object> TryInstall(string id, string folderNamePrefix = null, ModCompatibilityEntry compatibilityEntry = null)
+	/// <param name="deleteTargetFolder">Whether to delete the target folder if it already exists.</param>
+	public List<object> TryInstallByModId(string id, string folderNamePrefix = null, ModCompatibilityEntry compatibilityEntry = null, bool deleteTargetFolder = true)
 	{
-		TryInstall(id, out List<object> log, folderNamePrefix, compatibilityEntry);
-		return log;
-	}
-
-	/// <summary>Install a mod from the mod dump.</summary>
-	/// <param name="mod">The mod ID to install.</param>
-	/// <param name="log">A formatted list of log messages to display.</param>
-	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
-	/// <param name="compatibilityEntry">If set, the mod data from the compatibility entry to use to help select the correct mod.</param>
-	/// <returns>Returns whether the mod was successfully installed (or was already installed).</returns>
-	public bool TryInstall(string id, out List<object> log, string folderNamePrefix = null, ModCompatibilityEntry compatibilityEntry = null)
-	{
-		log = new();
+		List<object> log = new();
 
 		// get candidates
-		List<(ParsedMod Mod, ParsedFile File, ISemanticVersion Version)> candidates = [];
+		List<(ModPageRecord ModPage, ModPageDownloadRecord Download, ModFolderRecord Mod, ISemanticVersion Version)> candidates = [];
 		{
-			if (!this.ModCacheImpl.IsValueCreated)
-				log.Add(Util.WithStyle("Reading mod dump...", ConsoleHelper.TraceStyle));
+			// read mod ID index
+			log.Add(Util.WithStyle($"Loading mods-by-ID index...", ConsoleHelper.TraceStyle));
+			string indexPath = Path.Combine(this.ModDataRepoPath, "data-indexes", "mod IDs.json");
+			if (!File.Exists(indexPath))
+				throw new FileNotFoundException($"Could not find mods-by-ID index at {indexPath}.");
+			using FileStream indexStream = File.OpenRead(indexPath);
+			var index = JsonSerializer.Deserialize<Dictionary<ModSite, Dictionary<string, long[]>>>(indexStream);
 
-			ILookup<string, ParsedMod> modFoldersBySiteId = this.ModFoldersBySiteId.Value;
-
-			log.Add(Util.WithStyle($"Scanning for ID '{id}'...", ConsoleHelper.TraceStyle));
-			foreach (ParsedMod modPage in modFoldersBySiteId.SelectMany(p => p))
+			// collect candidates
+			log.Add(Util.WithStyle($"Searching for candidates...", ConsoleHelper.TraceStyle));
+			foreach ((ModSite modSite, Dictionary<string, long[]> pagesByModId) in index)
 			{
-				foreach (ParsedFile modFolder in modPage.ModFolders)
+				foreach ((string modId, long[] pageIds) in pagesByModId)
 				{
-					if (!string.Equals(modFolder.ModID, id, StringComparison.OrdinalIgnoreCase) || !SemanticVersion.TryParse(modFolder.Version, out ISemanticVersion curVersion))
+					if (!modId.Equals(id, StringComparison.OrdinalIgnoreCase))
 						continue;
 
-					candidates.Add(
-						(modPage, modFolder, curVersion)
-					);
+					foreach (long pageId in pageIds)
+					{
+						string relativePath = this.GetModDataRelativePath(modSite, pageId, null);
+						string jsonPath = Path.Combine(this.ModDataRepoPath, "data", $"{relativePath}.json");
+						if (!File.Exists(jsonPath))
+							throw new FileNotFoundException($"Couldn't find mod metadata at path {jsonPath}.");
+
+						using FileStream fileStream = File.OpenRead(jsonPath);
+						var modPage = JsonSerializer.Deserialize<ModPageRecord>(fileStream);
+
+						foreach (var download in modPage.Downloads)
+						{
+							foreach (var mod in download.Mods)
+							{
+								if (id.Equals(mod.Id, StringComparison.OrdinalIgnoreCase) && SemanticVersion.TryParse(mod.Manifest?.Version, out ISemanticVersion version))
+									candidates.Add((modPage, download, mod, version));
+							}
+						}
+					}
 				}
+			}
+
+			if (candidates.Count == 0)
+			{
+				log.Add(Util.WithStyle($"No matching mod found in the open mod dataset.", ConsoleHelper.ErrorStyle));
+				return log;
 			}
 		}
 
@@ -114,8 +150,8 @@ public class ModCacheUtilities
 			// official pages first
 			if (compatibilityEntry != null)
 			{
-				bool left = compatibilityEntry.HasSiteId((ModSiteKey)a.Mod.Site, (int)a.Mod.ID);
-				bool right = compatibilityEntry.HasSiteId((ModSiteKey)b.Mod.Site, (int)b.Mod.ID);
+				bool left = compatibilityEntry.HasSiteId((ModSiteKey)a.ModPage.Site, a.ModPage.Id);
+				bool right = compatibilityEntry.HasSiteId((ModSiteKey)b.ModPage.Site, b.ModPage.Id);
 
 				if (left != right)
 					return right.CompareTo(left);
@@ -135,58 +171,59 @@ public class ModCacheUtilities
 			}
 
 			// then by site ID (lowest first)
-			if (a.Mod.Site == b.Mod.Site)
-				return a.Mod.ID.CompareTo(b.Mod.ID);
+			if (a.ModPage.Site == b.ModPage.Site)
+				return a.ModPage.Id.CompareTo(b.ModPage.Id);
 
 			return 0;
 		});
 
 		// select best match
-		ParsedFile selectedMod = candidates.FirstOrDefault().File;
-		if (selectedMod is null)
-		{
-			log.Add(Util.WithStyle($"No matching mod found in the mod dump.", ConsoleHelper.ErrorStyle));
-			return false;
-		}
-		else
-		{
-			log.Add(
-				Util.WithStyle(
-					$"Found {candidates.Count} matches. In priority order:\n" + string.Join("\n", candidates.Select((p, index) => $"  {index + 1}. {p.Mod.Site}:{p.Mod.ID} {p.Mod.Name} -- {p.File.DisplayName} -- {p.Version}")),
-					ConsoleHelper.TraceStyle
-				)
-			);
-		}
+		var match = candidates[0];
+		log.Add(
+			Util.WithStyle(
+				$"Found {candidates.Count} matches. In priority order:\n" + string.Join("\n", candidates.Select((p, index) => $"  {index + 1}. {p.ModPage.Site}:{p.ModPage.Id} {p.Mod.DisplayName} -- {p.Download.DisplayName} -- {p.Version}")),
+				ConsoleHelper.TraceStyle
+			)
+		);
 
-		bool success = TryInstall(selectedMod, out var innerLog, folderNamePrefix);
-		log.Add(innerLog);
-		return success;
-	}
-
-	/// <summary>Install a mod from the mod dump.</summary>
-	/// <param name="folder">The mod folder to install.</param>
-	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
-	/// <param name="deleteTargetFolder">Whether to delete the target folder if it already exists.</param>
-	public List<object> TryInstall(ParsedFile folder, string folderNamePrefix = null, bool deleteTargetFolder = true)
-	{
-		TryInstall(folder, out List<object> log, folderNamePrefix);
+		// install match
+		log.AddRange(
+			this.TryInstall(match.ModPage, match.Download, match.Mod, out _, folderNamePrefix, deleteTargetFolder)
+		);
 		return log;
 	}
 
 	/// <summary>Install a mod from the mod dump.</summary>
-	/// <param name="folder">The mod folder to install.</param>
+	/// <param name="mod">The mod ID to install.</param>
+	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
+	/// <param name="compatibilityEntry">If set, the mod data from the compatibility entry to use to help select the correct mod.</param>
+	/// <param name="success">Whether the mod was successfully installed.</param>
+	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
+	/// <param name="deleteTargetFolder">Whether to delete the target folder if it already exists.</param>
+	public List<object> TryInstall(ModPageRecord modPage, ModPageDownloadRecord download, ModFolderRecord mod, out bool success, string folderNamePrefix = null, bool deleteTargetFolder = true)
+	{
+		string modDirPath = this.GetModDumpFolder(modPage, download, mod);
+		success = TryInstall(modDirPath, mod.Id, mod.DisplayName, mod.Manifest?.Version, out List<object> log, folderNamePrefix, deleteTargetFolder);
+		return log;
+	}
+
+	/// <summary>Install a mod from the mod dump.</summary>
+	/// <param name="fromDirPath">The mod directory path to install.</param>
+	/// <param name="modId">The unique mod ID.</param>
+	/// <param name="modDisplayName">The mod's display name.</param>
+	/// <param name="modVersion">The mod's display version.</param>
 	/// <param name="log">A formatted list of log messages to display.</param>
 	/// <param name="folderNamePrefix">A string to prepend to the original folder name when it's added to the installed-mods folder, if any.</param>
 	/// <param name="deleteTargetFolder">Whether to delete the target folder if it already exists.</param>
 	/// <returns>Returns whether the mod was successfully installed (or was already installed).</returns>
-	public bool TryInstall(ParsedFile folder, out List<object> log, string folderNamePrefix = null, bool deleteTargetFolder = true)
+	public bool TryInstall(string fromDirPath, string modId, string modDisplayName, string modVersion, out List<object> log, string folderNamePrefix = null, bool deleteTargetFolder = true)
 	{
 		log = new();
 
 		// get paths
-		DirectoryInfo fromDir = folder.RawFolder.Directory;
-		DirectoryInfo toDir = new DirectoryInfo(Path.Combine(this.InstalledModsPath, folderNamePrefix + fromDir.Name));
-		log.Add(Util.WithStyle($"Installing '{folder.DisplayName}' version {folder.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", ConsoleHelper.TraceStyle));
+		DirectoryInfo fromDir = new DirectoryInfo(fromDirPath);
+		DirectoryInfo toDir = new DirectoryInfo(Path.Combine(this.InstalledModsPath, folderNamePrefix + modId));
+		log.Add(Util.WithStyle($"Installing '{modDisplayName}' version {modVersion}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", ConsoleHelper.TraceStyle));
 		if (toDir.Exists)
 		{
 			if (!deleteTargetFolder)
@@ -211,105 +248,5 @@ public class ModCacheUtilities
 
 		log.Add(Util.WithStyle("Done!", ConsoleHelper.SuccessStyle));
 		return true;
-	}
-
-	/// <summary>If a newer version of a mod exists in the mod dump folder, replace the installed version with those newer files.</summary>
-	/// <param name="mod">The mod to update if possible.</param>
-	public IEnumerable<object> TryUpdateFromModCache(DirectoryInfo targetFolder, string[] modIds, string[] updateKeys, ISemanticVersion installedVersion)
-	{
-		// validate
-		if (installedVersion is null)
-		{
-			yield return Util.WithStyle("Can't auto-update because the installed version is unknown.", ConsoleHelper.ErrorStyle);
-			yield break;
-		}
-
-		// get latest version from mod dump
-		ParsedFile latestUpdate = null;
-		{
-			if (!this.ModFoldersBySiteId.IsValueCreated)
-				yield return Util.WithStyle("Reading mod dump...", ConsoleHelper.TraceStyle);
-			ILookup<string, ParsedMod> modFoldersBySiteId = this.ModFoldersBySiteId.Value;
-
-			HashSet<string> modIdsSet = new(modIds, StringComparer.OrdinalIgnoreCase);
-			ISemanticVersion latestVersion = installedVersion;
-
-			yield return Util.WithStyle($"Checking update keys:", ConsoleHelper.TraceStyle);
-			foreach (string rawUpdateKey in updateKeys)
-			{
-				if (!UpdateKey.TryParse(rawUpdateKey, out UpdateKey updateKey))
-				{
-					yield return Util.WithStyle($"   {rawUpdateKey} — skipped (invalid update key).", ConsoleHelper.TraceStyle);
-					continue;
-				}
-
-				string lookupKey = $"{updateKey.Site}:{updateKey.ID}";
-				ParsedMod[] candidates = modFoldersBySiteId[lookupKey].ToArray();
-				if (candidates.Length == 0)
-				{
-					yield return Util.WithStyle($"   {lookupKey} — skipped (no match found in the mod dump).", ConsoleHelper.TraceStyle);
-					continue;
-				}
-
-				foreach (ParsedMod candidate in candidates)
-				{
-					foreach (ParsedFile modFolder in candidate.ModFolders)
-					{
-						string logPrefix = candidate.ModFolders.Length > 1
-							? $"'{lookupKey}' > file {modFolder.ID}"
-							: $"'{lookupKey}'";
-
-						if (!modIdsSet.Contains(modFolder.ModID))
-						{
-							yield return Util.WithStyle($"   {logPrefix} — skipped (different mod ID '{modFolder.ModID}').", ConsoleHelper.TraceStyle);
-							continue;
-						}
-
-						if (!SemanticVersion.TryParse(modFolder.Version, out ISemanticVersion candidateVersion))
-						{
-							yield return Util.WithStyle($"    {logPrefix} — skipped (its version '{modFolder.Version}' couldn't be parsed).", ConsoleHelper.TraceStyle);
-							continue;
-						}
-
-						if (!latestVersion.IsOlderThan(candidateVersion))
-						{
-							yield return Util.WithStyle($"   {logPrefix} — skipped (its version '{candidate.Version}' is older than {latestVersion}).", ConsoleHelper.TraceStyle);
-							continue;
-						}
-
-						yield return Util.WithStyle($"   {logPrefix} — matched for newer version '{candidate.Version}'.", ConsoleHelper.TraceStyle);
-						latestUpdate = modFolder;
-						latestVersion = candidateVersion;
-					}
-				}
-			}
-		}
-		if (latestUpdate is null)
-		{
-			yield return Util.WithStyle("Can't auto-update because no newer version was found in the mod dump.", ConsoleHelper.ErrorStyle);
-			yield break;
-		}
-
-		// get paths
-		DirectoryInfo fromDir = latestUpdate.RawFolder.Directory;
-		DirectoryInfo toDir = targetFolder;
-		yield return Util.WithStyle($"Updating to version {latestUpdate.Version}:\n  - from: {fromDir.FullName};\n  - to: {toDir.FullName}.", ConsoleHelper.TraceStyle);
-		if (toDir.Exists)
-		{
-			FileHelper.ForceDelete(toDir);
-			toDir.Create();
-		}
-
-		// copy mod
-		foreach (FileInfo file in fromDir.GetFiles("*", SearchOption.AllDirectories))
-		{
-			string relativePath = Path.GetRelativePath(fromDir.FullName, file.FullName);
-			string toPath = Path.Combine(toDir.FullName, relativePath);
-
-			Directory.CreateDirectory(Path.GetDirectoryName(toPath));
-			File.Copy(file.FullName, toPath);
-		}
-
-		yield return Util.WithStyle("Done!", ConsoleHelper.SuccessStyle);
 	}
 }

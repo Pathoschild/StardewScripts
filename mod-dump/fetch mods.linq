@@ -1,28 +1,20 @@
 <Query Kind="Program">
-  <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\Pathoschild.Http.Client.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
-  <NuGetReference>HtmlAgilityPack</NuGetReference>
-  <NuGetReference>Pathoschild.FluentNexus</NuGetReference>
-  <Namespace>Newtonsoft.Json</Namespace>
-  <Namespace>Newtonsoft.Json.Linq</Namespace>
-  <Namespace>Pathoschild.FluentNexus</Namespace>
-  <Namespace>Pathoschild.FluentNexus.Models</Namespace>
-  <Namespace>Pathoschild.Http.Client</Namespace>
+  <NuGetReference>Newtonsoft.Json</NuGetReference>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CurseForgeExport</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CurseForgeExport.ResponseModels</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.ModDropExport</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.ModDropExport.ResponseModels</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.NexusExport</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.NexusExport.ResponseModels</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.ModDataset</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
+  <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
   <Namespace>System.Dynamic</Namespace>
   <Namespace>System.Net</Namespace>
+  <Namespace>System.Text.Encodings.Web</Namespace>
+  <Namespace>System.Text.Json</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
   <Namespace>System.Web</Namespace>
+  <RuntimeVersion>10.0</RuntimeVersion>
 </Query>
 
 /*
@@ -32,67 +24,28 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 */
 #load "Utilities/ConsoleHelper.linq"
 #load "Utilities/FileHelper.linq"
-#load "Utilities/IncrementalProgressBar.linq"
-#load "Utilities/ModCache.linq"
 #load "Utilities/ModCacheUtilities.linq"
 
 /*********
 ** Configuration
 *********/
 /*****
-** Authentication
-*****/
-/// <summary>The mod site clients from which to fetch mods.</summary>
-readonly IModSiteClient[] ModSites = new IModSiteClient[]
-{
-	new CurseForgeApiClient(
-		exportApiUrl: null,
-		userAgent: UserAgent
-	),
-	new ModDropApiClient(
-		exportApiUrl: null,
-		userAgent: UserAgent,
-		username: null,
-		password: null
-	),
-	new NexusApiClient(
-		exportApiUrl: null,
-		userAgent: UserAgent,
-		apiKey: null,
-		appName: "Pathoschild",
-		appVersion: "1.0.0"
-	)
-};
-
-/// <summary>The user agent sent to the mod site APIs.</summary>
-const string UserAgent = "PathoschildModDump/202504 (+https://github.com/Pathoschild/StardewScripts)";
-
-/*****
 ** Behavior
 *****/
-/// <summary>Whether to fetch any updated mods from the remote mod sites. If false, the script will skip to analysis with the last cached mods.</summary>
-readonly bool FetchMods = true;
-
-/// <summary>Whether to delete mods which no longer exist on the mod sites. If false, they'll show warnings instead.</summary>
-readonly bool DeleteRemovedMods = false; // NOTE: this can instantly delete many mods, which may take a long time to refetch. Consider only enabling it after you double-check the list it prints with it off.
-
 /// <summary>The date from which to list updated mods.</summary>
 readonly DateTimeOffset ListModsUpdatedSince = GetStartOfMonth().AddDays(-6);
 
 /*****
 ** Folder paths
 *****/
-/// <summary>The directory path in which to store cached mod data and downloads.</summary>
-const string ModDumpPath = @"E:\dev\mod-dump";
-
 /// <summary>The mods folder to which mods are copied when you click 'install mod'.</summary>
 const string InstallModsToPath = @"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods (test)";
 
-/// <summary>The path in which files are downloaded manually. This is only used when you need to download a file manually, and you click 'move download automatically'.</summary>
-readonly string DownloadsPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads");
+/// <summary>The full path to the <a href="https://github.com/Pathoschild/StardewModData">open mod dataset</a> repo.</summary>
+const string ModDataRepoPath = @"E:\source\_Stardew\_ModData";
 
 /// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
-const string LocalCompatListRepoPath = null;
+const string LocalCompatListRepoPath = @"E:\source\_Stardew\_SmapiCompatibilityList";
 
 /// <summary>The full path to the file containing mod data analysis overrides.</summary>
 /// <remarks>This should be the <c>scripts/metadata/mod-analysis-overrides.jsonc</c> file from the <a href="https://github.com/Pathoschild/SmapiCompatibilityList">Pathoschild/SmapiCompatibilityList repo</a>.</remarks>
@@ -101,14 +54,11 @@ const string ModDataOverridesFilePath = @"E:\source\_Stardew\_SmapiCompatibility
 /*****
 ** Internal
 *****/
+/// <summary>The full path to the directory which contains downloaded mod files.</summary>
+const string ModDumpPath = $@"{ModDataRepoPath}\mod-dump";
+
 /// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
-private readonly ModCacheUtilities ModCacheHelper = new(ModDumpPath, InstallModsToPath);
-
-/// <summary>The maximum age in hours for which a mod export is considered valid.</summary>
-const int MaxExportAge = 5;
-
-/// <summary>The number of mods to fetch from a mod site before the mod cache is written to disk to allow for incremental updates.</summary>
-readonly int ModFetchesPerSave = 10;
+private readonly ModCacheUtilities ModCacheHelper = new(ModDataRepoPath, InstallModsToPath);
 
 /// <summary>The manual overrides for specific mods or source repos when analyzing them with this script.</summary>
 private ModOverridesData ModOverrides;
@@ -148,28 +98,10 @@ async Task Main()
 		? await new ModToolkit().GetCompatibilityListFromLocalGitFolderAsync(LocalCompatListRepoPath)
 		: await new ModToolkit().GetCompatibilityListAsync();
 
-	// read cache
-	ConsoleHelper.Print($"Reading mod cache...");
-	ModCache modDump = this.ModCacheHelper.Cache;
-
-	// sync cache to mod sites
-	if (this.FetchMods)
-	{
-		ConsoleHelper.Print("Initializing clients...");
-		foreach (var site in this.ModSites)
-			await site.AuthenticateAsync();
-
-		ConsoleHelper.Print("Syncing cache with mod sites...");
-
-		foreach (IModSiteClient modSite in this.ModSites)
-			await this.DownloadAndCacheSiteAsync(modDump, modSite);
-
-		this.ModCacheHelper.ReloadFromModCache();
-	}
-
-	// read mod data
-	ConsoleHelper.Print($"Reading mod folders...");
-	ParsedMod[] mods = modDump.ReadUnpackedModFolders().ToArray();
+	// load mods from repo
+	ConsoleHelper.Print("Loading mods from repo...");
+	ModPageRecord[] modPages = LoadModsFromRepo(ModDataRepoPath).ToArray();
+	ConsoleHelper.Print($"Loaded {modPages.Length:#,###} mods.");
 
 	// add launch button
 	Util.VerticalRun(
@@ -179,28 +111,18 @@ async Task Main()
 				arguments: @$"--mods-path ""{Path.GetFileName(InstallModsToPath)}"""
 			),
 			"launch SMAPI"
-		),
-		Util.OnDemand(
-			"install compatible mods on compatibility list",
-			() => new object[] // returning an array allows collapsing the log in the LINQPad output
-			{
-				Util.WithStyle(
-					Util.VerticalRun(this.InstallEveryCompatibleCSharpMod(compatList)),
-					"font-style: monospace; font-size: 0.9em;"
-				)
-			}
 		)
 	).Dump("actions");
 
 	// detect issues
-	ConsoleHelper.Print($"Running analyses...");
+	ConsoleHelper.Print("Running analyses...");
 	{
 		Util.RawHtml("<h1>Detected issues</h1>").Dump();
 
 		// compatibility list issues
 		Util.RawHtml("<h3>Compatibility list issues</h3>").Dump();
 		{
-			var notOnCompatList = this.GetModsNotOnCompatibilityList(mods, compatList).ToArray();
+			var notOnCompatList = this.GetModsNotOnCompatibilityList(modPages, compatList).ToArray();
 			if (notOnCompatList.Length > 0)
 			{
 				notOnCompatList.Dump("SMAPI mods not on the compatibility list");
@@ -209,32 +131,32 @@ async Task Main()
 			else
 				"none".Dump("SMAPI mods not on the compatibility list");
 		}
-		this.GetCompatibilityListModsNotInCache(modDump, compatList).Dump("Mods on the compatibility list which weren't found on the modding sites");
-		this.GetModsWithSourceNotOnCompatList(mods, compatList).Dump("Mods on the compatibility list whose source repo doesn't match cached data");
-		this.GetModsMarkedHiddenWhichAreNot(mods, compatList).Dump("Mods on the compatibility list marked deleted/hidden which were found on a mod site");
-		//this.GetModsWhichAreContentPacks(mods, compatList).Dump("Mods on the compatibility list which are actually content packs (may have false positives with multiple versions)");
+		this.GetCompatibilityListModsNotInRepo(modPages, compatList).Dump("Mods on the compatibility list which weren't found on the modding sites");
+		this.GetModsWithSourceNotOnCompatList(modPages, compatList).Dump("Mods on the compatibility list whose source repo doesn't match cached data");
+		this.GetModsMarkedHiddenWhichAreNot(modPages, compatList).Dump("Mods on the compatibility list marked deleted/hidden which were found on a mod site");
+		//this.GetModsWhichAreContentPacks(modPages, compatList).Dump("Mods on the compatibility list which are actually content packs (may have false positives with multiple versions)");
 
 		// mod issues
 		Util.RawHtml("<h3>Mod issues</h3>").Dump();
-		this.GetInvalidMods(mods).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
+		this.GetInvalidMods(modPages).Dump("Mods marked invalid by SMAPI toolkit (except blacklist)");
 
 		// script issues
 		Util.RawHtml("<h3>Script issues</h3>").Dump();
-		this.GetInvalidIgnoreModEntries(mods).Dump($"{nameof(ModOverridesData.IgnoreForAnalysis)} values which don't match any local mod");
+		this.GetInvalidIgnoreModEntries(modPages).Dump($"{nameof(ModOverridesData.IgnoreForAnalysis)} values which don't match any local mod");
 	}
 
 	// mod updates
 	{
 		Util.RawHtml("<h1>Mod updates</h1>").Dump();
-		this.GetModsOnCompatibilityListUpdatedSince(mods, compatList, ListModsUpdatedSince).Dump($"Mod files on compatibility list uploaded since {ListModsUpdatedSince:yyyy-MM-dd HH:mm}");
+		this.GetModsOnCompatibilityListUpdatedSince(modPages, compatList, ListModsUpdatedSince).Dump($"Mod files on compatibility list uploaded since {ListModsUpdatedSince:yyyy-MM-dd HH:mm}");
 	}
 
 	// stats
 	{
 		Util.RawHtml("<h1>Stats</h1>").Dump();
 		this.GetOpenSourceStats(compatList).Dump("open-source stats");
-		this.GetModTypes(mods).Dump("mod types");
-		DumpDictionaryToColumns(this.GetContentPatcherVersionUsage(mods).Dump("Content Patcher packs by format version"), "Content Patcher packs by format version (row)");
+		this.GetModTypes(modPages).Dump("mod types");
+		DumpDictionaryToColumns(this.GetContentPatcherVersionUsage(modPages).Dump("Content Patcher packs by format version"), "Content Patcher packs by format version (row)");
 	}
 }
 
@@ -245,55 +167,56 @@ async Task Main()
 /// <summary>Get SMAPI mods which aren't listed on the mod compatibility list.</summary>
 /// <param name="mods">The mods to check.</param>
 /// <param name="compatList">The mod data from the mod compatibility list.</param>
-IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ModPageRecord> mods, ModCompatibilityEntry[] compatList)
 {
 	// fetch mods on the compatibility list
 	ISet<string> manifestIDs = new HashSet<string>(compatList.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
-	IDictionary<ModSite, ISet<long>> siteIDs = new Dictionary<ModSite, ISet<long>>
+	Dictionary<ModSite, ISet<long>> siteIDs = new()
 	{
-		[ModSite.CurseForge] = new HashSet<long>(compatList.Where(p => p.CurseForgeID.HasValue).Select(p => (long)p.CurseForgeID.Value)),
-		[ModSite.ModDrop] = new HashSet<long>(compatList.Where(p => p.ModDropID.HasValue).Select(p => (long)p.ModDropID.Value)),
-		[ModSite.Nexus] = new HashSet<long>(compatList.Where(p => p.NexusID.HasValue).Select(p => (long)p.NexusID.Value))
+		[ModSite.CurseForge] = new HashSet<long>(compatList.Where(p => p.CurseForgeID.HasValue).Select(p => p.CurseForgeID.Value)),
+		[ModSite.ModDrop] = new HashSet<long>(compatList.Where(p => p.ModDropID.HasValue).Select(p => p.ModDropID.Value)),
+		[ModSite.Nexus] = new HashSet<long>(compatList.Where(p => p.NexusID.HasValue).Select(p => p.NexusID.Value))
 	};
 
 	// fetch report
 	return (
-		from mod in mods
-		from folder in mod.ModFolders
-		orderby mod.Name
+		from modPage in mods
+		from download in modPage.Downloads
+		from mod in download.Mods
+		orderby modPage.Name
 
 		where
-			folder.ModType == ModType.Smapi
-			&& !string.IsNullOrWhiteSpace(folder.ModID)
-			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+			mod.Type == ModType.Smapi
+			&& !string.IsNullOrWhiteSpace(mod.Id)
+			&& !this.ShouldIgnoreForAnalysis(modPage.Site, modPage.Id, download.Id, mod.Id)
 
-		let compatHasManifestId = manifestIDs.Contains(folder.ModID)
-		let compatHasSiteId = siteIDs[mod.Site].Contains(mod.ID)
+		let compatHasManifestId = manifestIDs.Contains(mod.Id)
+		let compatHasSiteId = siteIDs.GetValueOrDefault(modPage.Site)?.Contains(modPage.Id) is true
 
 		where (!compatHasManifestId || !compatHasSiteId)
 
-		let manifest = folder.RawFolder.Manifest
-		let names = this.GetModNames(folder, mod)
-		let authorNames = this.GetAuthorNames(manifest, mod)
-		let githubRepos = this.GetGitHubRepos(manifest, mod)
-		let customSourceUrls = this.GetCustomSourceUrls(manifest, mod)
+		let manifest = mod.Manifest
+		let names = this.GetModNames(mod, modPage)
+		let authorNames = this.GetAuthorNames(manifest, modPage)
+		let githubRepos = this.GetGitHubRepos(manifest, modPage)
+		let customSourceUrls = this.GetCustomSourceUrls(manifest, modPage)
 
-		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
+		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, mod.Id))
 
 		let missingLabels = (new[] { !compatHasManifestId ? "manifest ID" : null, !compatHasSiteId ? "site ID" : null }).Where(p => p is not null).ToArray()
 
 		select new
 		{
-			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
-			SiteName = mod.Name,
-			SiteAuthor = mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
-				? $"{mod.Author}\n({mod.AuthorLabel})"
-				: mod.Author,
-			SiteVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : mod.Version,
-			FileName = folder.DisplayName,
-			FileCategory = folder.Type,
-			folder.ModID,
-			folder.ModVersion,
+			SitePage = new Hyperlinq(modPage.PageUrl, $"{modPage.Site}:{modPage.Id}"),
+			SiteName = modPage.Name,
+			SiteAuthor = modPage.AuthorLabel != null && modPage.AuthorLabel != modPage.Author
+				? $"{modPage.Author}\n({modPage.AuthorLabel})"
+				: modPage.Author,
+			SiteVersion = SemanticVersion.TryParse(modPage.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : modPage.Version,
+			FileName = mod.DisplayName,
+			FileCategory = mod.Type,
+			ModId = mod.Id,
+			ModVersion = mod.Manifest?.Version,
 			Missing = Util.WithStyle(
 				string.Join(", ", missingLabels),
 				missingLabels.Length == 1 ? "color: red" : "" // highlight mods that are partly missing, which usually means outdated info
@@ -305,44 +228,44 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 					() => new object[] // returning an array allows collapsing the log in the LINQPad output
 					{
 						Util.WithStyle(
-							Util.VerticalRun(this.ModCacheHelper.TryInstall(folder, deleteTargetFolder: false)),
+							Util.VerticalRun(this.ModCacheHelper.TryInstall(modPage, download, mod, out _, deleteTargetFolder: false)),
 							"font-style: monospace; font-size: 0.9em;"
 						)
 					}
 				),
 			Metadata = Util.OnDemand("expand", () => new
 			{
-				FileId = folder.ID,
-				FileType = folder.ModType,
-				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				FileId = download.Id,
+				FileType = download.Type,
+				UpdateKeys = Util.OnDemand("expand", () => this.GetUpdateKeys(manifest)),
 				Manifest = Util.OnDemand("expand", () => manifest),
-				Mod = Util.OnDemand("expand", () => mod),
-				Folder = Util.OnDemand("expand", () => folder)
+				Mod = Util.OnDemand("expand", () => modPage),
+				Folder = Util.OnDemand("expand", () => mod)
 			}),
 			CompatEntry = new Lazy<string>(() => // can't be in Metadata since it's accessed by the main script
-				BuildCompatibilityEntry(mod, manifest, names, authorNames, githubRepos, customSourceUrls)
+				BuildCompatibilityEntry(modPage, manifest, names, authorNames, githubRepos, customSourceUrls)
 			)
 		}
 	)
 	.ToArray();
-	
-	static string BuildCompatibilityEntry(ParsedMod mod, IManifest manifest, string[] names, string[] authorNames, HashSet<string> githubRepos, HashSet<string> customSourceUrls)
+
+	static string BuildCompatibilityEntry(ModPageRecord mod, ModManifestRecord? manifest, string[] names, string[] authorNames, HashSet<string> githubRepos, HashSet<string> customSourceUrls)
 	{
 		// build JSON
 		bool hasMultipleSourceUrls = (githubRepos.Count + customSourceUrls.Count) > 1;
-		string json = JsonConvert.SerializeObject(
+		string json = JsonSerializer.Serialize(
 			new
 			{
 				name = string.Join(", ", names),
 				author = string.Join(", ", authorNames),
-				id = manifest?.UniqueID,
-				curse = mod.Site == ModSite.CurseForge ? mod.ID : null as long?,
-				moddrop = mod.Site == ModSite.ModDrop ? mod.ID : null as long?,
-				nexus = mod.Site == ModSite.Nexus ? mod.ID : null as long?,
+				id = manifest?.UniqueId,
+				curse = mod.Site == ModSite.CurseForge ? mod.Id : null as long?,
+				moddrop = mod.Site == ModSite.ModDrop ? mod.Id : null as long?,
+				nexus = mod.Site == ModSite.Nexus ? mod.Id : null as long?,
 				github = FormatSourceField(githubRepos),
 				source = FormatSourceField(customSourceUrls)
 			},
-			Newtonsoft.Json.Formatting.Indented
+			new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }
 		);
 
 		// remove empty optional fields
@@ -370,9 +293,9 @@ IEnumerable<dynamic> GetModsNotOnCompatibilityList(IEnumerable<ParsedMod> mods, 
 }
 
 /// <summary>Get SMAPI mods with a source URL which isn't on the mod compatibility list.</summary>
-/// <param name="mods">The mods to check.</param>
+/// <param name="modPages">The mod pages to check.</param>
 /// <param name="compatList">The mod data from the mod compatibility list.</param>
-IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ModPageRecord> modPages, ModCompatibilityEntry[] compatList)
 {
 	Dictionary<string, ModCompatibilityEntry> compatById = this.GetCompatibilityEntriesByModId(compatList);
 
@@ -385,21 +308,22 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 			: "";
 	}
 	return (
-		from mod in mods
-		from folder in mod.ModFolders
-		orderby mod.Name
+		from modPage in modPages
+		from download in modPage.Downloads
+		from mod in download.Mods
+		orderby modPage.Name
 
 		where
-			folder.ModType == ModType.Smapi
-			&& !string.IsNullOrWhiteSpace(folder.ModID)
-			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+			mod.Type == ModType.Smapi
+			&& !string.IsNullOrWhiteSpace(mod.Id)
+			&& !this.ShouldIgnoreForAnalysis(modPage.Site, modPage.Id, download.Id, mod.Id)
 
-		let compatEntry = compatById.GetValueOrDefault(folder.ModID)
+		let compatEntry = compatById.GetValueOrDefault(mod.Id)
 		where compatEntry is not null
 
-		let manifest = folder.RawFolder.Manifest
-		let githubRepos = this.GetGitHubRepos(manifest, mod)
-		let customSourceUrls = this.GetCustomSourceUrls(manifest, mod)
+		let manifest = mod.Manifest
+		let githubRepos = this.GetGitHubRepos(manifest, modPage)
+		let customSourceUrls = this.GetCustomSourceUrls(manifest, modPage)
 
 		let githubRepoMismatch =
 			githubRepos.Count > 0
@@ -418,14 +342,14 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 
 		select new
 		{
-			ModId = manifest.UniqueID,
-			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
-			SiteName = mod.Name,
-			SiteAuthor = mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
-				? $"{mod.Author}\n({mod.AuthorLabel})"
-				: mod.Author,
-			FileName = folder.DisplayName,
-			FileCategory = folder.Type,
+			ModId = mod.Id,
+			SitePage = new Hyperlinq(modPage.PageUrl, $"{modPage.Site}:{modPage.Id}"),
+			SiteName = modPage.Name,
+			SiteAuthor = modPage.AuthorLabel != null && modPage.AuthorLabel != modPage.Author
+				? $"{modPage.Author}\n({modPage.AuthorLabel})"
+				: modPage.Author,
+			FileName = mod.DisplayName,
+			FileCategory = mod.Type,
 			GithubRepo = githubRepoMismatch
 				? Util.VerticalRun([
 					FormatLink(compatEntry.GitHubRepo != null ? $"https://github.com/{compatEntry.GitHubRepo}" : null, compatEntry.GitHubRepo, oldStyle),
@@ -440,12 +364,12 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 				: "",
 			Metadata = Util.OnDemand("expand", () => new
 			{
-				FileId = folder.ID,
-				FileType = folder.ModType,
-				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				FileId = download.Id,
+				FileType = mod.Type,
+				UpdateKeys = Util.OnDemand("expand", () => this.GetUpdateKeys(manifest)),
 				Manifest = Util.OnDemand("expand", () => manifest),
-				Mod = Util.OnDemand("expand", () => mod),
-				Folder = Util.OnDemand("expand", () => folder)
+				SitePage = Util.OnDemand("expand", () => modPage),
+				Mod = Util.OnDemand("expand", () => mod)
 			}),
 		}
 	)
@@ -453,43 +377,44 @@ IEnumerable<dynamic> GetModsWithSourceNotOnCompatList(IEnumerable<ParsedMod> mod
 }
 
 /// <summary>Get SMAPI mods which are marked deleted or hidden on the mod compatibility list, but which were found on a mod site.</summary>
-/// <param name="mods">The mods to check.</param>
+/// <param name="modPages">The mod pages to check.</param>
 /// <param name="compatList">The mod data from the mod compatibility list.</param>
-IEnumerable<dynamic> GetModsMarkedHiddenWhichAreNot(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+IEnumerable<dynamic> GetModsMarkedHiddenWhichAreNot(IEnumerable<ModPageRecord> modPages, ModCompatibilityEntry[] compatList)
 {
 	Dictionary<string, ModCompatibilityEntry> compatById = this.GetCompatibilityEntriesByModId(compatList);
 
 	return (
-		from mod in mods
-		from folder in mod.ModFolders
-		orderby mod.Name
+		from modPage in modPages
+		from download in modPage.Downloads
+		from mod in download.Mods
+		orderby modPage.Name
 
 		where
-			!string.IsNullOrWhiteSpace(folder.ModID)
-			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
-			&& compatById.TryGetValue(folder.ModID, out ModCompatibilityEntry compatEntry)
+			!string.IsNullOrWhiteSpace(mod.Id)
+			&& !this.ShouldIgnoreForAnalysis(modPage.Site, modPage.Id, download.Id, mod.Id)
+			&& compatById.TryGetValue(mod.Id, out ModCompatibilityEntry compatEntry)
 			&& compatEntry.Compatibility is { Status: ModCompatibilityStatus.Abandoned, AbandonedReason: ModCompatibilityReasonAbandoned.Deleted or ModCompatibilityReasonAbandoned.Hidden }
 
-		let manifest = folder.RawFolder.Manifest
+		let manifest = mod.Manifest
 
 		select new
 		{
-			ModId = manifest.UniqueID,
-			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
-			SiteName = mod.Name,
-			SiteAuthor = mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
-				? $"{mod.Author}\n({mod.AuthorLabel})"
-				: mod.Author,
-			FileName = folder.DisplayName,
-			FileCategory = folder.Type,
+			ModId = mod.Id,
+			SitePage = new Hyperlinq(modPage.PageUrl, $"{modPage.Site}:{modPage.Id}"),
+			SiteName = modPage.Name,
+			SiteAuthor = modPage.AuthorLabel != null && modPage.AuthorLabel != modPage.Author
+				? $"{modPage.Author}\n({modPage.AuthorLabel})"
+				: modPage.Author,
+			FileName = mod.DisplayName,
+			FileCategory = mod.Type,
 			Metadata = Util.OnDemand("expand", () => new
 			{
-				FileId = folder.ID,
-				FileType = folder.ModType,
-				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				FileId = download.Id,
+				FileType = mod.Type,
+				UpdateKeys = Util.OnDemand("expand", () => this.GetUpdateKeys(manifest)),
 				Manifest = Util.OnDemand("expand", () => manifest),
-				Mod = Util.OnDemand("expand", () => mod),
-				Folder = Util.OnDemand("expand", () => folder)
+				SitePage = Util.OnDemand("expand", () => modPage),
+				Mod = Util.OnDemand("expand", () => mod)
 			}),
 		}
 	)
@@ -497,20 +422,23 @@ IEnumerable<dynamic> GetModsMarkedHiddenWhichAreNot(IEnumerable<ParsedMod> mods,
 }
 
 /// <summary>Get SMAPI mods on the compatibility list which are actually content packs.</summary>
-/// <param name="mods">The mods to check.</param>
+/// <param name="modPages">The mod pages to check.</param>
 /// <param name="compatList">The mod data from the compatibility list.</param>
-IEnumerable<dynamic> GetModsWhichAreContentPacks(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList)
+IEnumerable<dynamic> GetModsWhichAreContentPacks(IEnumerable<ModPageRecord> modPages, ModCompatibilityEntry[] compatList)
 {
 	// get lookup of mods by ID
-	Dictionary<string, (ParsedMod Mod, ParsedFile Folder)> modsById = new(StringComparer.OrdinalIgnoreCase);
-	foreach (ParsedMod mod in mods)
+	Dictionary<string, (ModPageRecord Mod, ModFolderRecord Folder)> modsById = new(StringComparer.OrdinalIgnoreCase);
+	foreach (ModPageRecord modPage in modPages)
 	{
-		foreach (ParsedFile folder in mod.ModFolders)
+		foreach (ModPageDownloadRecord download in modPage.Downloads)
 		{
-			if (string.IsNullOrWhiteSpace(folder.ModID))
-				continue;
+			foreach (ModFolderRecord mod in download.Mods)
+			{
+				if (string.IsNullOrWhiteSpace(mod.Id))
+					continue;
 
-			modsById[folder.ModID] = (mod, folder);
+				modsById[mod.Id] = (modPage, mod);
+			}
 		}
 	}
 
@@ -522,49 +450,46 @@ IEnumerable<dynamic> GetModsWhichAreContentPacks(IEnumerable<ParsedMod> mods, Mo
 			continue;
 
 		// skip: mod not found (handled separately)
-		(ParsedMod mod, ParsedFile folder) = entry.ID.Select(p => modsById.GetValueOrDefault(p)).FirstOrDefault(p => p.Mod != null);
-		if (mod is null)
+		(ModPageRecord modPage, ModFolderRecord mod) = entry.ID.Select(p => modsById.GetValueOrDefault(p)).FirstOrDefault(p => p.Mod != null);
+		if (modPage is null)
 			continue;
 
 		// skip: has a C# mod
-		if (folder.RawFolder.Type is ModType.Smapi)
+		if (mod.Type is ModType.Smapi)
 			continue;
 
 		// return match
 		string url = entry.GetModPageUrls().FirstOrDefault().Value;
-		string linkText = $"{mod.Site}:{mod.ID}";
+		string linkText = $"{modPage.Site}:{modPage.Id}";
 		yield return new
 		{
 			Link = url != null
 				? new Hyperlinq(url, linkText)
 				: (object)linkText,
 			Mod =
-				$"{mod.Name}\n   by "
-				+ (mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
-					? $"{mod.Author} ({mod.AuthorLabel})"
-					: mod.Author
+				$"{modPage.Name}\n   by "
+				+ (modPage.AuthorLabel != null && modPage.AuthorLabel != modPage.Author
+					? $"{modPage.Author} ({modPage.AuthorLabel})"
+					: modPage.Author
 				),
 			Metadata = Util.OnDemand("expand", () => new
 			{
-				Mod = mod,
-				Folder = folder,
+				Mod = modPage,
+				Folder = mod,
 				Entry = entry
 			})
 		};
 	}
-	
+
 	yield break;
 }
 
 /// <summary>Get SMAPI mods on the compatibility list which have been updated recently.</summary>
-/// <param name="mods">The mods to check.</param>
+/// <param name="modPages">The mod pages to check.</param>
 /// <param name="compatList">The mod data from the compatibility list.</param>
 /// <param name="updatedSince">The earliest update date for which to list mods.</param>
-IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMod> mods, ModCompatibilityEntry[] compatList, DateTimeOffset updatedSince)
+IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ModPageRecord> modPages, ModCompatibilityEntry[] compatList, DateTimeOffset updatedSince)
 {
-	// get mod IDs on the compatibility list
-	var manifestIDs = new HashSet<string>(compatList.SelectMany(p => p.ID), StringComparer.InvariantCultureIgnoreCase);
-
 	// build compatibility list lookup
 	var compatEntries = new Dictionary<string, ModCompatibilityEntry>();
 	foreach (var entry in compatList)
@@ -580,127 +505,103 @@ IEnumerable<dynamic> GetModsOnCompatibilityListUpdatedSince(IEnumerable<ParsedMo
 	// fetch report
 	const string smallStyle = "font-size: 0.8em;";
 	return (
-		from mod in mods
-		from folder in mod.ModFolders
+		from modPage in modPages
+		from download in modPage.Downloads
+		from mod in download.Mods
 
-		let compatEntry = compatEntries.GetValueOrDefault($"{mod.Site}:{mod.ID}")
+		let compatEntry = compatEntries.GetValueOrDefault($"{modPage.Site}:{modPage.Id}")
 		let compat = compatEntry?.Compatibility
 
 		where
 			compatEntry != null
-			&& folder.Uploaded >= updatedSince
-			&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+			&& download.Uploaded >= updatedSince
+			&& !this.ShouldIgnoreForAnalysis(modPage.Site, modPage.Id, download.Id, mod.Id)
 
-		let uploadedStr = folder.Uploaded.ToString("yyyy-MM-dd")
-		let manifest = folder.RawFolder.Manifest
-		let isModInstalled = Directory.Exists(Path.Combine(InstallModsToPath, folder.RawFolder.Directory.Name))
+		let manifest = mod.Manifest
+		let isModInstalled = mod.Id != null && Directory.Exists(Path.Combine(InstallModsToPath, mod.Id))
 
-		let highlightType = folder.ModType is not (ModType.Smapi or ModType.ContentPack)
+		let highlightType = mod.Type is not (ModType.Smapi or ModType.ContentPack)
 		let highlightStatus = compat is null || compat.Status is not (ModCompatibilityStatus.Ok or ModCompatibilityStatus.Optional)
 
 		orderby
 			(highlightType || highlightStatus) descending, // mods with issues first
-			mod.Name
+			modPage.Name
 
 		select new
 		{
-			Link = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
+			Link = new Hyperlinq(modPage.PageUrl, $"{modPage.Site}:{modPage.Id}"),
 			Mod =
-				$"{mod.Name}\n   by "
-				+ (mod.AuthorLabel != null && mod.AuthorLabel != mod.Author
-					? $"{mod.Author} ({mod.AuthorLabel})"
-					: mod.Author
+				$"{modPage.Name}\n   by "
+				+ (modPage.AuthorLabel != null && modPage.AuthorLabel != modPage.Author
+					? $"{modPage.Author} ({modPage.AuthorLabel})"
+					: modPage.Author
 				),
-			//SiteVersion = SemanticVersion.TryParse(mod.Version, out ISemanticVersion siteVersion) ? siteVersion.ToString() : mod.Version,
-			FileUpdated = uploadedStr,
-			File = $"{folder.DisplayName} {folder.Version}",
-			FileCategory = folder.Type,
-			ModType = Util.WithStyle(folder.ModType, highlightType ? ConsoleHelper.ErrorStyle : ""),
+			FileUpdated = download.Uploaded.ToString("yyyy-MM-dd"),
+			File = $"{download.DisplayName} {download.Version}",
+			FileCategory = mod.Type,
+			ModType = Util.WithStyle(mod.Type, highlightType ? ConsoleHelper.ErrorStyle : ""),
 			Summary =
 			compatEntry != null
 				? Util.WithStyle($"{compat.Summary} {(!string.IsNullOrWhiteSpace(compat.BrokeIn) ? $"[broke in {compat.BrokeIn}]" : "")}".Trim(), $"{smallStyle} {(highlightStatus ? ConsoleHelper.ErrorStyle : "")}")
 				: Util.WithStyle($"not found on compatibility list", ConsoleHelper.ErrorStyle),
-			folder.ModID,
-			folder.ModVersion,
-			Actions = Util.HorizontalRun(true,
-				isModInstalled
-					? "installed"
-					: (object)Util.OnDemand(
-						"install",
-						() => new object[] // returning an array allows collapsing the log in the LINQPad output
-						{
-							Util.WithStyle(
-								Util.VerticalRun(this.ModCacheHelper.TryInstall(folder, deleteTargetFolder: false)),
-								"font-style: monospace; font-size: 0.9em;"
-							)
-						}
-					),
-				new Hyperlinq(folder.RawFolder.DirectoryPath, "files")
-			),
+			mod.Id,
+			ModVersion = mod.Manifest?.Version,
+			Actions = mod.Id != null
+				? Util.HorizontalRun(true,
+					isModInstalled
+						? "installed"
+						: (object)Util.OnDemand(
+							"install",
+							() => new object[] // returning an array allows collapsing the log in the LINQPad output
+							{
+								Util.WithStyle(
+									Util.VerticalRun(this.ModCacheHelper.TryInstall(modPage, download, mod, out _, deleteTargetFolder: false)),
+									"font-style: monospace; font-size: 0.9em;"
+								)
+							}
+						),
+					new Hyperlinq(this.ModCacheHelper.GetModDumpFolder(modPage, download, mod), "files")
+				)
+				: null,
 			Metadata = Util.OnDemand("expand", () => new
 			{
-				FileId = folder.ID,
-				UpdateKeys = Util.OnDemand("expand", () => manifest.UpdateKeys),
+				FileId = download.Id,
+				UpdateKeys = Util.OnDemand("expand", () => this.GetUpdateKeys(manifest)),
 				Manifest = Util.OnDemand("expand", () => manifest),
-				Mod = Util.OnDemand("expand", () => mod),
-				Folder = Util.OnDemand("expand", () => folder)
+				Mod = Util.OnDemand("expand", () => modPage),
+				Folder = Util.OnDemand("expand", () => mod)
 			})
 		}
 	)
 	.ToArray();
 }
 
-/// <summary>Install every mod from the C# compatibility list that's marked compatible.</summary>
-/// <param name="mods">The mods to install.</param>
-IEnumerable<object> InstallEveryCompatibleCSharpMod(ModCompatibilityEntry[] mods)
-{
-	if (Directory.GetFileSystemEntries(InstallModsToPath).Any())
-	{
-		yield return Util.WithStyle($"Can't install all mods to folder '{InstallModsToPath}' because that folder isn't empty.", ConsoleHelper.ErrorStyle);
-		yield break;
-	}
-
-
-	foreach (ModCompatibilityEntry mod in mods)
-	{
-		if (mod.Compatibility.Status is not (ModCompatibilityStatus.Ok or ModCompatibilityStatus.Optional or ModCompatibilityStatus.Unofficial))
-			continue;
-
-		string modId = mod.ID.FirstOrDefault();
-		if (modId is null)
-			continue;
-
-		bool installed = this.ModCacheHelper.TryInstall(modId, out List<object> log);
-
-		var _mod = mod;
-		yield return Util.HorizontalRun(true,
-			installed
-				? Util.WithStyle($"Installed {mod.Name.FirstOrDefault()}.", ConsoleHelper.SuccessStyle)
-				: Util.WithStyle($"Error installing {mod.Name.FirstOrDefault()}. Compatibility status: {mod.Compatibility.Summary}{(!string.IsNullOrWhiteSpace(mod.Compatibility.BrokeIn) ? $"[broke in {mod.Compatibility.BrokeIn}]" : "")}.", ConsoleHelper.ErrorStyle),
-			new Lazy<object>(() => new { log, _mod })
-		);
-	}
-}
-
-/// <summary>Get SMAPI mods listed on the mod compatibility list which don't exist in the mod dump, so they were probably hidden or deleted. This excludes mods marked abandoned on the compatibility list.</summary>
-/// <param name="modDump">The mod dump to search.</param>
-/// <param name="compatList">The mod data from the mod compatibility list.</param>
-IEnumerable<dynamic> GetCompatibilityListModsNotInCache(ModCache modDump, ModCompatibilityEntry[] mods)
+/// <summary>Get SMAPI mods listed on the mod compatibility list which don't exist in the open mod dataset, so they were probably hidden or deleted. This excludes mods marked abandoned on the compatibility list.</summary>
+/// <param name="modPages">The mod pages to check.</param>
+/// <param name="mods">The mod data from the mod compatibility list.</param>
+IEnumerable<dynamic> GetCompatibilityListModsNotInRepo(ModPageRecord[] modPages, ModCompatibilityEntry[] compatList)
 {
 	ModToolkit toolkit = new();
 
+	Dictionary<ModSite, HashSet<long>> knownIds = modPages
+		.GroupBy(page => page.Site)
+		.ToDictionary(
+			pages => pages.Key,
+			pages => new HashSet<long>(pages.Select(page => page.Id))
+		);
+
 	HashSet<string> missingPages = new(StringComparer.OrdinalIgnoreCase);
-	foreach (ModCompatibilityEntry mod in mods)
+	foreach (ModCompatibilityEntry mod in compatList)
 	{
 		if (mod.Compatibility.Status is ModCompatibilityStatus.Abandoned or ModCompatibilityStatus.Obsolete)
 			continue;
 
 		missingPages.Clear();
-		if (mod.CurseForgeID.HasValue && modDump.GetMod(ModSite.CurseForge, mod.CurseForgeID.Value) is null)
+		if (mod.CurseForgeID.HasValue && knownIds.GetValueOrDefault(ModSite.CurseForge)?.Contains(mod.CurseForgeID.Value) is not true)
 			missingPages.Add($"{ModSite.CurseForge}:{mod.CurseForgeID}");
-		if (mod.ModDropID.HasValue && modDump.GetMod(ModSite.ModDrop, mod.ModDropID.Value) is null)
+		if (mod.ModDropID.HasValue && knownIds.GetValueOrDefault(ModSite.ModDrop)?.Contains(mod.ModDropID.Value) is not true)
 			missingPages.Add($"{ModSite.ModDrop}:{mod.ModDropID}");
-		if (mod.NexusID.HasValue && modDump.GetMod(ModSite.Nexus, mod.NexusID.Value) is null)
+		if (mod.NexusID.HasValue && knownIds.GetValueOrDefault(ModSite.Nexus)?.Contains(mod.NexusID.Value) is not true)
 			missingPages.Add($"{ModSite.Nexus}:{mod.NexusID}");
 
 		if (missingPages.Count > 0)
@@ -725,88 +626,111 @@ IEnumerable<dynamic> GetCompatibilityListModsNotInCache(ModCache modDump, ModCom
 }
 
 /// <summary>Get mods which the SMAPI toolkit marked as invalid or unparseable.</summary>
-/// <param name="mods">The mods to check.</param>
-IEnumerable<dynamic> GetInvalidMods(IEnumerable<ParsedMod> mods)
+/// <param name="modPages">The mod pages to check.</param>
+IEnumerable<dynamic> GetInvalidMods(IEnumerable<ModPageRecord> modPages)
 {
 	return (
-		from mod in mods
+		from modPage in modPages
 
-		let invalid = mod.ModFolders
-			.Where(folder =>
-				folder.ModType == ModType.Invalid
-				&& folder.ModError != ModParseError.ManifestMissing // ignore non-mod files
-				&& folder.ModError != ModParseError.EmptyFolder // contains only non-mod files (e.g. replacement PNG assets)
-				&& !this.ShouldIgnoreForAnalysis(mod.Site, mod.ID, folder.ID, folder.ModID)
+		let invalid =
+			(
+				from download in modPage.Downloads
+				from mod in download.Mods
+				where
+					mod.Type == ModType.Invalid
+				&& mod.ManifestParseError != ModParseError.ManifestMissing // ignore non-mod files
+				&& mod.ManifestParseError != ModParseError.EmptyFolder // contains only non-mod files (e.g. replacement PNG assets)
+				&& !this.ShouldIgnoreForAnalysis(modPage.Site, modPage.Id, download.Id, mod.Id)
+				select (Download: download, Mod: mod)
 			)
 			.ToArray()
 
 		where invalid.Any()
 		select new
 		{
-			mod.Name,
-			mod.Author,
-			mod.Version,
-			mod.Updated,
-			SitePage = new Hyperlinq(mod.PageUrl, $"{mod.Site}:{mod.ID}"),
-			Data = new Lazy<object>(() => mod),
-			InvalidFile = invalid.Select(parsedFile => new
+			modPage.Name,
+			modPage.Author,
+			modPage.Version,
+			modPage.Updated,
+			SitePage = new Hyperlinq(modPage.PageUrl, $"{modPage.Site}:{modPage.Id}"),
+			Data = new Lazy<object>(() => modPage),
+			InvalidFile = invalid.Select(entry => new
 			{
-				parsedFile.ID,
-				parsedFile.Type,
-				parsedFile.DisplayName,
-				parsedFile.Version,
-				parsedFile.ModType,
-				parsedFile.ModError,
-				Data = new Lazy<object>(() => parsedFile),
+				FileId = entry.Download.Id,
+				FileType = entry.Mod.Type,
+				entry.Mod.DisplayName,
+				entry.Download.Version,
+				entry.Mod.Type,
+				entry.Mod.ManifestParseError,
+				Data = new Lazy<object>(() => entry),
 				Manifest = new Lazy<string>(() =>
 				{
-					FileInfo file = new FileInfo(Path.Combine(parsedFile.RawFolder.Directory.FullName, "manifest.json"));
+					string modPath = this.ModCacheHelper.GetModDumpFolder(modPage, entry.Download, entry.Mod);
+					FileInfo file = new FileInfo(Path.Combine(modPath, "manifest.json"));
 					return file.Exists
 						? File.ReadAllText(file.FullName)
 						: "<file not found>";
 				}),
-				ManifestError = new Lazy<string>(() => $"{parsedFile.RawFolder.ManifestParseError}\n{parsedFile.RawFolder.ManifestParseErrorText}"),
-				FileList = new Lazy<string>(() => this.BuildFileList(parsedFile.RawFolder.Directory))
+				ManifestError = new Lazy<string>(() => $"{entry.Mod.ManifestParseError}\n{entry.Mod.ManifestParseErrorText}"),
+				FileList = new Lazy<string>(() =>
+				{
+					string modPath = this.ModCacheHelper.GetModDumpFolder(modPage, entry.Download, entry.Mod);
+					return this.BuildFileList(new DirectoryInfo(modPath));
+				})
 			})
 		}
 	)
 	.ToArray();
 }
 
-/// <summary>Get entries in <see cref="IgnoreModsForValidation" /> which don't match any of the given mods.</summary>
-/// <param name="mods">The mods to check.</param>
-IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ParsedMod> mods)
+/// <summary>Get entries in <see cref="IgnoreForAnalysis" /> which don't match any of the given mods.</summary>
+/// <param name="modPages">The mod pages to check.</param>
+IEnumerable<dynamic> GetInvalidIgnoreModEntries(IEnumerable<ModPageRecord> modPages)
 {
 	// index known mods
-	IDictionary<string, ParsedMod> modsByKey = mods.ToDictionary(mod => $"{mod.Site}:{mod.ID}", StringComparer.OrdinalIgnoreCase);
+	IDictionary<string, ModPageRecord> modPagesByKey = modPages.ToDictionary(mod => $"{mod.Site}:{mod.Id}", StringComparer.OrdinalIgnoreCase);
 
 	// show unknown entries
-	var invalid = new List<(ModSearch Entry, string Reason, ParsedMod Mod)>();
+	var invalid = new List<(ModSearch Entry, string Reason, ModPageRecord Mod)>();
 	foreach (var pair in this.IgnoreForAnalysisBySiteId)
 	{
 		(string key, ModSearch[] entries) = pair;
 
 		// fetch mod
-		if (!modsByKey.TryGetValue(key, out ParsedMod mod))
+		if (!modPagesByKey.TryGetValue(key, out ModPageRecord modPage))
 		{
 			foreach (var entry in entries)
-				invalid.Add((entry, "Site ID not found", mod));
+				invalid.Add((entry, "Site ID not found", modPage));
 			continue;
 		}
 
 		// match against mod folders
-		HashSet<long> fileIds = new(mod.Files.Select(p => p.ID));
+		HashSet<long> fileIds = new(modPage.Downloads.Select(p => p.Id));
 		foreach (var entry in entries)
 		{
 			if (entry.FileId.HasValue && !fileIds.Contains(entry.FileId.Value))
-				invalid.Add((entry, "File ID not found", mod));
-			else if (!mod.ModFolders.Any(folder => entry.Matches(site: mod.Site, siteId: mod.ID, fileId: folder.ID, manifestId: folder.ModID)))
-				invalid.Add((entry, "Mod folder data not matched", mod));
+				invalid.Add((entry, "File ID not found", modPage));
+			else
+			{
+				bool found = false;
+				foreach (var download in modPage.Downloads)
+				{
+					foreach (var mod in download.Mods)
+					{
+						found = entry.Matches(site: modPage.Site, siteId: modPage.Id, fileId: download.Id, manifestId: mod.Id);
+						if (found)
+							break;
+					}
+				}
+
+				if (!found)
+					invalid.Add((entry, "Mod folder data not matched", modPage));
+			}
 		}
 	}
 
 	return invalid
-		.Select(p => new { p.Entry.Site, p.Entry.SiteId, p.Entry.FileId, p.Entry.ManifestId, Reason = p.Reason, Mod = new Lazy<ParsedMod>(() => p.Mod), Entry = new Lazy<ModSearch>(() => p.Entry) })
+		.Select(p => new { p.Entry.Site, p.Entry.SiteId, p.Entry.FileId, p.Entry.ManifestId, Reason = p.Reason, Mod = new Lazy<ModPageRecord>(() => p.Mod), Entry = new Lazy<ModSearch>(() => p.Entry) })
 		.OrderBy(p => p.Site)
 		.ThenBy(p => p.SiteId)
 		.ThenBy(p => p.FileId);
@@ -859,15 +783,16 @@ string[] GetOpenSourceStats(ModCompatibilityEntry[] compatList)
 }
 
 /// <summary>Get the number of mods by type.</summary>
-/// <param name="mods">The mods to check.</param>
-IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
+/// <param name="modPages">The mod pages to check.</param>
+IDictionary<string, int> GetModTypes(IEnumerable<ModPageRecord> modPages)
 {
 	const int minPerGroup = 100;
 
 	// get mod id => name lookup
-	IDictionary<string, string> namesById = mods
-		.SelectMany(p => p.ModFolders)
-		.Select(p => new { Id = p.ModID?.Trim(), Name = p.ModDisplayName })
+	IDictionary<string, string> namesById = modPages
+		.SelectMany(p => p.Downloads)
+		.SelectMany(p => p.Mods)
+		.Select(p => new { Id = p.Id?.Trim(), Name = p.DisplayName })
 		.Where(p => !string.IsNullOrWhiteSpace(p.Id) && !string.IsNullOrWhiteSpace(p.Name))
 		.GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
 		.ToDictionary(p => p.Key, p => p.First().Name, StringComparer.OrdinalIgnoreCase);
@@ -889,44 +814,45 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 
 	// get count by type key
 	var typesByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-	foreach (ParsedMod mod in mods)
+	foreach (ModPageRecord modPage in modPages)
 	{
 		// get all the mods available to download from this page (including downloads which contain multiple submods)
 		var submods =
 			(
-				from folder in mod.ModFolders
-				where folder.ModType is not (ModType.Ignored or ModType.Invalid)
-
-				let manifest = folder.RawFolder.Manifest
-				let contentPackFor = manifest?.ContentPackFor?.UniqueID
-				let type = folder.ModType switch
+				from download in modPage.Downloads
+				from mod in download.Mods
+				where mod.Type is not (ModType.Ignored or ModType.Invalid)
+	
+				let contentPackFor = mod.Manifest?.ContentPackFor?.UniqueId
+				let type = mod.Type switch
 				{
 					ModType.Smapi => "SMAPI",
 					ModType.ContentPack => !string.IsNullOrWhiteSpace(contentPackFor) && namesById.TryGetValue(contentPackFor.Trim(), out string name)
 						? $"content pack ({name})"
 						: $"content pack ({contentPackFor?.Trim()})",
 					ModType.Xnb => "XNB",
-					_ => $"other ({folder.ModType})"
+					_ => $"other ({mod.Type})"
 				}
 
 				orderby GetPriority(type)
-				select (folder, manifest, type)
-			);
+				select (mod, type)
+			)
+			.ToArray();
 		if (!submods.Any())
 			continue;
 
 		// count submods by type
 		bool hasNonXnb = submods.Any(p => p.type != "XNB");
-		foreach ((ParsedFile folder, IManifest manifest, string type) in submods)
+		foreach ((ModFolderRecord mod, string type) in submods)
 		{
 			// special case: if the mod has both XNB and non-XNB components, ignore the XNB ones (they're generally old/alternative versions)
 			if (type == "XNB" && hasNonXnb)
 				continue;
 
 			// get tracking key
-			string key = !string.IsNullOrWhiteSpace(manifest?.UniqueID)
-				? manifest.UniqueID.Trim()
-				: $"{type}:{mod.Site}:{mod.ID}";
+			string key = !string.IsNullOrWhiteSpace(mod.Id)
+				? mod.Id.Trim()
+				: $"{type}:{modPage.Site}:{modPage.Id}";
 
 			// ignore duplicates by ID
 			// (Each player can only install one mod with a given ID. If two mods have the same ID, we assume they're equivalent and count them once in priority order.)
@@ -968,46 +894,54 @@ IDictionary<string, int> GetModTypes(IEnumerable<ParsedMod> mods)
 }
 
 /// <summary>Get the number of unique content packs by Content Patcher version.</summary>
-/// <param name="mods">The mods to check.</param>
-IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ParsedMod> mods)
+/// <param name="modPages">The mod pages to check.</param>
+IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ModPageRecord> modPages)
 {
 	// get unique versions by content pack ID
+	var contentTemplate = new { Format = "" };
 	var modVersions = new Dictionary<string, ISemanticVersion>(StringComparer.OrdinalIgnoreCase);
-	foreach (ParsedMod mod in mods)
+	foreach (ModPageRecord modPage in modPages)
 	{
-		foreach (ParsedFile folder in mod.ModFolders)
+		foreach (ModPageDownloadRecord download in modPage.Downloads)
 		{
-			// parse manifest
-			IManifest manifest = folder.RawFolder.Manifest;
-			string id = manifest?.UniqueID?.Trim();
-			string contentPackFor = manifest?.ContentPackFor?.UniqueID?.Trim();
-			if (string.IsNullOrWhiteSpace(id) || !string.Equals(contentPackFor, "Pathoschild.ContentPatcher", StringComparison.OrdinalIgnoreCase))
-				continue;
-
-			// skip if content.json doesn't exist
-			FileInfo contentFile = new FileInfo(Path.Combine(folder.RawFolder.Directory.FullName, "content.json"));
-			if (!contentFile.Exists)
-				continue;
-
-			// extract format version
-			ISemanticVersion format = null;
-			try
+			foreach (ModFolderRecord mod in download.Mods)
 			{
-				var template = new { Format = "" };
-				var rawContent = JsonConvert.DeserializeAnonymousType(File.ReadAllText(contentFile.FullName), template);
-				if (!SemanticVersion.TryParse(rawContent?.Format, out format))
+				// parse manifest
+				ModManifestRecord manifest = mod.Manifest;
+				string id = manifest?.UniqueId?.Trim();
+				string contentPackFor = manifest?.ContentPackFor?.UniqueId?.Trim();
+				if (string.IsNullOrWhiteSpace(id) || !string.Equals(contentPackFor, "Pathoschild.ContentPatcher", StringComparison.OrdinalIgnoreCase))
 					continue;
 
-				format = new SemanticVersion(format.MajorVersion, format.MinorVersion, 0);
-			}
-			catch (JsonException)
-			{
-				continue; // ignore invalid content.json
-			}
+				// skip if content.json doesn't exist
+				FileInfo contentFile = new FileInfo(
+					Path.Combine(
+						this.ModCacheHelper.GetModDumpFolder(modPage, download, mod),
+						"content.json"
+					)
+				);
+				if (!contentFile.Exists)
+					continue;
 
-			// track latest version
-			if (!modVersions.TryGetValue(id, out ISemanticVersion prevVersion) || format.IsNewerThan(prevVersion))
-				modVersions[id] = format;
+				// extract format version
+				ISemanticVersion format = null;
+				try
+				{
+					var rawContent = Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(File.ReadAllText(contentFile.FullName), contentTemplate);
+					if (!SemanticVersion.TryParse(rawContent?.Format, out format))
+						continue;
+
+					format = new SemanticVersion(format.MajorVersion, format.MinorVersion, 0);
+				}
+				catch (Newtonsoft.Json.JsonException)
+				{
+					continue; // ignore invalid content.json
+				}
+
+				// track latest version
+				if (!modVersions.TryGetValue(id, out ISemanticVersion prevVersion) || format.IsNewerThan(prevVersion))
+					modVersions[id] = format;
+			}
 		}
 	}
 
@@ -1024,24 +958,6 @@ IDictionary<string, int> GetContentPatcherVersionUsage(IEnumerable<ParsedMod> mo
 	counts.Remove("3.0.0");
 
 	return counts;
-}
-
-/// <summary>Get all mods which depend on the given mod.</summary>
-/// <param name="parsedMods">The mods to check.</param>
-/// <param name="modID">The dependency mod ID.</param>
-IEnumerable<ModFolder> GetModsDependentOn(IEnumerable<ParsedMod> parsedMods, string modID)
-{
-	foreach (ParsedMod mod in parsedMods)
-	{
-		foreach (ModFolder folder in mod.ModFolders.Select(p => p.RawFolder))
-		{
-			bool dependency =
-				folder.Manifest?.Dependencies?.Any(p => p.UniqueID?.Equals(modID, StringComparison.InvariantCultureIgnoreCase) == true) == true
-				|| folder.Manifest?.ContentPackFor?.UniqueID?.Equals(modID, StringComparison.InvariantCultureIgnoreCase) == true;
-			if (dependency)
-				yield return folder;
-		}
-	}
 }
 
 
@@ -1061,7 +977,7 @@ private void DumpDictionaryToColumns<TKey, TValue>(IDictionary<TKey, TValue> dic
 }
 
 /// <summary>Get the start of the preceding month.</summary>
-/// <param name="dayOffset">The day offset to apply to the date.</param>
+/// <param name="fuzzyDays">The day offset to apply to the date.</param>
 private static DateTimeOffset GetStartOfMonth(int fuzzyDays = 5)
 {
 	DateTimeOffset now = DateTimeOffset.Now;
@@ -1070,305 +986,59 @@ private static DateTimeOffset GetStartOfMonth(int fuzzyDays = 5)
 		.AddMonths(now.Day <= fuzzyDays ? -1 : 0);
 }
 
-/// <summary>Fetch and cache all mods and mod files from a mod site.</summary>
-/// <param name="modDump">The mod dump to update.</param>
-/// <param name="modSite">The mod site from which to fetch mods.</param>
-async Task DownloadAndCacheSiteAsync(ModCache modDump, IModSiteClient modSite)
+/// <summary>Load all mod page records from the open mod dataset.</summary>
+/// <param name="repoPath">The full path to the open mod dataset repo.</param>
+private static IEnumerable<ModPageRecord> LoadModsFromRepo(string repoPath)
 {
-	// fetch all mods
-	ConsoleHelper.Print($"   Fetching mods from {modSite.SiteKey}...");
-	Dictionary<long, GenericMod> remoteMods;
-	while (true)
+	string dataPath = Path.Combine(repoPath, "data");
+
+	var progress = new Util.ProgressBar().Dump();
+
+	foreach (string siteDir in Directory.EnumerateDirectories(dataPath))
 	{
-		try
+		if (!Enum.TryParse(Path.GetFileName(siteDir), out ModSite site))
 		{
-			remoteMods = (await modSite.GetAllModsAsync()).ToDictionary(p => p.ID);
-			break;
-		}
-		catch (Exception ex)
-		{
-			ex.Dump();
-			string choice = ConsoleHelper.GetChoice("Do you want to [r]etry or [s]kip this site?", ["r", "s"]);
-			if (choice == "s")
-				return;
-		}
-	}
-
-	// remove deleted/hidden mods
-	bool removedAny = false;
-	foreach (GenericMod mod in modDump.GetModsFor(modSite.SiteKey))
-	{
-		if (!remoteMods.ContainsKey(mod.ID))
-		{
-			if (DeleteRemovedMods)
-			{
-				removedAny = true;
-				modDump.DeleteMod(modSite.SiteKey, mod.ID);
-				ConsoleHelper.Print($"      Deleted mod {mod.ID} ('{mod.Name}' by {mod.Author}) which is no longer accessible.");
-			}
-			else
-				ConsoleHelper.Print($"      Ignored mod {mod.ID} ('{mod.Name}' by {mod.Author}) which is no longer accessible. Enable {nameof(DeleteRemovedMods)} to delete it.");
-		}
-	}
-	if (removedAny)
-		modDump.SaveCache();
-
-	// get new/updated mods
-	List<(GenericMod mod, bool isNew)> queue = new();
-	foreach ((long modId, GenericMod mod) in remoteMods)
-	{
-		GenericMod cachedMod = modDump.GetMod(mod.Site, mod.ID);
-
-		bool isNew = true;
-		if (cachedMod != null)
-		{
-			if (this.IsCacheUpToDate(cachedMod, mod))
-				continue;
-
-			isNew = false;
+			Console.WriteLine($"  Ignored site dir at '{siteDir}': folder name isn't a known site.");
+			continue;
 		}
 
-		queue.Add((mod, isNew));
-	}
+		string[] jsonFiles = Directory.EnumerateFiles(siteDir, "*.json", SearchOption.AllDirectories).ToArray();
 
-	// save updated mods
-	if (queue.Count > 0)
-	{
-		var progress = new IncrementalProgressBar(queue.Count).Dump();
-		int fetchesSinceSave = 0;
 		int i = 0;
-		foreach ((GenericMod mod, bool isNew) in queue)
+		foreach (string jsonFile in jsonFiles)
 		{
-			// update progress
-			progress.Increment();
-			progress.Caption = $"Fetching {(isNew ? "new" : "updated")} mod {mod.ID} \"{mod.Name}\" ({++i} of {queue.Count})...";
+			string relativePath = Path.GetRelativePath(repoPath, jsonFile);
 
-			// fetch & save
-			while (true)
+			progress.Fraction = i++ / ((float)jsonFiles.Length);
+			progress.Caption = $"Reading {relativePath}...";
+
+			ModPageRecord modPage;
+			try
 			{
-				try
-				{
-					await this.DownloadAndCacheModDataAsync(modDump, mod, getDownloadLinks: async file => await modSite.GetDownloadUrlsAsync(mod, file));
-					break;
-				}
-				catch (RateLimitedException ex)
-				{
-					if (fetchesSinceSave > 0)
-					{
-						modDump.SaveCache();
-						fetchesSinceSave = 0;
-					}
-
-					this.LogAndAwaitRateLimit(ex, modSite.SiteKey);
-					continue;
-				}
+				using Stream fileStream = File.OpenRead(jsonFile);
+				modPage = JsonSerializer.Deserialize<ModPageRecord>(fileStream);
 			}
-			fetchesSinceSave++;
-
-			// update cache
-			if (fetchesSinceSave >= this.ModFetchesPerSave)
+			catch (Exception ex)
 			{
-				progress.Caption = $"Saving mod cache...";
-				modDump.SaveCache();
-				fetchesSinceSave = 0;
-			}
-		}
-
-		if (fetchesSinceSave > 0)
-			modDump.SaveCache();
-	}
-}
-
-/// <summary>Get whether a cached mod is already up-to-date with the latest fetched data.</summary>
-/// <param name="cached">The cached mod data.</param>
-/// <param name="fetched">The fetched mod data.</param>
-private bool IsCacheUpToDate(GenericMod cached, GenericMod fetched)
-{
-	// basic mod info
-	if (
-		cached.Name != fetched.Name
-		|| cached.Author != fetched.Author
-		|| cached.AuthorLabel != fetched.AuthorLabel
-		|| cached.Updated != fetched.Updated
-		|| cached.Version != fetched.Version
-		|| cached.Files.Length != fetched.Files.Length
-	)
-		return false;
-
-	// basic file info
-	Dictionary<long, GenericFile> fetchedFiles = fetched.Files.ToDictionary(p => p.ID);
-	foreach (GenericFile cachedFile in cached.Files)
-	{
-		if (
-			!fetchedFiles.TryGetValue(cachedFile.ID, out GenericFile fetchedFile)
-			|| cachedFile.DisplayName != fetchedFile.DisplayName
-			|| cachedFile.FileName != fetchedFile.FileName
-			|| cachedFile.Version != fetchedFile.Version
-		)
-			return false;
-	}
-
-	return true;
-}
-
-/// <summary>Write mod data to the cache directory and download the available files.</summary>
-/// <param name="modDump">The mod dump to update.</param>
-/// <param name="mod">The mod whose data to save.</param>
-/// <param name="getDownloadLinks">Get the download URLs for a specific file. If this returns multiple URLs, the first working one will be used.</param>
-async Task DownloadAndCacheModDataAsync(ModCache modDump, GenericMod mod, Func<GenericFile, Task<Uri[]>> getDownloadLinks)
-{
-	// reset cache folder
-	modDump.DeleteMod(mod.Site, mod.ID);
-	modDump.AddMod(mod);
-
-	// download files
-	using (WebClient downloader = new WebClient())
-	{
-		foreach (GenericFile file in mod.Files)
-		{
-			// get download sources
-			Queue<Uri> sources;
-			while (true)
-			{
-				try
-				{
-					sources = new Queue<Uri>(await getDownloadLinks(file));
-					break;
-				}
-				catch (Exception ex)
-				{
-					ConsoleHelper.Print($"File {mod.ID} > {file.ID}: could not fetch download links due to an unexpected error.", Severity.Error);
-					new Lazy<Exception>(() => ex).Dump(ex.Message);
-					if (ConsoleHelper.GetChoice("Do you want to [r]etry or [s]kip this file?", ["r", "s"]) == "r")
-						continue;
-					else
-					{
-						ConsoleHelper.Print($"Skipped file.", Severity.Info);
-						sources = null;
-						break;
-					}
-				}
-			}
-			if (sources is null)
+				Console.WriteLine($"  Ignored mod file at '{relativePath}': can't deserialize data.\n{ex}");
 				continue;
-
-			// download file from first working CDN
-			FileInfo localFile = new FileInfo(modDump.GetModFilePath(mod.Site, mod.ID, file));
-			bool skipped = false;
-			while (true)
-			{
-				if (!sources.Any())
-				{
-					ConsoleHelper.Print($"File {mod.ID} > {file.ID} has no download sources available.", Severity.Error);
-					ConsoleHelper.Print("You can optionally download it yourself:", Severity.Error);
-
-					Util.HorizontalRun(
-						true,
-						ConsoleHelper.FormatMessage($"   download from:", Severity.Error),
-						new Hyperlinq(mod.Site switch
-						{
-							ModSite.CurseForge => $"{mod.PageUrl}/download/{file.ID}",
-							_ => mod.PageUrl
-						})
-					).Dump();
-
-					CancellationTokenSource inputCancelToken = new();
-
-					Util.HorizontalRun(
-						true,
-						ConsoleHelper.FormatMessage($"   download to:  {localFile.FullName}", Severity.Error),
-						new Hyperlinq(
-							() =>
-							{
-								if (this.MoveDownloadedFile(file, localFile.FullName))
-									inputCancelToken.Cancel();
-							},
-							"[move download automatically]"
-						)
-					).Dump();
-
-					while (true)
-					{
-						try
-						{
-							if (await ConsoleHelper.GetChoiceAsync("Do you want to [u]se a manually downloaded file or [s]kip this file?", ["u", "s"], inputCancelToken.Token) == "u")
-							{
-								if (!File.Exists(localFile.FullName))
-								{
-									ConsoleHelper.Print($"No file found at {localFile.FullName}.", Severity.Error);
-									continue;
-								}
-
-								ConsoleHelper.Print($"Using manually downloaded file.", Severity.Info);
-							}
-							else
-							{
-								ConsoleHelper.Print($"Skipped file.", Severity.Info);
-								skipped = true;
-							}
-						}
-						catch (OperationCanceledException) // input cancelled due to [move download automatically]
-						{
-							if (!File.Exists(localFile.FullName))
-							{
-								ConsoleHelper.Print($"No file found at {localFile.FullName}.", Severity.Error);
-								continue;
-							}
-						}
-						break;
-					}
-					break;
-				}
-
-				Uri url = sources.Dequeue();
-				try
-				{
-					downloader.DownloadFile(url, localFile.FullName);
-					break;
-				}
-				catch (Exception ex)
-				{
-					string errorPhrase = $"Failed downloading mod {mod.ID} > file {file.ID} from {url}";
-					if (sources.Any())
-						ConsoleHelper.Print($"{errorPhrase}. Trying next CDN...\n{ex}", Severity.Warning);
-					else
-						ConsoleHelper.Print($"{errorPhrase}.\n{ex}", Severity.Error);
-					Console.WriteLine();
-				}
 			}
 
-			// unpack file
-			if (!skipped && !modDump.TryUnpackFile(mod.Site, mod.ID, file, out string error))
-				ConsoleHelper.Print($"Failed unpacking mod {mod.ID} > file {file.ID}: {error}.", Severity.Warning);
+			yield return modPage;
 		}
 	}
-}
 
-/// <summary>If a file was downloaded manually, move the downloaded file to the target path automatically.</summary>
-/// <param name="file">The file info from the mod site.</param>
-/// <param name="targetPath">The absolute file path to which to move it.</param>
-/// <returns>Returns whether it was moved successfully.</returns>
-private bool MoveDownloadedFile(GenericFile file, string targetPath)
-{
-	FileInfo fromFile = new(Path.Combine(DownloadsPath, file.FileName));
-	if (!fromFile.Exists)
-	{
-		ConsoleHelper.Print($"   No file found at {fromFile.FullName}.");
-		return false;
-	}
-
-	fromFile.MoveTo(targetPath);
-	ConsoleHelper.Print($"  Download moved to {targetPath}.");
-	return true;
+	progress.HideWhenCompleted = true;
+	progress.Fraction = 1;
 }
 
 /// <summary>Get the human-readable mod names for the compatibility list.</summary>
 /// <param name="folder">The downloaded mod folder.</param>
 /// <param name="mod">The mod metadata.</param>
-private string[] GetModNames(ParsedFile folder, ParsedMod mod)
+private string[] GetModNames(ModFolderRecord folder, ModPageRecord mod)
 {
 	// get possible names
-	string[] names = new[] { folder.ModDisplayName?.Trim(), mod.Name?.Trim() }
+	string[] names = new[] { folder.DisplayName?.Trim(), mod.Name?.Trim() }
 		.Where(name => !string.IsNullOrWhiteSpace(name))
 		.OrderBy(name => name)
 		.Distinct(StringComparer.InvariantCultureIgnoreCase)
@@ -1389,7 +1059,7 @@ private string[] GetModNames(ParsedFile folder, ParsedMod mod)
 /// <summary>Get the human-readable mod author names for the compatibility list.</summary>
 /// <param name="manifest">The downloaded mod manifest file.</param>
 /// <param name="mod">The mod metadata.</param>
-private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
+private string[] GetAuthorNames(ModManifestRecord? manifest, ModPageRecord mod)
 {
 	return new[] { manifest?.Author?.Trim(), mod.AuthorLabel?.Trim() ?? mod.Author?.Trim() }
 		.SelectMany(field => field?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
@@ -1401,12 +1071,12 @@ private string[] GetAuthorNames(IManifest manifest, ParsedMod mod)
 /// <summary>Get the GitHub repository name for a mod, if available.</summary>
 /// <param name="manifest">The downloaded mod manifest file.</param>
 /// <param name="mod">The mod metadata.</param>
-private HashSet<string> GetGitHubRepos(IManifest manifest, ParsedMod mod)
+private HashSet<string> GetGitHubRepos(ModManifestRecord? manifest, ModPageRecord mod)
 {
 	HashSet<string> repos = new(StringComparer.OrdinalIgnoreCase);
 
 	// from update key
-	foreach (string rawUpdateKey in manifest?.UpdateKeys ?? Array.Empty<string>())
+	foreach (string rawUpdateKey in this.GetUpdateKeys(manifest))
 	{
 		string updateKey = rawUpdateKey?.Trim();
 		if (updateKey?.StartsWith("GitHub", StringComparison.OrdinalIgnoreCase) == true)
@@ -1422,10 +1092,9 @@ private HashSet<string> GetGitHubRepos(IManifest manifest, ParsedMod mod)
 	}
 
 	// from mod description
-	string description = this.TryGetModDescription(mod);
-	if (!string.IsNullOrWhiteSpace(description))
+	if (!string.IsNullOrWhiteSpace(mod.Description))
 	{
-		MatchCollection matches = Regex.Matches(description, @"(?<!help\.|gist\.)github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		MatchCollection matches = Regex.Matches(mod.Description, @"(?<!help\.|gist\.)github\.com/([a-z0-9_\-\.]+/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
 		foreach (Match match in matches)
 		{
 			string repo = this.MapSourceLink(manifest, match.Groups[1].Value);
@@ -1440,15 +1109,14 @@ private HashSet<string> GetGitHubRepos(IManifest manifest, ParsedMod mod)
 /// <summary>Get the custom source code URL for a mod, if available.</summary>
 /// <param name="manifest">The downloaded mod manifest file.</param>
 /// <param name="mod">The mod metadata.</param>
-private HashSet<string> GetCustomSourceUrls(IManifest manifest, ParsedMod mod)
+private HashSet<string> GetCustomSourceUrls(ModManifestRecord? manifest, ModPageRecord mod)
 {
 	HashSet<string> sourceUrls = new(StringComparer.OrdinalIgnoreCase);
 
 	// from mod description
-	string description = this.TryGetModDescription(mod);
-	if (!string.IsNullOrWhiteSpace(description))
+	if (!string.IsNullOrWhiteSpace(mod.Description))
 	{
-		MatchCollection matches = Regex.Matches(description, @"(gitlab\.com/[a-z0-9_\-\.]+/[a-z0-9_\-\.]+|sourceforge\.net/p/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
+		MatchCollection matches = Regex.Matches(mod.Description, @"(gitlab\.com/[a-z0-9_\-\.]+/[a-z0-9_\-\.]+|sourceforge\.net/p/[a-z0-9_\-\.]+)", RegexOptions.IgnoreCase);
 		foreach (Match match in matches)
 		{
 			string url = this.MapSourceLink(manifest, $"https://{match.Groups[1].Value}");
@@ -1460,30 +1128,11 @@ private HashSet<string> GetCustomSourceUrls(IManifest manifest, ParsedMod mod)
 	return sourceUrls;
 }
 
-/// <summary>Get the raw mod page description, if available.</summary>
-/// <param name="mod">The mod metadata.</param>
-private string TryGetModDescription(ParsedMod mod)
-{
-	// ModDrop
-	{
-		if (mod.RawData.TryGetValue("desc", out object rawValue) && rawValue is string description)
-			return description;
-	}
-
-	// Nexus
-	{
-		if (mod.RawData.TryGetValue(nameof(NexusModExport.Description), out object rawValue) && rawValue is string description)
-			return description;
-	}
-
-	return null;
-}
-
 /// <summary>Get the source link for a mod after applying the <see cref="ModOverridesData.IgnoreSourceLinks"/>, <see cref="ModOverridesData.IgnoreSourceLinksForSpecificMods"/>, and <see cref="ModOverridesData.MapSourceLinks"/> patterns.</summary>
 /// <param name="manifest">The mod manifest.</param>
 /// <param name="repoOrUrl">The GitHub repo name (like 'Pathoschild/SMAPI') or custom source URL to map.</param>
-/// <returns>Returns the source link to use, or <c>null</c> if it should be ignored.
-private string MapSourceLink(IManifest manifest, string repoOrUrl)
+/// <returns>Returns the source link to use, or <c>null</c> if it should be ignored.</returns>
+private string? MapSourceLink(ModManifestRecord? manifest, string repoOrUrl)
 {
 	if (string.IsNullOrWhiteSpace(repoOrUrl))
 		return null;
@@ -1498,7 +1147,7 @@ private string MapSourceLink(IManifest manifest, string repoOrUrl)
 	repoOrUrl = this.ModOverrides.MapSourceLinks.GetValueOrDefault(repoOrUrl) ?? repoOrUrl;
 	if (this.ModOverrides.IgnoreSourceLinks.Contains(repoOrUrl))
 		return null;
-	if (manifest?.UniqueID != null && this.ModOverrides.IgnoreSourceLinksForSpecificMods.GetValueOrDefault(manifest.UniqueID.Trim())?.Contains(repoOrUrl) is true)
+	if (manifest?.UniqueId != null && this.ModOverrides.IgnoreSourceLinksForSpecificMods.GetValueOrDefault(manifest.UniqueId.Trim())?.Contains(repoOrUrl) is true)
 		return null;
 
 	return repoOrUrl;
@@ -1540,18 +1189,6 @@ private bool ShouldIgnoreForAnalysis(ModSite site, long siteId, long fileId, str
 		&& entries.Any(search => search.Matches(site: site, siteId: siteId, fileId: fileId, manifestId: manifestId));
 }
 
-/// <summary>Log a human-readable summary for a rate limit exception, and pause the thread until the rate limit is refreshed.</summary>
-/// <param name="ex">The rate limit exception.</param>
-/// <param name="site">The mod site whose rate limit was exceeded.</param>
-private void LogAndAwaitRateLimit(RateLimitedException ex, ModSite site)
-{
-	TimeSpan resumeDelay = ex.TimeUntilRetry;
-	DateTime resumeTime = DateTime.Now + resumeDelay;
-
-	ConsoleHelper.Print($"{site} rate limit exhausted: {ex.RateLimitSummary}; resuming in {ConsoleHelper.GetFormattedTime(resumeDelay)} ({resumeTime:HH:mm:ss} local time).");
-	Thread.Sleep(resumeDelay);
-}
-
 /// <summary>Get a lookup of mod compatibility entries by mod ID.</summary>
 /// <param name="compatList">The compatibility entries to index.</param>
 private Dictionary<string, ModCompatibilityEntry> GetCompatibilityEntriesByModId(ModCompatibilityEntry[] compatList)
@@ -1565,6 +1202,17 @@ private Dictionary<string, ModCompatibilityEntry> GetCompatibilityEntriesByModId
 	return entriesById;
 }
 
+/// <summary>Get the update keys from a mod manifest.</summary>
+/// <param name="manifest">The mod manifest.</param>
+private IEnumerable<string> GetUpdateKeys(ModManifestRecord? manifest)
+{
+	return manifest?.UpdateKeys?.Distinct().Where(p => p is not null) ?? [];
+}
+
+
+/*********
+** Override types
+*********/
 /// <summary>The manual overrides for specific mods or source repos when analyzing them with this script.</summary>
 private class ModOverridesData
 {
@@ -1597,11 +1245,11 @@ private class ModOverridesData
 		if (!File.Exists(filePath))
 			throw new FileNotFoundException($"Can't load mod overrides data because no file was found at path '{filePath}'.");
 		string json = File.ReadAllText(filePath);
-		var rawData = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(json);
+		RawDataModel rawData = Newtonsoft.Json.JsonConvert.DeserializeObject<RawDataModel>(json);
 
 		// read ignore for analysis
 		var ignoreForAnalysis = new List<ModSearch>();
-		foreach ((string rawSiteKey, string[] entries) in rawData["IgnoreForAnalysis"].ToObject<Dictionary<string, string[]>>())
+		foreach ((string rawSiteKey, string[] entries) in rawData.IgnoreForAnalysis)
 		{
 			if (!Enum.TryParse(rawSiteKey, out ModSite siteKey))
 				throw new InvalidOperationException($"Can't load mod overrides data from '{filePath}': invalid site key '{rawSiteKey}'.");
@@ -1616,12 +1264,12 @@ private class ModOverridesData
 
 		// read 'ignore source links for specific mods'
 		var ignoreSourceLinksForSpecificMods = new Dictionary<string, HashSet<string>>();
-		foreach ((string modId, string rawRepos) in rawData["IgnoreSourceLinksForSpecificMods"].ToObject<Dictionary<string, string>>())
+		foreach ((string modId, string rawRepos) in rawData.IgnoreSourceLinksForSpecificMods)
 			ignoreSourceLinksForSpecificMods[modId] = new HashSet<string>(rawRepos.Split(',', StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
 
 		// read other fields
-		var ignoreSourceLinks = new HashSet<string>(rawData["IgnoreSourceLinks"].ToObject<string[]>(), StringComparer.OrdinalIgnoreCase);
-		var mapSourceLinks = new Dictionary<string, string>(rawData["MapSourceLinks"].ToObject<Dictionary<string, string>>(), StringComparer.OrdinalIgnoreCase);
+		var ignoreSourceLinks = new HashSet<string>(rawData.IgnoreSourceLinks, StringComparer.OrdinalIgnoreCase);
+		var mapSourceLinks = new Dictionary<string, string>(rawData.MapSourceLinks, StringComparer.OrdinalIgnoreCase);
 
 		// build model
 		return new ModOverridesData
@@ -1631,6 +1279,15 @@ private class ModOverridesData
 			IgnoreSourceLinksForSpecificMods = ignoreSourceLinksForSpecificMods,
 			MapSourceLinks = mapSourceLinks
 		};
+	}
+
+	/// <summary>The raw data model for the overrides file.</summary>
+	private class RawDataModel
+	{
+		public Dictionary<string, string[]> IgnoreForAnalysis;
+		public Dictionary<string, string> IgnoreSourceLinksForSpecificMods;
+		public string[] IgnoreSourceLinks;
+		public Dictionary<string, string> MapSourceLinks;
 	}
 }
 
@@ -1676,14 +1333,6 @@ class ModSearch
 			&& (this.ManifestId == null || this.ManifestId == manifestId);
 	}
 
-	/// <summary>Get a set of mod search models for the same site.</summary>
-	/// <param name="site">The mod site.</param>
-	/// <param name="siteIds">The mod IDs on the mod site.</param>
-	public static IEnumerable<ModSearch> ForSiteIds(ModSite site, params long[] siteIds)
-	{
-		return siteIds.Select(id => new ModSearch(site, id));
-	}
-
 	/// <summary>Parse a string representation of a mod search.</summary>
 	/// <param name="site">The mod site.</param>
 	/// <param name="entry">The mod entry to match, in the form <c>{mod page ID} [file ID] [@{manifest ID}]</c>.</param>
@@ -1709,538 +1358,5 @@ class ModSearch
 			fileId: fileId,
 			manifestId: mainParts.Length > 1 ? mainParts[1] : null
 		);
-	}
-}
-
-/// <summary>An exception raised when API client exceeds the rate limits for an API.</summary>
-class RateLimitedException : Exception
-{
-	/*********
-	** Accessors
-	*********/
-	/// <summary>The amount of time to wait until it's safe to retry the request.</summary>
-	public TimeSpan TimeUntilRetry { get; }
-
-	/// <summary>A human-readable of current rate limit values, if available.</summary>
-	public string RateLimitSummary { get; }
-
-
-	/*********
-	** Accessors
-	*********/
-	public RateLimitedException(TimeSpan timeUntilRetry, string rateLimitSummary)
-		: base("Rate limits have been exceeded for this API.")
-	{
-		this.TimeUntilRetry = timeUntilRetry;
-		this.RateLimitSummary = rateLimitSummary;
-	}
-}
-
-/// <summary>A client which fetches mods from a particular mod site.</summary>
-interface IModSiteClient
-{
-	/*********
-	** Accessors
-	*********/
-	/// <summary>The identifier for this mod site used in update keys.</summary>
-	ModSite SiteKey { get; }
-
-
-	/*********
-	** Methods
-	*********/
-	/// <summary>Authenticate with the mod site if needed.</summary>
-	Task AuthenticateAsync();
-
-	/// <summary>Get every mod currently available on this site.</summary>
-	Task<GenericMod[]> GetAllModsAsync();
-
-	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get download URLs.</param>
-	/// <param name="file">The file for which to get download URLs.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file);
-}
-
-/// <summary>A client which fetches mods from the CurseForge export API.</summary>
-class CurseForgeApiClient : IModSiteClient
-{
-	/*********
-	** Fields
-	*********/
-	/// <summary>A regex pattern which matches a version number in a CurseForge mod file name.</summary>
-	private readonly Regex VersionInNamePattern = new Regex(@"^(?:.+? | *)v?(\d+\.\d+(?:\.\d+)?(?:-.+?)?) *(?:\.(?:zip|rar|7z))?$", RegexOptions.Compiled);
-
-	/// <summary>The CurseForge export API client.</summary>
-	private readonly CurseForgeExportApiClient CurseForge;
-
-
-	/*********
-	** Accessors
-	*********/
-	/// <inheritdoc />
-	public ModSite SiteKey { get; } = ModSite.CurseForge;
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="exportApiUrl">The base URL for the CurseForge export API.</param>
-	/// <param name="userAgent">The user agent sent to the mod site API.</param>
-	public CurseForgeApiClient(string exportApiUrl, string userAgent)
-	{
-		this.CurseForge = new CurseForgeExportApiClient(userAgent, exportApiUrl);
-	}
-
-	/// <inheritdoc/>
-	public Task AuthenticateAsync()
-	{
-		return Task.CompletedTask;
-	}
-
-	/// <inheritdoc/>
-	public async Task<GenericMod[]> GetAllModsAsync()
-	{
-		CurseForgeFullExport export = await this.CurseForge.FetchExportAsync();
-
-		if (export.CacheHeaders.LastModified < DateTimeOffset.UtcNow.AddHours(-MaxExportAge))
-			throw new InvalidOperationException($"Can't fetch export from CurseForge export API: the export was last updated {Math.Round((DateTimeOffset.UtcNow - export.CacheHeaders.LastModified).TotalHours, 2)} hours ago.");
-
-		return export.Mods.Values
-			.Select(this.Parse)
-			.ToArray();
-	}
-
-	/// <inheritdoc />
-	public Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
-	{
-		return Task.FromResult(
-			GetDownloadUrls(mod, file).Select(url => new Uri(url)).ToArray()
-		);
-	}
-
-
-	/*********
-	** Private methods
-	*********/
-	/// <summary>Get the download URLs for a CurseForge file.</summary>
-	/// <param name="mod">The mod which has the file to download.</param>
-	/// <param name="file">The file for which to get download URLs.</param>
-	private IEnumerable<string> GetDownloadUrls(GenericMod mod, GenericFile file)
-	{
-		// API download URL
-		if (file.RawData.GetValueOrDefault("downloadUrl") is string apiDownloadUrl)
-			yield return apiDownloadUrl;
-
-		// build CDN URL manually
-		// The API doesn't always return a download URL.
-		yield return $"https://www.curseforge.com/api/v1/mods/{mod.ID}/files/{file.ID}/download";
-	}
-
-	/// <summary>Parse raw mod data from the CurseForge API.</summary>
-	/// <param name="rawMod">The raw mod data.</param>
-	private GenericMod Parse(CurseForgeModExport mod)
-	{
-		// get author names
-		string[] authorNames = mod.Authors.Select(p => p.Name).ToArray();
-
-		// get last updated
-		DateTimeOffset lastUpdated;
-		{
-			lastUpdated = mod.DateCreated;
-			if (mod.DateModified > lastUpdated)
-				lastUpdated = mod.DateModified;
-			if (mod.DateReleased > lastUpdated)
-				lastUpdated = mod.DateReleased;
-		}
-
-		// get files
-		List<GenericFile> files = new List<GenericFile>();
-		foreach (CurseForgeFileExport file in mod.Files)
-		{
-			files.Add(new GenericFile(
-				id: file.Id,
-				type: file.ReleaseType == 1 ? GenericFileType.Main : GenericFileType.Optional, // FileReleaseType: 1=release, 2=beta, 3=alpha
-				displayName: file.DisplayName,
-				fileName: file.FileName,
-				version: this.GetFileVersion(file.DisplayName, file.FileName),
-				uploaded: file.FileDate,
-				rawData: file
-			));
-
-			if (file.FileDate > lastUpdated)
-				lastUpdated = file.FileDate;
-		}
-
-		// get model
-		CurseForgeModExport rawModWithoutFiles = JsonConvert.DeserializeObject<CurseForgeModExport>(JsonConvert.SerializeObject(mod));
-		rawModWithoutFiles.Files = Array.Empty<CurseForgeFileExport>();
-
-		return new GenericMod(
-			site: ModSite.CurseForge,
-			id: mod.Id,
-			name: mod.Name,
-			author: authorNames.FirstOrDefault(),
-			authorLabel: authorNames.Length > 1 ? string.Join(", ", authorNames) : null,
-			pageUrl: mod.ModPageUrl,
-			version: null,
-			updated: lastUpdated,
-			rawData: rawModWithoutFiles,
-			files: files.ToArray()
-		);
-	}
-
-	/// <summary>Get a raw version string for a mod file, if available.</summary>
-	/// <param name="displayName">The file's display name.</param>
-	/// <param name="fileName">The filename.</param>
-	private string GetFileVersion(string displayName, string fileName)
-	{
-		Match match = this.VersionInNamePattern.Match(displayName);
-		if (!match.Success)
-			match = this.VersionInNamePattern.Match(fileName);
-
-		return match.Success
-			? match.Groups[1].Value
-			: null;
-	}
-}
-
-/// <summary>A client which fetches mods from the ModDrop export API.</summary>
-class ModDropApiClient : IModSiteClient
-{
-	/*********
-	** Fields
-	*********/
-	/// <summary>The username with which to log in to the main API, if any.</summary>
-	private readonly string Username;
-
-	/// <summary>The password with which to log in to the main API, if any.</summary>
-	private readonly string Password;
-
-	/// <summary>The ModDrop API client.</summary>
-	private IClient MainApi = new FluentClient("https://www.moddrop.com/api");
-
-	/// <summary>The ModDrop export API client.</summary>
-	private readonly ModDropExportApiClient ExportApi;
-
-
-	/*********
-	** Accessors
-	*********/
-	/// <inheritdoc />
-	public ModSite SiteKey { get; } = ModSite.ModDrop;
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="exportApiUrl">The base URL for the ModDrop export API.</param>
-	/// <param name="userAgent">The user agent sent to the mod site API.</param>
-	/// <param name="username">The username with which to log in, if any.</param>
-	/// <param name="password">The password with which to log in, if any.</param>
-	public ModDropApiClient(string exportApiUrl, string userAgent, string username, string password)
-	{
-		this.ExportApi = new ModDropExportApiClient(userAgent, exportApiUrl);
-		this.Username = username;
-		this.Password = password;
-	}
-
-	/// <summary>Authenticate with the mod site if needed.</summary>
-	public async Task AuthenticateAsync()
-	{
-		if (this.Username == null || this.Password == null)
-			return;
-
-		var response = await this.MainApi
-			.PostAsync("v1/auth/login")
-			.WithBasicAuthentication(this.Username, this.Password)
-			.AsRawJsonObject();
-
-		string apiToken = response["apiToken"].Value<string>();
-		if (string.IsNullOrEmpty(apiToken))
-			throw new InvalidOperationException($"Authentication with the ModDrop API failed:\n{response.ToString()}");
-
-		this.MainApi.AddDefault(p => p.WithHeader("Authorization", apiToken));
-	}
-
-	/// <inheritdoc/>
-	public async Task<GenericMod[]> GetAllModsAsync()
-	{
-		ModDropFullExport export = await this.ExportApi.FetchExportAsync();
-
-		if (export.CacheHeaders.LastModified < DateTimeOffset.UtcNow.AddHours(-MaxExportAge))
-			throw new InvalidOperationException($"Can't fetch export from ModDrop export API: the export was last updated {Math.Round((DateTimeOffset.UtcNow - export.CacheHeaders.LastModified).TotalHours, 2)} hours ago.");
-
-		return export.Mods.Values
-			.Where(p => !p.IsDeleted && p.IsPublished)
-			.Select(this.Parse)
-			.ToArray();
-	}
-
-	/// <summary>Get the download URLs for a file. If this returns multiple URLs, they're assumed to be mirrors and the first working URL will be used.</summary>
-	/// <param name="mod">The mod for which to get download URLs.</param>
-	/// <param name="file">The file for which to get download URLs.</param>
-	/// <exception cref="RateLimitedException">The API client has exceeded the API's rate limits.</exception>
-	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
-	{
-		try
-		{
-			var response = await this.MainApi
-				.PostAsync($"v1/mod-{mod.ID}/file-{file.ID}/download")
-				.AsRawJsonObject();
-
-			return new[]
-			{
-				new Uri(response["url"].Value<string>())
-			};
-		}
-		catch (Exception ex)
-		{
-			string error = $"Can't fetch download URL for \"{mod.Name}\" (#{mod.ID}) > file \"{file.DisplayName} {file.Version}\" (#{file.ID}).";
-			if (ex is ApiException apiEx)
-				error += $"\n\nHTTP {apiEx.Response.Status}: {await apiEx.Response.AsString()}";
-			error += $"\n\n{ex.ToString()}";
-
-			ConsoleHelper.Print(error, Severity.Error);
-			return new Uri[0];
-		}
-	}
-
-
-	/*********
-	** Private methods
-	*********/
-	/// <summary>Parse raw mod data from the ModDrop export API.</summary>
-	/// <param name="rawMod">The raw mod data.</param>
-	private GenericMod Parse(ModDropModExport rawMod)
-	{
-		// get author names
-		string author = rawMod.UserName?.Trim();
-		string authorLabel = rawMod.AuthorName?.Trim();
-		if (author.Equals(authorLabel, StringComparison.InvariantCultureIgnoreCase))
-			authorLabel = null;
-
-		// get last updated
-		DateTimeOffset lastUpdated = DateTimeOffset.FromUnixTimeMilliseconds(rawMod.DateUpdated);
-		{
-			DateTimeOffset published = DateTimeOffset.FromUnixTimeMilliseconds(rawMod.DatePublished);
-			if (published > lastUpdated)
-				lastUpdated = published;
-		}
-
-		// get files
-		List<GenericFile> files = new List<GenericFile>();
-		foreach (ModDropFileExport file in rawMod.Files)
-		{
-			try
-			{
-				if (file.IsOld || file.IsDeleted || file.IsHidden)
-					continue;
-
-				DateTimeOffset dateCreated = DateTimeOffset.FromUnixTimeMilliseconds(file.DateCreated);
-				if (dateCreated > lastUpdated)
-					lastUpdated = dateCreated;
-
-				files.Add(new GenericFile(
-					id: file.Id,
-					type: !file.IsPreRelease && !file.IsAlternative
-						? GenericFileType.Main
-						: GenericFileType.Optional,
-					displayName: file.Name,
-					fileName: file.FileName,
-					version: file.Version,
-					uploaded: dateCreated,
-					rawData: file
-				));
-			}
-			catch
-			{
-				new { mod = new Lazy<ModDropModExport>(() => rawMod), file = new Lazy<ModDropFileExport>(() => file) }.Dump();
-				throw;
-			}
-		}
-
-		// get model
-		return new GenericMod(
-			site: ModSite.ModDrop,
-			id: rawMod.Id,
-			name: rawMod.Title,
-			author: author,
-			authorLabel: authorLabel,
-			pageUrl: rawMod.PageUrl,
-			version: null,
-			updated: lastUpdated,
-			rawData: rawMod,
-			files: files.ToArray()
-		);
-	}
-}
-
-/// <summary>A client which fetches mods from the Nexus Mods API.</summary>
-class NexusApiClient : IModSiteClient
-{
-	/*********
-	** Fields
-	*********/
-	/// <summary>The Nexus Mods game key for Stardew Valley.</summary>
-	private readonly string GameKey = "stardewvalley";
-
-	/// <summary>The API client for the main Nexus API.</summary>
-	private NexusClient MainApi;
-
-	/// <summary>The Nexus export API client.</summary>
-	private readonly NexusExportApiClient ExportApi;
-
-
-	/*********
-	** Accessors
-	*********/
-	/// <inheritdoc/>
-	public ModSite SiteKey { get; } = ModSite.Nexus;
-
-
-	/*********
-	** Public methods
-	*********/
-	/// <summary>Construct an instance.</summary>
-	/// <param name="exportApiUrl">The base URL for the ModDrop export API.</param>
-	/// <param name="userAgent">The user agent sent to the mod site API.</param>
-	/// <param name="apiKey">The Nexus API key with which to authenticate.</param>
-	/// <param name="appName">An arbitrary name for the app/script using the client, reported to the Nexus Mods API and used in the user agent.</param>
-	/// <param name="appVersion">An arbitrary version number for the <paramref name="appName" /> (ideally a semantic version).</param>
-	public NexusApiClient(string exportApiUrl, string userAgent, string apiKey, string appName, string appVersion)
-	{
-		this.MainApi = new NexusClient(apiKey, appName, appVersion);
-		this.ExportApi = new NexusExportApiClient(userAgent, exportApiUrl);
-	}
-
-	/// <inheritdoc/>
-	public Task AuthenticateAsync()
-	{
-		return Task.CompletedTask;
-	}
-
-	/// <inheritdoc/>
-	public async Task<GenericMod[]> GetAllModsAsync()
-	{
-		NexusFullExport export = await this.ExportApi.FetchExportAsync();
-
-		if (export.CacheHeaders.LastModified < DateTimeOffset.UtcNow.AddHours(-MaxExportAge))
-			throw new InvalidOperationException($"Can't fetch export from Nexus export API: the export was last updated {Math.Round((DateTimeOffset.UtcNow - export.CacheHeaders.LastModified).TotalHours, 2)} hours ago.");
-
-		return export.Data
-			.Where(p => p.Value.Published && p.Value.AllowView && !p.Value.Moderated)
-			.Select(p => this.Parse(p.Key, p.Value))
-			.ToArray();
-	}
-
-	/// <inheritdoc/>
-	public async Task<Uri[]> GetDownloadUrlsAsync(GenericMod mod, GenericFile file)
-	{
-		try
-		{
-			ModFileDownloadLink[] downloadLinks = await this.MainApi.ModFiles.GetDownloadLinks(this.GameKey, (int)mod.ID, (int)file.ID);
-			return downloadLinks.Select(p => p.Uri).ToArray();
-		}
-		catch (ApiException ex) when (ex.Status == (HttpStatusCode)429)
-		{
-			throw await this.GetRateLimitExceptionAsync();
-		}
-	}
-
-
-	/*********
-	** Private methods
-	*********/
-	/// <summary>Parse raw mod data from the Nexus export API.</summary>
-	/// <param name="modId">The mod ID.</param>
-	/// <param name="rawMod">The raw mod data.</param>
-	private GenericMod Parse(uint modId, NexusModExport mod)
-	{
-		// get author
-		string author = mod.Uploader ?? mod.Author;
-		string authorLabel = mod.Author != null && !mod.Author.Equals(author, StringComparison.InvariantCultureIgnoreCase)
-			? mod.Author
-			: null;
-
-		// get files
-		DateTimeOffset lastUpdated = DateTimeOffset.MinValue;
-		List<GenericFile> files = new List<GenericFile>();
-		foreach ((uint fileId, NexusFileExport file) in mod.Files)
-		{
-			// get file type
-			GenericFileType type;
-			if (file.CategoryId is (int)FileCategory.Main)
-				type = GenericFileType.Main;
-			else if (file.CategoryId is (int)FileCategory.Optional)
-				type = GenericFileType.Optional;
-			else
-				continue;
-
-			// track last update
-			DateTimeOffset uploadedAt = DateTimeOffset.FromUnixTimeSeconds(file.UploadedAt);
-			if (uploadedAt > lastUpdated)
-				lastUpdated = uploadedAt;
-
-			// add file
-			files.Add(new GenericFile(id: fileId, type: type, displayName: file.Name, fileName: file.FileName, version: file.Version, uploaded: uploadedAt, rawData: file));
-		}
-
-		// special case: if a mod has zero main/optional files, get files from any non-archived/deleted/old category
-		if (files.Count == 0)
-		{
-			foreach ((uint fileId, NexusFileExport file) in mod.Files)
-			{
-				if (file.CategoryId is (int)FileCategory.Archived or (int)FileCategory.Deleted or (int)FileCategory.Old)
-					continue;
-
-				// track last update
-				DateTimeOffset uploadedAt = DateTimeOffset.FromUnixTimeSeconds(file.UploadedAt);
-				if (uploadedAt > lastUpdated)
-					lastUpdated = uploadedAt;
-
-				files.Add(new GenericFile(id: fileId, type: GenericFileType.Optional, displayName: file.Name, fileName: file.FileName, version: file.Version, uploaded: uploadedAt, rawData: file));
-			}
-		}
-
-		// get model
-		return new GenericMod(
-			site: ModSite.Nexus,
-			id: modId,
-			name: mod.Name,
-			author: author,
-			authorLabel: authorLabel,
-			pageUrl: $"https://www.nexusmods.com/stardewvalley/mods/{modId}",
-			version: null,
-			updated: lastUpdated,
-			rawData: mod,
-			files: files.ToArray()
-		);
-	}
-
-	/// <summary>Get an exception indicating that rate limits have been exceeded.</summary>
-	private async Task<RateLimitedException> GetRateLimitExceptionAsync()
-	{
-		IRateLimitManager rateLimits = await this.MainApi.GetRateLimits();
-		TimeSpan unblockTime = rateLimits.GetTimeUntilRenewal();
-		throw new RateLimitedException(unblockTime, this.GetRateLimitSummary(rateLimits));
-	}
-
-	/// <summary>Get a human-readable summary for the current rate limits.</summary>
-	/// <param name="meta">The current rate limits.</param>
-	private string GetRateLimitSummary(IRateLimitManager meta)
-	{
-		return $"{meta.DailyRemaining}/{meta.DailyLimit} daily resetting in {ConsoleHelper.GetFormattedTime(meta.DailyReset - DateTimeOffset.UtcNow)}, {meta.HourlyRemaining}/{meta.HourlyLimit} hourly resetting in {ConsoleHelper.GetFormattedTime(meta.HourlyReset - DateTimeOffset.UtcNow)}";
-	}
-
-	/// <summary>Get a human-readable formatted time span.</summary>
-	/// <param name="span">The time span to format.</param>
-	private string GetFormattedTime(TimeSpan span)
-	{
-		int hours = (int)span.TotalHours;
-		int minutes = (int)span.TotalMinutes - (hours * 60);
-		return $"{hours:00}:{minutes:00}";
 	}
 }

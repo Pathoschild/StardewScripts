@@ -1,16 +1,11 @@
 <Query Kind="Program">
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.CoreInterfaces.dll</Reference>
   <Reference>&lt;ProgramFilesX86&gt;\Steam\steamapps\common\Stardew Valley\smapi-internal\SMAPI.Toolkit.dll</Reference>
-  <NuGetReference>HtmlAgilityPack</NuGetReference>
   <NuGetReference>Newtonsoft.Json</NuGetReference>
-  <NuGetReference>Pathoschild.Http.FluentClient</NuGetReference>
-  <Namespace>HtmlAgilityPack</Namespace>
-  <Namespace>Pathoschild.Http.Client</Namespace>
   <Namespace>StardewModdingAPI</Namespace>
   <Namespace>StardewModdingAPI.Toolkit</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.CompatibilityRepo</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.Clients.WebApi</Namespace>
-  <Namespace>StardewModdingAPI.Toolkit.Framework.ModData</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.ModScanning</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Framework.UpdateData</Namespace>
   <Namespace>StardewModdingAPI.Toolkit.Serialization</Namespace>
@@ -29,7 +24,6 @@ See documentation at https://github.com/Pathoschild/StardewScripts.
 #load "Utilities/ConsoleHelper.linq"
 #load "Utilities/FileHelper.linq"
 #load "Utilities/IncrementalProgressBar.linq"
-#load "Utilities/ModCache.linq"
 #load "Utilities/ModCacheUtilities.linq"
 
 /*********
@@ -45,7 +39,7 @@ private const string GameFolderPath = @"C:\Program Files (x86)\Steam\steamapps\c
 private static string InstalledModsPath => Path.Combine(GameFolderPath, "Mods (test)");
 
 /// <summary>Provides higher-level utilities for working with the underlying mod cache.</summary>
-private readonly ModCacheUtilities ModCacheHelper = new(@"E:\dev\mod-dump", InstalledModsPath);
+private readonly ModCacheUtilities ModCacheHelper = new(@"E:\source\_Stardew\_ModData", InstalledModsPath);
 
 /// <summary>If set, the full path to a local copy of the compatibility list repo to read directly instead of fetching it from the server.</summary>
 const string LocalCompatListRepoPath = null;
@@ -449,7 +443,7 @@ async Task Main()
 						() => new object[] // returning an array allows collapsing the log in the LINQPad output
 						{
 							Util.WithStyle(
-								Util.VerticalRun(this.ModCacheHelper.TryInstall(requiredId, folderNamePrefix: ModCacheUtilities.TemporaryFolderPrefix, compatibilityEntry: compatModsById.Value.GetValueOrDefault(requiredId))),
+								Util.VerticalRun(this.ModCacheHelper.TryInstallByModId(requiredId, folderNamePrefix: ModCacheUtilities.TemporaryFolderPrefix, compatibilityEntry: compatModsById.Value.GetValueOrDefault(requiredId))),
 								"font-style: monospace; font-size: 0.9em;"
 							)
 						}
@@ -525,24 +519,6 @@ async Task Main()
 			if (mod.Author != null)
 				nameCol = Util.VerticalRun(nameCol, Util.WithStyle($"  by {mod.Author}", smallStyle));
 
-			// get actions
-			object actions = null;
-			if (hasUpdate)
-			{
-				var data = mod.ModData;
-
-				actions = Util.OnDemand(
-					"install from dump",
-					() => new object[] // returning an array allows collapsing the log in the LINQPad output
-					{
-						Util.WithStyle(
-							Util.VerticalRun(this.ModCacheHelper.TryUpdateFromModCache(data.Folder.Directory, data.IDs, data.UpdateKeys, data.InstalledVersion)),
-							"font-style: monospace; font-size: 0.9em;"
-						)
-					}
-				);
-			}
-
 			// get report
 			return new
 			{
@@ -554,7 +530,6 @@ async Task Main()
 				Issues = Util.RawHtml(issues),
 				Type = mod.ModData.Folder.Type,
 				Source = mod.SourceUrl != null ? new Hyperlinq(mod.SourceUrl, "source") : null,
-				Actions = actions,
 				Metadata = Util.OnDemand("expand", () => new
 				{
 					UpdateKeys = Util.OnDemand("expand", () => mod.UpdateKeys),
@@ -601,7 +576,7 @@ private dynamic GetReportLinks(ModEntryModel mod)
 
 /// <summary>Get links for a mod.</summary>
 /// <param name="mod">The API metadata for the mod.</param>
-private dynamic GetReportLinks(int? nexusId, int? modDropId, int? curseForgeId, int? chucklefishId, string gitHubRepo, string customUrl)
+private dynamic GetReportLinks(long? nexusId, long? modDropId, long? curseForgeId, long? chucklefishId, string gitHubRepo, string customUrl)
 {
 	return new
 	{
